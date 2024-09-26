@@ -1,9 +1,9 @@
-import { Component, JSX, ParentComponent, children, createContext, createRenderEffect, createUniqueId, mergeProps, onCleanup, useContext } from "solid-js";
-import { isServer, ssr, useAssets } from "solid-js/web";
+import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createRenderEffect, createSignal, createUniqueId, mergeProps, onCleanup, useContext } from "solid-js";
+import { Portal, isServer, ssr, useAssets } from "solid-js/web";
 
 export interface MenuContextType {
-    add(item: Item): number;
-    remove(index: number): void;
+    ref(): JSX.Element|undefined;
+    // setRef(ref: JSX.Element|undefined): void;
 };
 
 export interface Item {
@@ -15,35 +15,48 @@ export interface Item {
 
 const MenuContext = createContext<MenuContextType>();
 
-const initClientProvider = () => {
-    console.log(document.querySelector('[data-app-menu="root"]'));
-    console.log(document.querySelector('[data-app-menu="ssr-items"]'));
+// const initClientProvider = (): MenuContextType => {
+//     const root = document.querySelector('[data-app-menu="root"]');
+//     const items = JSON.parse(document.querySelector('[data-app-menu="ssr-items"]')?.textContent ?? '[]');
 
-    return {
-        add(item: Item) {
-            return -1;
-        },
-        remove(index: number) {},
-    };
-};
+//     console.log(items);
 
-const initServerProvider = () => {
-    const items: Item[] = [];
+//     let _ref!: JSX.Element;
 
-    useAssets(() => ssr(`<div data-app-menu="ssr-items">${JSON.stringify(items)}</div>`) as any);
+//     // useAssets(() => ssr(`<script type="application/json" data-app-menu="ssr-items">${JSON.stringify(items)}</script>`) as any);
 
-    return {
-        add(item: Item) {
-            return items.push(item);
-        },
-        remove(index: number) {},
-    };
-};
+//     return {
+//         ref() {
+//             return _ref;
+//         },
+//         setRef(ref: JSX.Element) {
+//             _ref = ref;
+//         },
+//     };
+// };
 
-export const MenuProvider: ParentComponent = (props) => {
-    const ctx = isServer ? initServerProvider() : initClientProvider();
+// const initServerProvider = (): MenuContextType => {
+//     let _ref!: JSX.Element;
 
-    return <MenuContext.Provider value={ctx}>{props.children}</MenuContext.Provider>;
+//     // useAssets(() => ssr(`<script type="application/json" data-app-menu="ssr-items">${JSON.stringify(items)}</script>`) as any);
+
+//     return {
+//         ref() {
+//             return _ref;
+//         },
+//         setRef(ref: JSX.Element) {
+//             _ref = ref;
+//         },
+//     };
+// };
+
+export const MenuProvider: ParentComponent<{ root?: JSX.Element }> = (props) => {
+    // const ctx = isServer ? initServerProvider() : initClientProvider();
+
+    // const [ ref, setRef ] = createSignal<JSX.Element>();
+    // const ctx = {ref, setRef};
+
+    return <MenuContext.Provider value={{ ref: () => props.root }}>{props.children}</MenuContext.Provider>;
 }
 
 const useMenu = () => { 
@@ -56,7 +69,7 @@ const useMenu = () => {
     return context;
 }
 
-export const MenuItem: ParentComponent<{ label: string }> = (props) => {
+const Item: ParentComponent<{ label: string }> = (props) => {
     const childItems = children(() => props.children);
 
     return mergeProps(props, {
@@ -66,48 +79,28 @@ export const MenuItem: ParentComponent<{ label: string }> = (props) => {
     }) as unknown as JSX.Element;
 }
 
-export const Menu: ParentComponent<{}> = (props) => {
+const Root: ParentComponent<{}> = (props) => {
     const menu = useMenu();
     const items: { label: string, children?: { label: string }[] }[] = (isServer 
         ? props.children
         : props.children?.map(c => c())) ?? [];
 
-    createRenderEffect(() => {
-        const indices = items.map(({ label, children }) => 
-            menu.add({ 
-                id: createUniqueId(),
-                label, 
-                children: children?.map(({ label }) => ({ id: createUniqueId(), label }))
-            })
-        );
+    return <Portal mount={menu.ref()}>
+        <For each={items}>
+            {(item) => <>
+                <button {...(item.children ? { popovertarget: item.label } : {})}>{item.label}</button>
 
-        onCleanup(() => {
-            for(const index of indices){
-                menu.remove(index);
+                <Show when={item.children}>
+                    <div id={item.label} popover>
+                        <For each={item.children}>
+                            {(child) => <span>{child.label}</span>}
+                        </For>
+                    </div>
+                </Show>
+            </>
             }
-        });
-    });
-
-    return null;
+        </For>
+    </Portal>
 };
 
-export const MenuRoot: Component = () => {
-    const menu = useMenu();
-
-    return <div data-app-menu="root"></div>
-
-    // return <For each={menu?.items()}>
-    //     {(item) => <>
-    //         <button {...(item.children ? { popovertarget: item.label } : {})}>{item.label}</button>
-
-    //         <Show when={item.children}>
-    //             <div id={item.label} popover>
-    //                 <For each={item.children}>
-    //                     {(child) => <span>{child.label}</span>}
-    //                 </For>
-    //             </div>
-    //         </Show>
-    //     </>
-    //     }
-    // </For>;
-};
+export const Menu = { Root, Item } as const;

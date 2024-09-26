@@ -1,21 +1,21 @@
-import { Menu, MenuItem } from "~/features/menu";
+import { Menu } from "~/features/menu";
 
 export default function Index() {
   return (
     <>
-      <Menu>
-        <MenuItem label="file">
-          <MenuItem label="open" />
+      <Menu.Root>
+        <Menu.Item label="file">
+          <Menu.Item label="open" />
 
-          <MenuItem label="save" />
-        </MenuItem>
+          <Menu.Item label="save" />
+        </Menu.Item>
 
-        <MenuItem label="edit" />
+        <Menu.Item label="edit" />
 
-        <MenuItem label="selection" />
+        <Menu.Item label="selection" />
 
-        <MenuItem label="view" />
-      </Menu>
+        <Menu.Item label="view" />
+      </Menu.Root>
     </>
   );
 }
