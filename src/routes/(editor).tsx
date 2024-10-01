@@ -1,19 +1,14 @@
 import { Title } from "@solidjs/meta";
-import { JSX, createSignal } from "solid-js";
 import { FilesProvider } from "~/features/file";
-import { MenuProvider, Menu } from "~/features/menu";
+import { MenuProvider, asMenuRoot } from "~/features/menu";
 
+asMenuRoot // prevents removal of import
 
 export default function Editor(props) {
-    const [ref, setRef] = createSignal<JSX.Element>();
-
-    return <MenuProvider root={ref()}>
+    return <MenuProvider>
         <Title>Translation-Tool</Title>
 
-        <nav ref={setRef}>
-            <a href="/">Index</a>
-            <a href="/about">About</a>
-        </nav>
+        <nav use:asMenuRoot />
         
         <main>
             <FilesProvider>
