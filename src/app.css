@@ -1,3 +1,19 @@
+:root {
+  --surface-1: #eee;
+  --surface-2: #f8f8f8;
+  --surface-3: #fff;
+  --text: #222;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --surface-1: #333;
+    --surface-2: #383838;
+    --surface-3: #444;
+    --text: #eee;
+  }
+}
+
 html {
   inline-size: 100%;
   block-size: 100%;
@@ -8,6 +24,8 @@ body {
   inline-size: 100%;
   block-size: 100%;
   overflow: clip;
+
+  background-color: var(--surface-3);
 
   margin: 0;
 
@@ -27,7 +45,8 @@ body {
     padding-inline-start: 1em;
     block-size: 2em;
 
-    background-color: #eee;
+    background-color: var(--surface-1);
+    color: var(--text);
 
     & > .logo {
       inline-size: 3em;
@@ -45,14 +64,15 @@ body {
     .menu-item {
         padding: .5em 1em;
 
+        background-color: var(--surface-1);
+        color: var(--text);
         border: none;
-        background-color: #eee;
         cursor: pointer;
 
         text-align: start;
 
         &:hover {
-            background-color: #fff;
+          background-color: var(--surface-2);
         }
     }
     
@@ -68,8 +88,8 @@ body {
         padding: .5em 0;
         inline-size: max-content;
         
-        background-color: #fff;
-        border: 1px solid #eee;
+        background-color: var(--surface-2);
+        border: 1px solid var(--surface-3);
         border-block-start-width: 0;
         margin: unset;
 
@@ -78,16 +98,16 @@ body {
         }
 
         & > .menu-item {
-            background-color: #fff;
+          background-color: var(--surface-2);
 
-            &:hover {
-                background-color: #f8f8f8;
+          &:hover {
+            background-color: var(--surface-3);
             }
         }
     }
 
     :popover-open + .menu-item {
-        background-color: #fff;
+      background-color: var(--surface-2);
     }
   }
 
