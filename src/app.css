@@ -3,6 +3,10 @@
   --surface-2: #f8f8f8;
   --surface-3: #fff;
   --text: #222;
+  --primary: #41c6b3;
+
+  color: var(--text);
+  accent-color: var(--primary);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -11,6 +15,7 @@
     --surface-2: #383838;
     --surface-3: #444;
     --text: #eee;
+    --primary: #6be8d6;
   }
 }
 
@@ -25,7 +30,7 @@ body {
   block-size: 100%;
   overflow: clip;
 
-  background-color: var(--surface-3);
+  background-color: var(--surface-1);
 
   margin: 0;
 
@@ -45,7 +50,7 @@ body {
     padding-inline-start: 1em;
     block-size: 2em;
 
-    background-color: var(--surface-1);
+    background-color: var(--surface-2);
     color: var(--text);
 
     & > .logo {
@@ -64,7 +69,7 @@ body {
     .menu-item {
         padding: .5em 1em;
 
-        background-color: var(--surface-1);
+        background-color: inherit;
         color: var(--text);
         border: none;
         cursor: pointer;
