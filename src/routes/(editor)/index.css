@@ -1,0 +1,8 @@
+section.index {
+    display: grid;
+    grid: 100% / 20% 1fr;
+
+    & > aside {
+        overflow: clip auto;
+    }
+}

@@ -1,6 +1,5 @@
-import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
+import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
 import { Portal, isServer } from "solid-js/web";
-import './style.css';
 import { createStore } from "solid-js/store";
 
 export interface MenuContextType {
@@ -57,31 +56,13 @@ export const MenuProvider: ParentComponent = (props) => {
 
     const addItems = (items: (Item|ItemWithChildren)[]) => setStore('items', values => {
         for (const item of items) {
-            // const existing = values.get(item.id);
-            
-            // if(item.children && existing?.children instanceof Map) {
-            //     for (const child of item.children) {
-            //         existing.children.set(child.id, child);
-            //     }
-            // }
-            // else if (item.children && existing === undefined){
-            //     values.set(item.id, { ...item, children: new Map(item.children.map(c => [ c.id, c ])) });
-            // }
-            // else {
-            //     values.set(item.id, item as Item);
-            // }
             values[item.id] = item;
         }
 
         return values;
     });
-    const items = createMemo<(Item|ItemWithChildren)[]>(() => 
-        Array.from(
-            Object.values(store.items), 
-            // item => item.children instanceof Map ? { ...item, children: Array.from(item.children.values()) } : item
-        )
-    );
-    const commands = createMemo(() => items().map(item => item.children instanceof Array ? item.children.map(c => c.command) : item.command).flat());
+    const items = () => Object.values(store.items);
+    const commands = () => Object.values(store.items).map(item => item.children?.map(c => c.command) ?? item.command).flat();
 
     return <MenuContext.Provider value={{ ref, setRef, addItems, items, commands }}>{props.children}</MenuContext.Provider>;
 }
@@ -90,7 +71,7 @@ const useMenu = () => {
     const context = useContext(MenuContext);
 
     if(context === undefined) {
-        throw new Error('<Menu /> is called outside of a <MenuProvider />');
+        throw new Error(`MenuContext is called outside of a <MenuProvider />`);
     }
 
     return context;
@@ -117,31 +98,81 @@ const Item: Component<ItemProps> = (props) => {
 
 const Root: ParentComponent<{}> = (props) => {
     const menu = useMenu();
-
-    menu.addItems((isServer 
+    const [ current, setCurrent ] = createSignal<HTMLElement>();
+    const items = (isServer 
         ? props.children
-        : props.children?.map(c => c())) ?? [])
+        : props.children?.map(c => c())) ?? [];
+
+    menu.addItems(items)
+
+    const close = () => {
+        const el = current();
+
+        if(el) {
+            el.hidePopover();
+
+            setCurrent(undefined);
+        }
+    };
+
+    const onExecute = (command: Command) => {
+        return async () => {
+            await command?.();
+
+            close();
+        }
+    };
 
     const Button: Component<{ label: string, command: Command }|{ [key: string]: any }> = (props) => {
         const [ local, rest ] = splitProps(props, ['label', 'command']);
-        return <button class="item" on:pointerDown={local.command} {...rest}>{local.label}</button>;
+        return <button class="menu-item" type="button" on:pointerdown={onExecute(local.command)} {...rest}>{local.label}</button>;
     };
 
     return <Portal mount={menu.ref()}>
-        <For each={menu.items()}>
-            {(item) => <>
-                <Button label={item.label} {...(item.children ? { popovertarget: `child-${item.id}`, id: `menu-${item.id}`, command: item.command } : {})} />
+        <For each={items}>{
+            item => {
+                const [] = createSignal();
 
-                <Show when={item.children}>
-                    <div class="child" id={`child-${item.id}`} anchor={`menu-${item.id}`} style="inset: unset;" popover>
-                        <For each={item.children}>
-                            {(child) => <Button label={child.label} command={child.command} />}
-                        </For>
-                    </div>
-                </Show>
-            </>
+                return <>
+                    <Show when={item.children}>
+                        <div 
+                            class="menu-child" 
+                            id={`child-${item.id}`} 
+                            style={`position-anchor: --menu-${item.id};`} 
+                            popover 
+                            on:toggle={(e: ToggleEvent) => {
+                                if(e.newState === 'open' && e.target !== null) {
+                                    return setCurrent(e.target as HTMLElement);
+                                }
+                            }}
+                        >
+                            <For each={item.children}>
+                                {(child) => <Button label={child.label} command={child.command} />}
+                            </For>
+                        </div>
+                    </Show>
+                    
+                    <Button 
+                        label={item.label} 
+                        on:pointerenter={(e) => {
+                            if(!item.children) {
+                                return;
+                            }
+
+                            const el = current();
+
+                            if(!el){
+                                return;
+                            }
+
+                            el.hidePopover();
+                            
+                        }}
+                        {...(item.children ? { popovertarget: `child-${item.id}`, style: `anchor-name: --menu-${item.id};`, command: item.command } : {})}
+                    />
+                </>;
             }
-        </For>
+        }</For>
     </Portal>
 };
 

@@ -1,15 +1,123 @@
+html {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: clip;
+}
+
 body {
+  inline-size: 100%;
+  block-size: 100%;
+  overflow: clip;
+
+  margin: 0;
+
   font-family: Gordita, Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+
+  * {
+    box-sizing: border-box;
+  }
+
+  & .menu-root {
+    display: grid;
+    grid-auto-flow: column;
+    justify-content: start;
+    position: relative;
+
+    gap: .5em;
+    padding-inline-start: 1em;
+    block-size: 2em;
+
+    background-color: #eee;
+
+    & > .logo {
+      inline-size: 3em;
+      block-size: 3em;
+      padding: .75em;
+      margin-block-end: -1em;
+      background-color: inherit;
+      border-radius: .25em;
+    }
+
+    & > div {
+        display: contents;
+    }
+
+    .menu-item {
+        padding: .5em 1em;
+
+        border: none;
+        background-color: #eee;
+        cursor: pointer;
+
+        text-align: start;
+
+        &:hover {
+            background-color: #fff;
+        }
+    }
+    
+    .menu-child {
+        position: fixed;
+        inset-inline-start: anchor(self-start);
+        inset-block-start: anchor(end);
+
+        grid-auto-flow: row;
+        place-content: start;
+
+        gap: .5em;
+        padding: .5em 0;
+        inline-size: max-content;
+        
+        background-color: #fff;
+        border: 1px solid #eee;
+        border-block-start-width: 0;
+        margin: unset;
+
+        &:popover-open {
+            display: grid;
+        }
+
+        & > .menu-item {
+            background-color: #fff;
+
+            &:hover {
+                background-color: #f8f8f8;
+            }
+        }
+    }
+
+    :popover-open + .menu-item {
+        background-color: #fff;
+    }
+  }
+
+  & > main {
+    block-size: 100%;
+
+    padding: 1em;
+    padding-block-start: 1.5em;
+
+    overflow: clip auto;
+
+    & details {
+      & > summary::marker {
+        content: url('data:image/svg+xml;charset=UTF-8,<svg color="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M880 298.4H521L403.7 186.2a8.15 8.15 0 0 0-5.5-2.2H144c-17.7 0-32 14.3-32 32v592c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V330.4c0-17.7-14.3-32-32-32z"></path></svg>');
+      }
+
+      &[open] > summary::marker {
+        content: url('data:image/svg+xml;charset=UTF-8,<svg color="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M928 444H820V330.4c0-17.7-14.3-32-32-32H473L355.7 186.2a8.15 8.15 0 0 0-5.5-2.2H96c-17.7 0-32 14.3-32 32v592c0 17.7 14.3 32 32 32h698c13 0 24.8-7.9 29.7-20l134-332c1.5-3.8 2.3-7.9 2.3-12 0-17.7-14.3-32-32-32zm-180 0H238c-13 0-24.8 7.9-29.7 20L136 643.2V256h188.5l119.6 114.4H748V444z"></path></svg>');
+      }
+
+      & span {
+        cursor: pointer;
+      }
+    }
+
+  }
 }
 
 a {
   margin-right: 1rem;
-}
-
-main {
-  text-align: center;
-  padding: 1em;
-  margin: 0 auto;
 }
 
 h1 {
