@@ -30,6 +30,9 @@ body {
   block-size: 100%;
   overflow: clip;
 
+  display: grid;
+  grid: auto 1fr / 100%;
+
   background-color: var(--surface-1);
 
   margin: 0;
@@ -59,114 +62,82 @@ body {
       padding: .75em;
       margin-block-end: -1em;
       background-color: inherit;
+      color: inherit;
       border-radius: .25em;
+
+      & > svg {
+        inline-size: 100%;
+        block-size: 100%;
+      }
     }
 
     & > div {
-        display: contents;
+      display: contents;
     }
 
     .menu-item {
-        padding: .5em 1em;
+      padding: .5em 1em;
 
-        background-color: inherit;
-        color: var(--text);
-        border: none;
-        cursor: pointer;
+      background-color: inherit;
+      color: var(--text);
+      border: none;
+      cursor: pointer;
 
-        text-align: start;
+      text-align: start;
+
+      &:hover {
+        background-color: var(--surface-2);
+      }
+    }
+
+    .menu-child {
+      position: fixed;
+      inset-inline-start: anchor(self-start);
+      inset-block-start: anchor(end);
+
+      grid-auto-flow: row;
+      place-content: start;
+
+      gap: .5em;
+      padding: .5em 0;
+      inline-size: max-content;
+
+      background-color: var(--surface-2);
+      border: 1px solid var(--surface-3);
+      border-block-start-width: 0;
+      margin: unset;
+
+      &:popover-open {
+        display: grid;
+      }
+
+      & > .menu-item {
+        background-color: var(--surface-2);
 
         &:hover {
-          background-color: var(--surface-2);
+          background-color: var(--surface-3);
         }
-    }
-    
-    .menu-child {
-        position: fixed;
-        inset-inline-start: anchor(self-start);
-        inset-block-start: anchor(end);
-
-        grid-auto-flow: row;
-        place-content: start;
-
-        gap: .5em;
-        padding: .5em 0;
-        inline-size: max-content;
-        
-        background-color: var(--surface-2);
-        border: 1px solid var(--surface-3);
-        border-block-start-width: 0;
-        margin: unset;
-
-        &:popover-open {
-            display: grid;
-        }
-
-        & > .menu-item {
-          background-color: var(--surface-2);
-
-          &:hover {
-            background-color: var(--surface-3);
-            }
-        }
+      }
     }
 
     :popover-open + .menu-item {
       background-color: var(--surface-2);
     }
   }
-
-  & > main {
-    block-size: 100%;
-
-    padding: 1em;
-    padding-block-start: 1.5em;
-
-    overflow: clip auto;
-
-    & details {
-      & > summary::marker {
-        content: url('data:image/svg+xml;charset=UTF-8,<svg color="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M880 298.4H521L403.7 186.2a8.15 8.15 0 0 0-5.5-2.2H144c-17.7 0-32 14.3-32 32v592c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V330.4c0-17.7-14.3-32-32-32z"></path></svg>');
-      }
-
-      &[open] > summary::marker {
-        content: url('data:image/svg+xml;charset=UTF-8,<svg color="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 1024 1024" width="1em" height="1em" xmlns="http://www.w3.org/2000/svg"><path d="M928 444H820V330.4c0-17.7-14.3-32-32-32H473L355.7 186.2a8.15 8.15 0 0 0-5.5-2.2H96c-17.7 0-32 14.3-32 32v592c0 17.7 14.3 32 32 32h698c13 0 24.8-7.9 29.7-20l134-332c1.5-3.8 2.3-7.9 2.3-12 0-17.7-14.3-32-32-32zm-180 0H238c-13 0-24.8 7.9-29.7 20L136 643.2V256h188.5l119.6 114.4H748V444z"></path></svg>');
-      }
-
-      & span {
-        cursor: pointer;
-      }
-    }
-
-  }
 }
 
 a {
-  margin-right: 1rem;
+  color: var(--primary);
 }
 
 h1 {
-  color: #335d92;
+  color: var(--primary);
   text-transform: uppercase;
   font-size: 4rem;
   font-weight: 100;
   line-height: 1.1;
-  margin: 4rem auto;
-  max-width: 14rem;
 }
 
 p {
-  max-width: 14rem;
-  margin: 2rem auto;
   line-height: 1.35;
-}
-
-@media (min-width: 480px) {
-  h1 {
-    max-width: none;
-  }
-
-  p {
-    max-width: none;
-  }
 }

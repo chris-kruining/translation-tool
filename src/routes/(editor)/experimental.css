@@ -1,0 +1,45 @@
+section.index {
+    display: grid;
+    grid: 100% / auto 1fr;
+    inline-size: 100%;
+    block-size: 100%;
+
+    & > aside {
+        overflow: clip auto;
+        resize: horizontal;
+
+        min-inline-size: 300px;
+        max-inline-size: 75vw;
+        block-size: 100%;
+        padding: 1em;
+        padding-block-start: 1.5em;
+        padding-inline-end: 1em;
+
+        & details {
+            & > summary::marker {
+                content: none;
+                color: var(--text) !important;
+            }
+
+            & span {
+                cursor: pointer;
+            }
+        }
+
+        & ul {
+            padding-inline-start: 0;
+
+            & ul {
+                padding-inline-start: 1.25em;
+            }
+
+            & span {
+                white-space: nowrap;
+            }
+        }
+    }
+
+    & > section {
+        padding-inline: 1em;
+    }
+}

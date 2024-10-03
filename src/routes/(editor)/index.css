@@ -1,8 +1,4 @@
-section.index {
+body > main {
     display: grid;
-    grid: 100% / 20% 1fr;
-
-    & > aside {
-        overflow: clip auto;
-    }
+    place-content: center;
 }

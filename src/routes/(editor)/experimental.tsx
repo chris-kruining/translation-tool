@@ -2,8 +2,7 @@ import { Component, createEffect, createMemo, createResource, createSignal, For,
 import { useFiles } from "~/features/file";
 import { createCommand, Menu, Modifier } from "~/features/menu";
 import { AiFillFile, AiFillFolder, AiFillFolderOpen } from "solid-icons/ai";
-import "./index.css";
-import { A } from "@solidjs/router";
+import "./experimental.css";
 
 interface FileEntry {
   name: string;
@@ -140,12 +139,36 @@ export default function Index() {
 
   return (
     <>
-      <h1>Hi, welcome!</h1>
-      <b>Lets get started</b>
+      <Menu.Root>
+        <Menu.Item label="file">
+          <Menu.Item label="open" command={commands.open} />
 
-      <ul>
-        <li><A href="/edit">Start editing</A></li>
-      </ul>
+          <Menu.Item label="open folder" command={commands.openFolder} />
+
+          <Menu.Item label="save" command={commands.save} />
+
+          <Menu.Item label="save all" command={commands.saveAll} />
+        </Menu.Item>
+
+        <Menu.Item label="edit" command={commands.edit} />
+
+        <Menu.Item label="selection" command={commands.selection} />
+
+        <Menu.Item label="view" command={commands.view} />
+      </Menu.Root>
+
+      <section class="index">
+        <aside>
+          <label><input type="checkbox" on:input={() => setShowHiddenFiles(v => !v)} />Show hidden files</label>
+          <Show when={tree()}>{
+            tree => <Tree entries={tree().entries} />
+          }</Show>
+        </aside>
+
+        <section>
+          <pre>{content()}</pre>
+        </section>
+      </section>
     </>
   );
 }

@@ -1,0 +1,83 @@
+{
+  "registration": {
+    "title": "Who are you?",
+    "description": "Please enter your name to play. Your email address is optional. Please note we have a code of conduct, so don't be too silly.",
+    "accept-terms": "My information is compliant with the Code of Conduct",
+    "display-name": "Name",
+    "email-address": "Email address",
+    "register": "Register",
+    "join": {
+      "voucher-valid": "Voucher is valid",
+      "title": "Join a game",
+      "description": "In order to join a game, enter the game code or scan the QR code.",
+      "game-code": "Game code",
+      "join": "Join"
+    }
+  },
+  "users": {
+    "exclusionreasons": {
+      "generalsystemmisuse": "You are locked out in suspect of general system misuse",
+      "codeofconductviolation": "You are locked out, you broke our code of conduct"
+    }
+  },
+  "game": {
+    "join": {
+      "scan": {
+        "title": "Scan QR Code",
+        "text": "Scan a valid game code QR code to join a game",
+        "device-select": "Select camera"
+      }
+    },
+    "waiting": {
+      "title": "Waiting for more players",
+      "description": "Please wait for more players to join the game. We will start this game shortly...",
+      "current-players": "At this time, {{numberOfPlayers}} player(s) have joined the game."
+    },
+    "finished": {
+      "title": "Game Finished",
+      "description": "Time's up! The game is over. Please wait for the results to be displayed."
+    },
+    "scoreboard": {
+      "title": "Scoreboard",
+      "player": "Player",
+      "score": "Score",
+      "rank": "Rank"
+    }
+  },
+  "button": {
+    "close": "Close",
+    "join-new-game": "Join a new game"
+  },
+  "wam": {
+    "errorcodes": {
+      "games": {
+        "invalidgamecode": {
+          "title": "Invalid game code",
+          "message": "The game code you entered is invalid. Please try again."
+        },
+        "gamenotfound": {
+          "title": "Invalid game code",
+          "message": "The game code you entered is invalid. Please try again."
+        },
+        "invalidstate": {
+          "title": "Cannot join this game",
+          "message": "You are trying to join a game, but this game has already been played."
+        },
+        "invalidgamevoucher": {
+          "title": "Invalid game voucher",
+          "message": "The voucher you scanned is invalid or has already been used."
+        }
+      },
+      "users": {
+        "usernotfound": {
+          "title": "Invalid user",
+          "message": "Tried to resolve your user ID, but it seems you are not registered. Please register first."
+        }
+      },
+      "unknown": {
+        "title": "Unknown server error",
+        "message": "Oops, something went wrong on the server side. Please try again later."
+      }
+    }
+  }
+}

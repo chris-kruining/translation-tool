@@ -1,0 +1,391 @@
+{
+  "app": {
+    "login": "Get started",
+    "logout": "Logout",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "events": "Events",
+      "organizations": "Organizations",
+      "reviews": "Reviews",
+      "speakers": "Speakers"
+    },
+    "server-down": {
+      "message": "Apparently, (one of our) server(s) is not responding properly. Please hold on while we try to fix this issue. One the connection is established, this message will disappear automatically.",
+      "title": "Oops, there is a problem"
+    },
+    "title": "SpreaView"
+  },
+  "button": {
+    "add-speaker": "Add speaker",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "download-qr": "Download QRs",
+    "invite": "Invite for {{name}}",
+    "join": "Join",
+    "new": "New",
+    "new-room": "New room",
+    "new-session": "New session",
+    "qr-code": "QR Code",
+    "register": "Register",
+    "save": "Save",
+    "submit": "Submit",
+    "synchronize": "Sync Sessionize",
+    "prize-draw": "Prize draw"
+  },
+  "dashboard": {
+    "new-organization": {
+      "create": "Enter a valid organization name to create a new organization",
+      "description": "You as a conference organizer do not work alone, you are part of an organization. Please create an organization that will host your events, or join an existing organization using an invitation code.",
+      "invitation-code": "Invitation code",
+      "join": "Enter a valid invitation code to join an existing organization",
+      "name": "Organization name",
+      "subtitle": "Join an existing organization or create a new one",
+      "title": "You're empty handed"
+    },
+    "new-organizer": {
+      "description": "Welcome to SpreaView. We're happy to have you here. Before we continue, please take a moment to check and verify your information. You are about to be registered as an organizer.",
+      "email": "Email address",
+      "name": "Display name",
+      "subtitle": "Please take a moment to check and verify your information before we continue",
+      "title": "Hi, I see you're new here"
+    },
+    "tiles": {
+      "planned-events": {
+        "link": "View all events",
+        "title": "Planned events",
+        "tooltip": "Shows the amount of upcoming events versus the total amount of events in the system"
+      },
+      "reviews-per-session": {
+        "link": "Go to reviews",
+        "title": "Reviews / Session",
+        "tooltip": "Shows the average amount of reviews per session"
+      },
+      "speaker-engagement": {
+        "title": "Spkr Engagement",
+        "tooltip": "Shows the engagement of speakers based on their interest in the system (did speakers visit the speaker dashboard, did they download their QR code etc.)"
+      }
+    },
+    "title": "Dashboard"
+  },
+  "dialogs": {
+    "delete-confirmation": {
+      "message": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+      "title": "Are you sure?"
+    }
+  },
+  "errorcode": {
+    "events": {
+      "prizedrawwinnerunknown": "The prize draw did not take place just yet so the winner is still unknown. Please try again later.",
+      "prizewinner-load-failed": "Failed to load prize winner data, please try again later."
+    },
+    "organizer": {
+      "create-failed": "Failed to create a new organization due to an unknown error",
+      "invitation-failed": "Failed to invite member for organization due to an unknown error",
+      "join-failed": "Failed to join organization due to an unknown error",
+      "list-failed": "Failed to fetch list from server",
+      "registration-failed": "The organizer is new, but the registration process failed on the server.",
+      "resolve-failed": "Failed to resolve organizer, this usually means the organizer is not registered and needs to be registered first.",
+      "update-failed": "Failed to update organization due to an unknown error"
+    },
+    "review": {
+      "review-date-time-indication": "Sessions can only be reviewed during the review window, for this session, the review window is between {{startDateTime}} and {{endDateTime}}."
+    },
+    "reviews": {
+      "review-session-code-invalid": "The session code is invalid. Session information for this session could not be found.",
+      "session-details-failed": "Failed to load session information from the server. The session code is invalid or the session is not available for review."
+    }
+  },
+  "events": {
+    "create": {
+      "date-range": "Date range",
+      "default-review-duration": "Default review window (in hours)",
+      "default-session-duration": "Default session duration (in minutes)",
+      "name": "Event name",
+      "title": "Create a new event"
+    },
+    "details": {
+      "rooms-monitor-link": "Rooms monitor",
+      "event-information-link": "Event information",
+      "event-prize-draw": "Event prize draw",
+      "description": "Event description",
+      "duration-in-minutes": "Default session duration in minutes",
+      "ends-on": "Ends on",
+      "event-code": "Unique event code",
+      "free-comments": "Enable free comment field for attendee reviews",
+      "name": "Name",
+      "review-window-in-hours": "Review window in hours",
+      "rooms": {
+        "actions": "Actions",
+        "capacity": "Capacity",
+        "download": {
+          "tooltip": "Download the QR code to the Review URL for this room. This URL shows the review form for the session that is currently active in this room."
+        },
+        "external-identifier": {
+          "text": "Import",
+          "tooltip": "This room is imported from an external system and cannot be altered in SpreaView."
+        },
+        "name": "Name",
+        "read-only": "This room cannot be altered or deleted because it is imported from an external system.",
+        "subtitle": "Rooms are locations or stages where your event presentations are held. You can create rooms here, and assign sessions to them.",
+        "title": "Event Rooms",
+        "review-link": {
+          "text": "Room review link",
+          "tooltip": "This link will bring you to the review page of the session that started most recently in this room"
+        }
+      },
+      "sessionize-api": "Sessionize API ID",
+      "sessions": {
+        "abstract": "Session abstract",
+        "code": "Code",
+        "duration-in-hours": "Duration",
+        "duration-in-minutes": "Duration",
+        "end": "Ends",
+        "help": "Read more about sessions management in the SpreaView documentation online: https://docs.spreaview.com/docs/features/sessions/",
+        "read-only": "This session cannot be altered because it is imported from an external system. You can only delete this session.",
+        "review-start-date": "Review start date",
+        "review-start-time": "Review start time",
+        "room": "Room",
+        "session-title": "Session title",
+        "speakers": "Speaker(s)",
+        "start": "Starts",
+        "start-date": "Start date",
+        "start-time": "Start time",
+        "subtitle": "Your sessions are scheduled for your event and take place in a room",
+        "title": "Event sessions"
+      },
+      "starts-on": "Starts on",
+      "subtitle": "Change the properties of your event here to change the behavior of SpreaView for your event",
+      "swag-requirement": "Swag requirement threshold",
+      "theme-background": "Event theme background color",
+      "theme-foreground": "Event theme foreground color",
+      "event-logo-url": "Event logo URL",
+      "title": "Event details"
+    },
+    "list": {
+      "ends-on": "Ends on",
+      "name": "Name",
+      "organization": "Organization",
+      "starts-on": "Starts on"
+    },
+    "title": "Events"
+  },
+  "home": {
+    "about": {
+      "how": {
+        "steps": {
+          "five": {
+            "text": "Get comprehensive insights in the quality of the sessions and the popularity of the speakers. Share a personalized report with your speakers",
+            "title": "Step 5"
+          },
+          "four": {
+            "text": "Provide your speakers with a QR Code and use the Rooms view to allow attendees to rate the sessions",
+            "title": "Step 4"
+          },
+          "one": {
+            "text": "Register as an organizer, and create your first organization. Registration is free and takes only a couple of minutes",
+            "title": "Step 1"
+          },
+          "three": {
+            "text": "Import speakers and sessions from your conference management system, or create them manually",
+            "title": "Step 3"
+          },
+          "two": {
+            "text": "Create a new event, with a start- and end date. Provide more detailed properties when required to change SpreaView's behavior",
+            "title": "Step 2"
+          }
+        },
+        "text": "The SpreaView platform is easy to use. With just a couple of steps, you are ready to start measuring session quality and popularity.",
+        "title": "This is how it works"
+      },
+      "partners": {
+        "text": "SpreaView is used by many conference organizers and speakers. We have partnerships with many organizations to provide the best possible service to our users.",
+        "title": "Your are not alone"
+      },
+      "text": "SpreaView is a platform that helps conference organizers and speakers to gain more insights in the quality of their presentations. With SpreaView, speakers gain more insigths in how and where to improver their sessions, while organizers get insights in the popularity of topics and speakers.",
+      "title": "About SpreaView"
+    },
+    "landing": {
+      "cta": "Get started",
+      "documentation": "Documentation",
+      "more": "More information",
+      "subtitle": "SpreaView is the got-to platform for conference organizers and speakers to gain more insights in the quality of their presentations. With SpreaView, speakers gain more insigths in how and where to improver their sessions, while organizers get insights in the popularity of topics and speakers.",
+      "title": "Welcome to SpreaView"
+    },
+    "links": {
+      "about": "About",
+      "contact": "Contact",
+      "documentation": "Documentation",
+      "home": "Home",
+      "pricing": "Pricing",
+      "terms": "Terms"
+    }
+  },
+  "organizations": {
+    "details": {
+      "name": "Name",
+      "title": "Organization details"
+    },
+    "invite": {
+      "description": "Invite a new member to your organization by entering their e-mail address. The new member will receive an invitation to join your organization.",
+      "email-address": "E-mail address",
+      "title": "Invite member organization"
+    },
+    "join": {
+      "code": "Invitation code",
+      "title": "Join an organization"
+    },
+    "list": {
+      "members": "Members",
+      "name": "Name"
+    },
+    "selector": {
+      "text": "Select an organization",
+      "tooltip": "Select an organization"
+    },
+    "title": "Organizations"
+  },
+  "review": {
+    "session": {
+      "comment": "Comment",
+      "content": "Content",
+      "delivery": "Delivery",
+      "description": "Please take a moment to review the session '<strong>{{sessionName}}</strong>' you just attended. Your feedback is important to us and the speaker.",
+      "interaction": "Interaction",
+      "loading": "Hold on, we're loading the session information for you",
+      "loading-error": "Oops, something went wrong while loading the session information. Please try again later.",
+      "speaker": "Speaker",
+      "success": "Thanks!",
+      "title": "Your review is gold to us"
+    }
+  },
+  "event-info": {
+    "description": "To improve the quality of our conference and be able to fit the content to your needs, we would like you to review the sessions you visited. Select the room you visited your session.",
+    "no-sessions-started": "For this event, no sessions have started yet. Please come back later.",
+    "session": {
+      "title": "Title",
+      "speakers": "Speaker(s)",
+      "starts-on": "Started",
+      "ends-on": "Ended",
+      "actions": " "
+    }
+  },
+  "reviews": {
+    "dashboard": {
+      "best-session": {
+        "description": "For <strong>{{title}}</strong> by {{speakers}} based on {{reviews}} review(s)",
+        "title": "Best session",
+        "tooltip": "This tile shows the best rated session for this event"
+      },
+      "best-speaker": {
+        "description": "For <strong>{{displayName}}</strong> based on {{reviews}} review(s) of {{sessions}} session(s)",
+        "title": "Best speaker",
+        "tooltip": "This tile shows the best rated speaker for this event over all sessions"
+      },
+      "reviewed-sessions": {
+        "link": "View event sessions",
+        "title": "Reviewed sessions",
+        "tooltip": "This shows the amount of reviewed sessions, versus the total amount of sessions in the event"
+      },
+      "session-top": {
+        "rating": "Rating",
+        "reviews": "Reviews",
+        "speakers": "Speaker(s)",
+        "title": "Session"
+      },
+      "sessions-vs-speakers": {
+        "description": "You event has {{speakers}} speakers and {{sessions}} sessions",
+        "title": "Speakers",
+        "tooltip": "The number of speakers versus the number of sessions in this event"
+      },
+      "speaker-top": {
+        "display-name": "Name",
+        "rating": "Rating",
+        "reviews": "Reviews",
+        "sessions": "Sessions"
+      },
+      "total-reviews": {
+        "title": "Reviews",
+        "tooltip": "This shows the total amount of reviews given by attendees for this event"
+      }
+    },
+    "list": {
+      "average-score": "Speaker Avg.",
+      "ends-on": "Ends on",
+      "name": "Name",
+      "reviews-count": "Reviews",
+      "session-count": "Sessions",
+      "starts-on": "Starts on"
+    },
+    "session-list": {
+      "actions": "",
+      "actions-toolip": "Download the complete session report PDF file for this session.",
+      "average-score": "Average",
+      "content-score": "Content",
+      "delivery-score": "Delivery",
+      "interaction-score": "Interact.",
+      "speaker-score": "Speaker",
+      "speakers": "Speakers",
+      "title": "Sessions"
+    },
+    "title": "Reviews"
+  },
+  "rooms": {
+    "select": {
+      "enter": "Show room information",
+      "title": "Select a room"
+    }
+  },
+  "speaker-dashboard": {
+    "past": {
+      "title": "Past sessions"
+    },
+    "planned": {
+      "title": "Planned sessions"
+    },
+    "title": "Speaker Dashboard",
+    "welcome": {
+      "description": "This is SpreaView, the platform that helps you to gain more insights in the quality of your presentations. With SpreaView, you gain more insigths in how and where to improver your sessions. We do that by collecting session review information from attendees who attended your session. After you finished your session, you can come back to this speaker dashboad to get review your review information. Below are your sessions that have been scheduled in SpeaView, and sessions that have already been reviewed with SpreaView.",
+      "learn-more": "Learn more about SpreaView",
+      "speaker-error": "The system could not succesfully collect your personal speaker information. Please contact the event organizer for more information.",
+      "title": "Welcome on your speaker dashboard",
+      "pin-error": "Too many pincode attempts, please try again later",
+      "pin-create-error": "Creating your pincode failed, try again",
+      "pin-create": "Create pincode"
+    }
+  },
+  "speakers": {
+    "details": {
+      "description": "Change the details of the speaker. Speakers that were imported from an external system cannot be altered",
+      "name": "Name",
+      "profile-picture": "Profile picture",
+      "read-only": "This speaker cannot be altered or deleted because it is imported from an external system.",
+      "title": "Speaker details"
+    },
+    "title": "Speakers"
+  },
+  "pincode": {
+    "create": {
+      "title": "Create a pincode",
+      "description": "Choose a pincode that you can remember. This pincode is used to secure your performance data and to access your speaker dashboard.",
+      "pin": "6-character pincode",
+      "pin-confirm": "Confirm pincode",
+      "pin-mismatch": "Pincodes are not equal"
+    },
+    "validate": {
+      "title": "Enter your pincode",
+      "description": "Enter your pincode to access your speaker dashboard",
+      "pin-incorrect": "The pincode is incorrect, try again"
+    }
+  },
+  "prize-draw": {
+    "title": "Prize draw",
+    "winner": "You are a winner!",
+    "winner-description": "Congratulations, you are the winner of the prize draw. Please come forward to claim your prize.",
+    "loser": "Sorry, you're not the one",
+    "loser-description": "Unfortunately someone just clinched the prize. Better luck next time.",
+    "errors": {
+      "data-load-error": "Failed to load prize draw winner. Please refresh this page to try again."
+    }
+  }
+}

@@ -1,0 +1,27 @@
+.table {
+    display: grid;
+    overflow: auto;
+    grid-template-columns: 1em max-content repeat(var(--columns), auto);
+    gap: .5em;
+
+    block-size: 100%;
+    overflow: clip auto;
+
+    & > :is(header, main, footer) {
+        display: contents;
+    }
+
+    & details {
+        display: contents;
+
+        &::details-content {
+            grid-column: span calc(2 + var(--columns));
+            display: grid;
+            grid-template-columns: subgrid;
+        }
+
+        & > summary {
+            grid-column: 2 / span calc(1 + var(--columns));
+        }
+    }
+}
