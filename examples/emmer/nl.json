@@ -1,38 +1,38 @@
 {
-  "topLevel": "top level",
+  "topLevel": "hoogste niveau",
   "app": {
-    "login": "Get started",
-    "logout": "Logout",
+    "login": "Aan de slag",
+    "logout": "Log uit",
     "navigation": {
       "dashboard": "Dashboard",
-      "events": "Events",
-      "organizations": "Organizations",
+      "events": "Evenementen",
+      "organizations": "Organisaties",
       "reviews": "Reviews",
-      "speakers": "Speakers"
+      "speakers": "Sprekers"
     },
     "server-down": {
-      "message": "Apparently, (one of our) server(s) is not responding properly. Please hold on while we try to fix this issue. One the connection is established, this message will disappear automatically.",
-      "title": "Oops, there is a problem"
+      "message": "Server is onbereikbaar.",
+      "title": "Oeps, er is een probleem"
     },
     "title": "SpreaView"
   },
   "button": {
-    "add-speaker": "Add speaker",
-    "cancel": "Cancel",
-    "create": "Create",
-    "delete": "Delete",
-    "download-qr": "Download QRs",
-    "invite": "Invite for {{name}}",
-    "join": "Join",
-    "new": "New",
-    "new-room": "New room",
-    "new-session": "New session",
+    "add-speaker": "spreker toevoegen",
+    "cancel": "Annuleren",
+    "create": "Maak",
+    "delete": "Verwijder",
+    "download-qr": "Download QR codes",
+    "invite": "Uitnodiging voor {{name}}",
+    "join": "Doe mee",
+    "new": "Nieuw",
+    "new-room": "Nieuwe kamer",
+    "new-session": "Niruwe sessie",
     "qr-code": "QR Code",
-    "register": "Register",
-    "save": "Save",
-    "submit": "Submit",
+    "register": "Registreren",
+    "save": "Opslaan",
+    "submit": "Versturen",
     "synchronize": "Sync Sessionize",
-    "prize-draw": "Prize draw"
+    "prize-draw": "Prijd uitreiking"
   },
   "dashboard": {
     "new-organization": {

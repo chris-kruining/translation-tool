@@ -1,14 +1,11 @@
 import { createCommand, Menu, Modifier } from "~/features/menu";
-import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, Show } from "solid-js";
-import { useFiles } from "~/features/file";
+import { createEffect, createResource, createSignal, onMount } from "solid-js";
+import { Entry, Grid, load, useFiles } from "~/features/file";
 import "./edit.css";
 
-interface Entry extends Record<string, Entry | string> { }
+interface RawEntry extends Record<string, RawEntry | string> { }
 
-interface Leaf extends Record<string, string> { }
-interface Entry2 extends Record<string, Entry2 | Leaf> { }
-
-async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []): AsyncGenerator<{ lang: string, entries: Entry }, void, never> {
+async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []): AsyncGenerator<{ handle: FileSystemFileHandle, path: string[], lang: string, entries: Map<string, string> }, void, never> {
     for await (const handle of directory.values()) {
         if (handle.kind === 'directory') {
             yield* walk(handle, [...path, handle.name]);
@@ -21,30 +18,21 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
         }
 
         const file = await handle.getFile();
-
-        if (file.type !== 'application/json') {
-            continue;
-        }
-
         const lang = file.name.split('.').at(0)!;
-        const text = await file.text();
-        const root: Entry = {};
+        const entries = await load(file);
 
-        let current: Entry = root;
-        for (const key of path) {
-            current[key] = {};
-
-            current = current[key];
+        if (entries !== undefined) {
+            yield { handle, path, lang, entries };
         }
-        Object.assign(current, JSON.parse(text));
-
-        yield { lang, entries: root };
     }
 };
 
 export default function Edit(props) {
     const files = useFiles();
     const [root, { mutate, refetch }] = createResource(() => files.get('root'));
+    const [columns, setColumns] = createSignal(['these', 'are', 'some', 'columns']);
+    const [rows, setRows] = createSignal<Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>>(new Map);
+    const [ctx, setCtx] = createSignal<any>();
 
     // Since the files are stored in indexedDb we need to refetch on the client in order to populate on page load
     onMount(() => {
@@ -57,37 +45,22 @@ export default function Edit(props) {
         if (root.state === 'ready' && directory?.kind === 'directory') {
             const contents = await Array.fromAsync(walk(directory));
 
-            const entries = Object.entries(
-                Object.groupBy(contents, e => e.lang)
-            ).map(([lang, entries]) => ({
-                lang,
-                entries: entries!
-                    .map(e => e.entries)
-                    .reduce((o, e) => {
-                        Object.assign(o, e);
+            const merged = contents.reduce((aggregate, { handle, path, lang, entries }) => {
+                for (const [key, value] of entries.entries()) {
+                    if (!aggregate.has(key)) {
+                        aggregate.set(key, {});
+                    }
 
-                        return o;
-                    }, {})
-            }));
-
-            const assign = (lang: string, entries: Entry) => {
-                return Object.entries(entries).reduce((aggregate, [key, value]) => {
-                    const v = typeof value === 'string' ? { [lang]: value } : assign(lang, value);
-
-                    Object.assign(aggregate, { [key]: v });
-
-                    return aggregate;
-                }, {});
-            }
-
-            const unified = contents.reduce((aggregate, { lang, entries }) => {
-                Object.assign(aggregate, assign(lang, entries));
+                    aggregate.get(key)![lang] = { handle, value };
+                }
 
                 return aggregate;
-            }, {});
+            }, new Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>());
+
+            console.log(contents, merged);
 
             setColumns(['key', ...new Set(contents.map(c => c.lang))]);
-            setRows(unified);
+            setRows(merged);
         }
     });
 
@@ -124,41 +97,11 @@ export default function Edit(props) {
         }, { key: 's', modifier: Modifier.Control | Modifier.Shift }),
         edit: createCommand(() => {
         }),
-        selection: createCommand(() => { }),
+        selectAll: createCommand(() => {
+            console.log(ctx()?.selectAll(true));
+        }, { key: 'a', modifier: Modifier.Control }),
         view: createCommand(() => { }),
     } as const;
-
-    const [columns, setColumns] = createSignal([]);
-    const [rows, setRows] = createSignal<Entry2>({});
-
-    const Row: Component<{ entry: Entry2 }> = (props) => {
-        return <For each={Object.entries(props.entry)}>{
-            ([key, value]) => {
-                const values = Object.values(value);
-                const isLeaf = values.some(v => typeof v === 'string');
-
-                return <Show when={isLeaf} fallback={<Group key={key} entry={value as Entry2} />}>
-                    <input type="checkbox" />
-
-                    <span>{key}</span>
-
-                    <For each={values}>{
-                        value => <input type="" value={value} />
-                    }</For>
-                </Show>;
-            }
-        }</For>
-    };
-
-    const Group: Component<{ key: string, entry: Entry2 }> = (props) => {
-        return <details open>
-            <summary>{props.key}</summary>
-
-            <Row entry={props.entry} />
-        </details>;
-    };
-
-    const columnCount = createMemo(() => columns().length - 1);
 
     return <>
         <Menu.Root>
@@ -174,29 +117,13 @@ export default function Edit(props) {
 
             <Menu.Item label="edit" command={commands.edit} />
 
-            <Menu.Item label="selection" command={commands.selection} />
+            <Menu.Item label="selection">
+                <Menu.Item label="select all" command={commands.selectAll} />
+            </Menu.Item>
 
             <Menu.Item label="view" command={commands.view} />
         </Menu.Root>
 
-        <section class="table" style={{ '--columns': columnCount() }}>
-            <header>
-                <input type="checkbox" />
-
-                <For each={columns()}>{
-                    column => <span>{column}</span>
-                }</For>
-            </header>
-
-            <main>
-                <Row entry={rows()} />
-            </main>
-        </section>
-
-        {/* <AgGridSolid
-            singleClickEdit
-            columnDefs={columnDefs()}
-            rowData={rowData()}
-            defaultColDef={defaultColDef} /> */}
+        <Grid columns={columns()} rows={rows()} context={setCtx} />
     </>
 }

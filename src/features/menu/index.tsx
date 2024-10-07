@@ -91,7 +91,7 @@ const Item: Component<ItemProps> = (props) => {
     return mergeProps(props, {
         id,
         get children() {
-            return childItems();
+            return childItems.toArray();
         }
     }) as unknown as JSX.Element;
 }

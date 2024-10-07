@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght,GRAD@8..144,400,45;8..144,400,50;8..144,1000,0&family=Roboto+Serif:opsz,GRAD@8..144,71&display=swap");
+
 :root {
   --surface-1: #eee;
   --surface-2: #f8f8f8;
@@ -7,6 +9,11 @@
 
   color: var(--text);
   accent-color: var(--primary);
+
+  --info: oklch(.71 .17 249);
+  --fail: oklch(.64 .21 25.3);
+  --warn: oklch(.82 .18 78.9);
+  --succ: oklch(.86 .28 150);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -15,7 +22,13 @@
     --surface-2: #383838;
     --surface-3: #444;
     --text: #eee;
+
     --primary: #6be8d6;
+
+    --info: oklch(.71 .17 249);
+    --fail: oklch(.64 .21 25.3);
+    --warn: oklch(.82 .18 78.9);
+    --succ: oklch(.86 .28 150);
   }
 }
 
@@ -26,18 +39,19 @@ html {
 }
 
 body {
+  position: relative;
   inline-size: 100%;
   block-size: 100%;
   overflow: clip;
 
   display: grid;
-  grid: auto 1fr / 100%;
+  grid: auto minmax(0, 1fr) / 100%;
 
   background-color: var(--surface-1);
 
   margin: 0;
 
-  font-family: Gordita, Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+  font-family: Roboto Flex, sans-serif;
 
   * {
     box-sizing: border-box;

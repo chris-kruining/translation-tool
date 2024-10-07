@@ -1,21 +1,22 @@
 import Dexie, { EntityTable } from "dexie";
-import { Component, createContext, useContext } from "solid-js";
+import { createContext, useContext } from "solid-js";
 import { isServer } from "solid-js/web";
+import * as json from './parser/json';
 
-type Handle = FileSystemFileHandle|FileSystemDirectoryHandle;
+type Handle = FileSystemFileHandle | FileSystemDirectoryHandle;
 
-interface File {
+interface FileEntity {
     name: string;
     handle: Handle;
 }
 
 type Store = Dexie & {
-    files: EntityTable<File, 'name'>;
+    files: EntityTable<FileEntity, 'name'>;
 };
 
 interface FilesContextType {
     set(name: string, handle: Handle): Promise<void>;
-    get(name: string): Promise<Handle|undefined>;
+    get(name: string): Promise<Handle | undefined>;
     list(): Promise<Handle[]>;
 }
 
@@ -37,20 +38,20 @@ const clientContext = (): FilesContextType => {
         },
         async list() {
             const files = await db.files.toArray();
-            
+
             return files.map(f => f.handle)
         },
     }
 };
 
 const serverContext = (): FilesContextType => ({
-    set(){
+    set() {
         return Promise.resolve();
     },
-    get(name: string){
+    get(name: string) {
         return Promise.resolve(undefined);
     },
-    list(){
+    list() {
         return Promise.resolve<Handle[]>([]);
     },
 });
@@ -63,6 +64,13 @@ export const FilesProvider = (props) => {
 
 export const useFiles = () => useContext(FilesContext)!;
 
-export const open = () => {
+export const load = (file: File): Promise<Map<string, string> | undefined> => {
+    switch (file.type) {
+        case 'application/json': return json.load(file.stream())
 
+        default: return Promise.resolve(undefined);
+    }
 };
+
+export { Grid } from './grid';
+export type { Entry } from './grid';
