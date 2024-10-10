@@ -1,5 +1,8 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server";
+import { installIntoGlobal } from "iterator-helpers-polyfill";
+
+installIntoGlobal();
 
 export default createHandler(() => (
   <StartServer

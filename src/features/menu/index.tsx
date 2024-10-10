@@ -12,6 +12,7 @@ export interface MenuContextType {
 };
 
 export enum Modifier {
+    None = 0,
     Shift = 1 << 0,
     Control = 1 << 1,
     Meta = 1 << 2,
@@ -22,7 +23,7 @@ export interface Command {
     (): any;
     shortcut?: {
         key: string;
-        modifier?: Modifier;
+        modifier: Modifier;
     };
 }
 
@@ -115,17 +116,31 @@ const Root: ParentComponent<{}> = (props) => {
         }
     };
 
-    const onExecute = (command: Command) => {
-        return async () => {
-            await command?.();
+    const onExecute = (command?: Command) => {
+        return command
+            ? async () => {
+                await command?.();
 
-            close();
-        }
+                close();
+            }
+            : () => { }
     };
 
-    const Button: Component<{ label: string, command: Command } | { [key: string]: any }> = (props) => {
+    const Button: Component<{ label: string, command?: Command } & { [key: string]: any }> = (props) => {
         const [local, rest] = splitProps(props, ['label', 'command']);
-        return <button class="menu-item" type="button" on:pointerdown={onExecute(local.command)} {...rest}>{local.label}</button>;
+        return <button class="menu-item" type="button" on:pointerdown={onExecute(local.command)} {...rest}>
+            {local.label}
+            <Show when={local.command?.shortcut}>{
+                shortcut => {
+                    const shift = shortcut().modifier & Modifier.Shift ? 'Shft+' : '';
+                    const ctrl = shortcut().modifier & Modifier.Control ? 'Ctrl+' : '';
+                    const meta = shortcut().modifier & Modifier.Meta ? 'Meta+' : '';
+                    const alt = shortcut().modifier & Modifier.Alt ? 'Alt+' : '';
+
+                    return <sub>{ctrl}{shift}{meta}{alt}{shortcut().key}</sub>;
+                }
+            }</Show>
+        </button>;
     };
 
     return <Portal mount={menu.ref()}>
@@ -151,20 +166,6 @@ const Root: ParentComponent<{}> = (props) => {
 
                 <Button
                     label={item.label}
-                    on:pointerenter={(e) => {
-                        if (!item.children) {
-                            return;
-                        }
-
-                        const el = current();
-
-                        if (!el) {
-                            return;
-                        }
-
-                        el.hidePopover();
-
-                    }}
                     {...(item.children ? { popovertarget: `child-${item.id}`, style: `anchor-name: --menu-${item.id};` } : { command: item.command })}
                 />
             </>

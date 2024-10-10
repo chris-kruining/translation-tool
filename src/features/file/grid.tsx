@@ -61,7 +61,28 @@ const SelectionProvider: ParentComponent<{ rows: Map<string, { [lang: string]: {
 export const Grid: Component<{ columns: string[], rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, context?: (ctx: SelectionContextType) => any }> = (props) => {
     const columnCount = createMemo(() => props.columns.length - 1);
     const root = createMemo<Entry>(() => {
-        return Object.fromEntries(props.rows.entries().map(([key, value]) => [key, Object.fromEntries(Object.entries(value).map(([lang, { value }]) => [lang, value]))]));
+        return props.rows
+            ?.entries()
+            .map(([key, value]) => [key, Object.fromEntries(Object.entries(value).map(([lang, { value }]) => [lang, value]))] as const)
+            .reduce((aggregate, [key, entry]) => {
+                let obj: any = aggregate;
+                const parts = key.split('.');
+
+                for (const [i, part] of parts.entries()) {
+                    if (Object.hasOwn(obj, part) === false) {
+                        obj[part] = {};
+                    }
+
+                    if (i === (parts.length - 1)) {
+                        obj[part] = entry;
+                    }
+                    else {
+                        obj = obj[part];
+                    }
+                }
+
+                return aggregate;
+            }, {});
     });
 
     return <section class="table" style={{ '--columns': columnCount() }}>
@@ -127,7 +148,7 @@ const Row: Component<{ entry: Entry, path?: string[] }> = (props) => {
 
 const Group: Component<{ key: string, entry: Entry, path: string[] }> = (props) => {
     return <details open>
-        <summary class="cell" style={{ '--depth': props.path.length - 1 }}>{props.key}</summary>
+        <summary style={{ '--depth': props.path.length - 1 }}>{props.key}</summary>
 
         <Row entry={props.entry} path={props.path} />
     </details>;

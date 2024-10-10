@@ -15,7 +15,6 @@
         margin: .1em;
     }
 
-
     & textarea {
         resize: vertical;
         min-block-size: 2em;
@@ -87,14 +86,13 @@
 
         & > summary {
             grid-column: 2 / span calc(1 + var(--columns));
+            padding: .5em;
+            padding-inline-start: calc(var(--depth) * 1em + .5em);
 
-            &.cell {
-                padding-inline-start: calc((var(--depth) + 1) * 1em);
-            }
         }
 
         & > label > .cell > span {
-            padding-inline-start: calc(var(--depth) * 1.25em);
+            padding-inline-start: calc(var(--depth) * 1em);
         }
     }
 }

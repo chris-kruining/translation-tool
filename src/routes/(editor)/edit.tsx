@@ -57,8 +57,6 @@ export default function Edit(props) {
                 return aggregate;
             }, new Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>());
 
-            console.log(contents, merged);
-
             setColumns(['key', ...new Set(contents.map(c => c.lang))]);
             setRows(merged);
         }
