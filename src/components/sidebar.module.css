@@ -1,0 +1,21 @@
+.root {
+    display: grid;
+    grid: auto 1fr / 100%;
+
+    & > button {
+        inline-size: max-content;
+        padding: 0;
+        background-color: var(--surface-1);
+        color: var(--text-1);
+        border: none;
+        font-size: var(--text-l);
+    }
+
+    & > .content {
+        overflow: auto clip;
+    }
+
+    &.closed > .content {
+        inline-size: 0;
+    }
+}

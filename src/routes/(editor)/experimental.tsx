@@ -1,50 +1,31 @@
-import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, Show } from "solid-js";
+import { createEffect, createMemo, createResource, createSignal, For, lazy, onMount, Suspense } from "solid-js";
 import { useFiles } from "~/features/file";
-import { createCommand, Menu, Modifier } from "~/features/menu";
-import { AiFillFile, AiFillFolder, AiFillFolderOpen } from "solid-icons/ai";
+import { Menu } from "~/features/menu";
 import "./experimental.css";
+import { createCommand, Modifier } from "~/features/command";
+import { emptyFolder, FolderEntry, Tree, walk } from "~/components/filetree";
+import { createStore, produce } from "solid-js/store";
+import { Tab, Tabs, TabSimple, TabsSimple } from "~/components/tabs";
 
-interface FileEntry {
-  name: string;
-  kind: 'file';
-  meta: File;
+interface ExperimentalState {
+  files: File[];
+  numberOfFiles: number;
 }
 
-interface FolderEntry {
-  name: string;
-  kind: 'folder';
-  entries: Entry[];
-}
-
-type Entry = FileEntry | FolderEntry;
-
-async function* walk(directory: FileSystemDirectoryHandle, filters: RegExp[] = [], depth = 0): AsyncGenerator<Entry, void, never> {
-  if (depth === 10) {
-    return;
-  }
-
-  for await (const handle of directory.values()) {
-
-    if (filters.some(f => f.test(handle.name))) {
-      continue;
-    }
-
-    if (handle.kind === 'file') {
-      yield { name: handle.name, kind: 'file', meta: await handle.getFile() };
-    }
-    else {
-      yield { name: handle.name, kind: 'folder', entries: await Array.fromAsync(walk(handle, filters, depth + 1)) };
-    }
-  }
-}
-
-export default function Index() {
+export default function Experimental() {
   const files = useFiles();
-  const [tree, setTree] = createSignal<FolderEntry>();
-  const [content, setContent] = createSignal<string>('');
+  const [tree, setTree] = createSignal<FolderEntry>(emptyFolder);
+  const [state, setState] = createStore<ExperimentalState>({
+    files: [],
+    numberOfFiles: 0,
+  });
   const [showHiddenFiles, setShowHiddenFiles] = createSignal<boolean>(false);
   const filters = createMemo<RegExp[]>(() => showHiddenFiles() ? [/^node_modules$/] : [/^node_modules$/, /^\..+$/]);
   const [root, { mutate, refetch }] = createResource(() => files.get('root'));
+
+  createEffect(() => {
+    setState('numberOfFiles', state.files.length);
+  });
 
   // Since the files are stored in indexedDb we need to refetch on the client in order to populate on page load
   onMount(() => {
@@ -62,15 +43,13 @@ export default function Index() {
   });
 
   const open = async (file: File) => {
-    const text = await file.text();
-
-    console.log({ file, text });
-
-    return setContent(text);
+    setState('files', produce(files => {
+      files.push(file);
+    }));
   };
 
   const commands = {
-    open: createCommand(async () => {
+    open: createCommand('open', async () => {
       const [fileHandle] = await window.showOpenFilePicker({
         types: [
           {
@@ -88,7 +67,7 @@ export default function Index() {
 
       console.log(fileHandle, file, text);
     }, { key: 'o', modifier: Modifier.Control }),
-    openFolder: createCommand(async () => {
+    openFolder: createCommand('openFolder', async () => {
       const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
       const entries = await Array.fromAsync(walk(directory, filters()));
 
@@ -97,45 +76,19 @@ export default function Index() {
 
       setTree({ name: '', kind: 'folder', entries });
     }),
-    save: createCommand(() => {
+    save: createCommand('save', () => {
       console.log('save');
     }, { key: 's', modifier: Modifier.Control }),
-    saveAll: createCommand(() => {
+    saveAll: createCommand('save all', () => {
       console.log('save all');
     }, { key: 's', modifier: Modifier.Control | Modifier.Shift }),
-    edit: createCommand(() => { }),
-    selection: createCommand(() => { }),
-    view: createCommand(() => { }),
   } as const;
 
-  const Tree: Component<{ entries: Entry[] }> = (props) => {
-    return <ul style="display: flex; flex-direction: column; list-style: none;">
-      <For each={props.entries}>{
-        (entry, index) => <li style={`order: ${(entry.kind === 'file' ? 200 : 100) + index()}`}>
-          <Show when={entry.kind === 'folder' ? entry : undefined}>{
-            folder => <Folder folder={folder()} />
-          }</Show>
+  const Content = lazy(async () => {
+    const text = Promise.resolve('this is text');
 
-          <Show when={entry.kind === 'file' ? entry : undefined}>{
-            file => <span on:pointerdown={() => {
-              console.log(`lets open '${file().name}'`);
-
-              open(file().meta);
-            }}><AiFillFile /> {file().name}</span>
-          }</Show>
-        </li>
-      }</For>
-    </ul>
-  }
-
-  const Folder: Component<{ folder: FolderEntry }> = (props) => {
-    const [open, setOpen] = createSignal(false);
-
-    return <details open={open()} on:toggle={() => setOpen(o => !o)}>
-      <summary><Show when={open()} fallback={<AiFillFolder />}><AiFillFolderOpen /></Show> {props.folder.name}</summary>
-      <Tree entries={props.folder.entries} />
-    </details>;
-  };
+    return { default: () => <>{text}</> };
+  });
 
   return (
     <>
@@ -149,24 +102,26 @@ export default function Index() {
 
           <Menu.Item label="save all" command={commands.saveAll} />
         </Menu.Item>
-
-        <Menu.Item label="edit" command={commands.edit} />
-
-        <Menu.Item label="selection" command={commands.selection} />
-
-        <Menu.Item label="view" command={commands.view} />
       </Menu.Root>
 
       <section class="index">
         <aside>
           <label><input type="checkbox" on:input={() => setShowHiddenFiles(v => !v)} />Show hidden files</label>
-          <Show when={tree()}>{
-            tree => <Tree entries={tree().entries} />
-          }</Show>
+          <Tree entries={tree().entries}>{
+            file => <span on:dblclick={() => open(file().meta)}>{file().name}</span>
+          }</Tree>
         </aside>
 
         <section>
-          <pre>{content()}</pre>
+          <TabsSimple>
+            <For each={state.files}>{
+              file => <TabSimple label={file.name}>
+                <pre>
+                  <Suspense><Content /></Suspense>
+                </pre>
+              </TabSimple>
+            }</For>
+          </TabsSimple>
         </section>
       </section>
     </>

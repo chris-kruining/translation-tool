@@ -1,9 +1,11 @@
-import { createCommand, Menu, Modifier } from "~/features/menu";
-import { createEffect, createResource, createSignal, onMount } from "solid-js";
-import { Entry, Grid, load, useFiles } from "~/features/file";
-import "./edit.css";
-
-interface RawEntry extends Record<string, RawEntry | string> { }
+import { Menu } from "~/features/menu";
+import { Sidebar } from "~/components/sidebar";
+import { Component, createEffect, createResource, createSignal, For, onMount, Show } from "solid-js";
+import { Grid, load, useFiles } from "~/features/file";
+import { createCommand, Modifier, noop } from "~/features/command";
+import { GridContextType } from "~/features/file/grid";
+import css from "./edit.module.css";
+import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/components/filetree";
 
 async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []): AsyncGenerator<{ handle: FileSystemFileHandle, path: string[], lang: string, entries: Map<string, string> }, void, never> {
     for await (const handle of directory.values()) {
@@ -28,11 +30,12 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
 };
 
 export default function Edit(props) {
-    const files = useFiles();
-    const [root, { mutate, refetch }] = createResource(() => files.get('root'));
+    const filesContext = useFiles();
+    const [root, { mutate, refetch }] = createResource(() => filesContext.get('root'));
+    const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
     const [columns, setColumns] = createSignal(['these', 'are', 'some', 'columns']);
     const [rows, setRows] = createSignal<Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>>(new Map);
-    const [ctx, setCtx] = createSignal<any>();
+    const [ctx, setCtx] = createSignal<GridContextType>();
 
     // Since the files are stored in indexedDb we need to refetch on the client in order to populate on page load
     onMount(() => {
@@ -44,26 +47,31 @@ export default function Edit(props) {
 
         if (root.state === 'ready' && directory?.kind === 'directory') {
             const contents = await Array.fromAsync(walk(directory));
+            const languages = new Set(contents.map(c => c.lang));
+            const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
 
             const merged = contents.reduce((aggregate, { handle, path, lang, entries }) => {
                 for (const [key, value] of entries.entries()) {
-                    if (!aggregate.has(key)) {
-                        aggregate.set(key, {});
+                    const k = [...path, key].join('.');
+
+                    if (!aggregate.has(k)) {
+                        aggregate.set(k, Object.fromEntries(template));
                     }
 
-                    aggregate.get(key)![lang] = { handle, value };
+                    aggregate.get(k)![lang] = { handle, value };
                 }
 
                 return aggregate;
             }, new Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>());
 
-            setColumns(['key', ...new Set(contents.map(c => c.lang))]);
+            setFiles({ name: '', kind: 'folder', entries: await Array.fromAsync(fileTreeWalk(directory)) });
+            setColumns(['key', ...languages]);
             setRows(merged);
         }
     });
 
     const commands = {
-        open: createCommand(async () => {
+        open: createCommand('open', async () => {
             const [fileHandle] = await window.showOpenFilePicker({
                 types: [
                     {
@@ -81,27 +89,26 @@ export default function Edit(props) {
 
             console.log(fileHandle, file, text);
         }, { key: 'o', modifier: Modifier.Control }),
-        openFolder: createCommand(async () => {
+        openFolder: createCommand('open', async () => {
             const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
 
-            files.set('root', directory);
+            filesContext.set('root', directory);
             mutate(directory);
         }),
-        save: createCommand(() => {
-            console.log('save');
+        save: createCommand('save', () => {
+            console.log('save', rows());
         }, { key: 's', modifier: Modifier.Control }),
-        saveAll: createCommand(() => {
-            console.log('save all');
+        saveAs: createCommand('saveAs', () => {
+            console.log('save as ...');
         }, { key: 's', modifier: Modifier.Control | Modifier.Shift }),
-        edit: createCommand(() => {
+        edit: createCommand('edit', () => {
         }),
-        selectAll: createCommand(() => {
-            console.log(ctx()?.selectAll(true));
+        selectAll: createCommand('selectAll', () => {
+            console.log(ctx(), ctx()?.selection.selectAll(true));
         }, { key: 'a', modifier: Modifier.Control }),
-        view: createCommand(() => { }),
     } as const;
 
-    return <>
+    return <div class={css.root}>
         <Menu.Root>
             <Menu.Item label="file">
                 <Menu.Item label="open" command={commands.open} />
@@ -110,7 +117,7 @@ export default function Edit(props) {
 
                 <Menu.Item label="save" command={commands.save} />
 
-                <Menu.Item label="save all" command={commands.saveAll} />
+                <Menu.Item label="save all" command={commands.saveAs} />
             </Menu.Item>
 
             <Menu.Item label="edit" command={commands.edit} />
@@ -119,9 +126,15 @@ export default function Edit(props) {
                 <Menu.Item label="select all" command={commands.selectAll} />
             </Menu.Item>
 
-            <Menu.Item label="view" command={commands.view} />
+            <Menu.Item label="view" command={noop} />
         </Menu.Root>
 
+        <Sidebar as="aside">
+            <Tree entries={tree().entries}>{
+                file => <span>{file().name}</span>
+            }</Tree>
+        </Sidebar>
+
         <Grid columns={columns()} rows={rows()} context={setCtx} />
-    </>
+    </div>
 }

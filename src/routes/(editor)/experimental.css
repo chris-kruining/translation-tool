@@ -14,29 +14,6 @@ section.index {
         padding: 1em;
         padding-block-start: 1.5em;
         padding-inline-end: 1em;
-
-        & details {
-            & > summary::marker {
-                content: none;
-                color: var(--text) !important;
-            }
-
-            & span {
-                cursor: pointer;
-            }
-        }
-
-        & ul {
-            padding-inline-start: 0;
-
-            & ul {
-                padding-inline-start: 1.25em;
-            }
-
-            & span {
-                white-space: nowrap;
-            }
-        }
     }
 
     & > section {
