@@ -1,0 +1,13 @@
+.root {
+    display: grid;
+    grid: 100% / auto 1fr;
+
+    & > aside {
+        z-index: 1;
+
+        & > ul {
+            padding: 0;
+            margin: 0;
+        }
+    }
+}

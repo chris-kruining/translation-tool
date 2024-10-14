@@ -1,6 +1,7 @@
 import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
 import { Portal, isServer } from "solid-js/web";
 import { createStore } from "solid-js/store";
+import { Command, Modifier } from "../command";
 
 export interface MenuContextType {
     ref: Accessor<JSX.Element | undefined>;
@@ -10,22 +11,6 @@ export interface MenuContextType {
     items: Accessor<(Item | ItemWithChildren)[]>;
     commands(): Command[];
 };
-
-export enum Modifier {
-    None = 0,
-    Shift = 1 << 0,
-    Control = 1 << 1,
-    Meta = 1 << 2,
-    Alt = 1 << 3,
-}
-
-export interface Command {
-    (): any;
-    shortcut?: {
-        key: string;
-        modifier: Modifier;
-    };
-}
 
 export interface Item {
     id: string;
@@ -40,14 +25,6 @@ export interface ItemWithChildren {
 }
 
 const MenuContext = createContext<MenuContextType>();
-
-export const createCommand = (command: () => any, shortcut?: Command['shortcut']): Command => {
-    if (shortcut) {
-        (command as Command).shortcut = { key: shortcut.key.toLowerCase(), modifier: shortcut.modifier };
-    }
-
-    return command;
-};
 
 export const MenuProvider: ParentComponent = (props) => {
     const [ref, setRef] = createSignal<JSX.Element | undefined>();
@@ -100,9 +77,7 @@ const Item: Component<ItemProps> = (props) => {
 const Root: ParentComponent<{}> = (props) => {
     const menu = useMenu();
     const [current, setCurrent] = createSignal<HTMLElement>();
-    const items = (isServer
-        ? props.children
-        : props.children?.map(c => c())) ?? [];
+    const items = children(() => props.children).toArray() as unknown as (Item & ItemWithChildren)[];
 
     menu.addItems(items)
 
@@ -146,8 +121,8 @@ const Root: ParentComponent<{}> = (props) => {
     return <Portal mount={menu.ref()}>
         <For each={items}>{
             item => <>
-                <Show when={item.children}>
-                    <div
+                <Show when={item.children}>{
+                    children => <div
                         class="menu-child"
                         id={`child-${item.id}`}
                         style={`position-anchor: --menu-${item.id};`}
@@ -158,11 +133,11 @@ const Root: ParentComponent<{}> = (props) => {
                             }
                         }}
                     >
-                        <For each={item.children}>
+                        <For each={children()}>
                             {(child) => <Button label={child.label} command={child.command} />}
                         </For>
                     </div>
-                </Show>
+                }</Show>
 
                 <Button
                     label={item.label}

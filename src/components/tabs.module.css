@@ -1,0 +1,20 @@
+.root {
+    display: grid;
+    grid-template-rows: auto 1fr;
+
+    .tab {
+        display: contents;
+
+        & > summary {
+            grid-row: 1 / 1;
+
+            &::marker {
+                content: none;
+            }
+        }
+
+        &::details-content {
+            grid-area: 2 / 1;
+        }
+    }
+}

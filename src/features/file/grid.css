@@ -19,12 +19,23 @@
         resize: vertical;
         min-block-size: 2em;
         max-block-size: 50em;
+
+        background-color: var(--surface-1);
+        color: var(--text-1);
+        border-color: var(--text-2);
+        border-radius: var(--radii-s);
     }
 
     & .cell {
         display: grid;
         place-content: center stretch;
         padding: .5em;
+        border: 1px solid transparent;
+        border-radius: var(--radii-m);
+
+        &:focus-within {
+            border-color: var(--info);
+        }
     }
 
     & > :is(header, main, footer) {
