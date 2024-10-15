@@ -62,7 +62,7 @@ export const FilesProvider = (props) => {
     return <FilesContext.Provider value={ctx}>{props.children}</FilesContext.Provider>;
 }
 
-export const useFiles = () => useContext(FilesContext)!;
+export const useFiles = () => useContext(FilesContext);
 
 export const load = (file: File): Promise<Map<string, string> | undefined> => {
     switch (file.type) {

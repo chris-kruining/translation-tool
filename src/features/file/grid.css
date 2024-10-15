@@ -33,7 +33,7 @@
         border: 1px solid transparent;
         border-radius: var(--radii-m);
 
-        &:focus-within {
+        &:has(textarea:focus) {
             border-color: var(--info);
         }
     }

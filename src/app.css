@@ -25,6 +25,10 @@
   --text-l: 1.25rem;
   --text-xl: 1.6rem;
   --text-xxl: 2rem;
+
+  --padding-s: .25em;
+  --padding-m: .5em;
+  --padding-l: 1em;
 }
 
 @media (prefers-color-scheme: dark) {

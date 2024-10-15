@@ -1,0 +1,5 @@
+.selectable {
+    &[data-selected="true"] {
+        background-color: color(from var(--info) xyz x y z / .2);
+    }
+}

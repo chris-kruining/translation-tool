@@ -1,6 +1,7 @@
-import { Accessor, Component, createSignal, For, JSX, Show } from "solid-js";
+import { Accessor, Component, createContext, createSignal, For, JSX, Show, useContext } from "solid-js";
 import css from "./filetree.module.css";
 import { AiFillFile, AiFillFolder, AiFillFolderOpen } from "solid-icons/ai";
+import { SelectionProvider, selectable } from "~/features/selectable";
 
 export interface FileEntry {
     name: string;
@@ -38,27 +39,61 @@ export async function* walk(directory: FileSystemDirectoryHandle, filters: RegEx
     }
 }
 
-export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element }> = (props) => {
-    return <ul class={css.root}>
-        <For each={props.entries}>{
-            (entry, index) => <li style={`order: ${(entry.kind === 'file' ? 200 : 100) + index()}`}>
-                <Show when={entry.kind === 'folder' ? entry : undefined}>{
-                    folder => <Folder folder={folder()} children={props.children} />
-                }</Show>
+interface TreeContextType {
+    open(file: File): void;
+}
 
-                <Show when={entry.kind === 'file' ? entry : undefined}>{
-                    file => <><AiFillFile />{props.children(file)}</>
-                }</Show>
-            </li>
-        }</For>
-    </ul>
+const TreeContext = createContext<TreeContextType>();
+
+export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element, open: TreeContextType['open'] }> = (props) => {
+    const [selection, setSelection] = createSignal();
+
+    // createEffect(() => {
+    //   console.log(selection());
+    // });
+
+    const context = {
+        open: props.open,
+        // open(file: File) {
+        //     console.log(`open ${file.name}`)
+        // },
+    };
+
+    return <SelectionProvider selection={setSelection}>
+        <TreeContext.Provider value={context}>
+            <div class={css.root}><_Tree entries={props.entries} children={props.children} /></div>
+        </TreeContext.Provider>
+    </SelectionProvider>;
+}
+
+const _Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element }> = (props) => {
+    const context = useContext(TreeContext);
+
+    return <For each={props.entries.sort(sort_by('kind'))}>{
+        entry => <>
+            <Show when={entry.kind === 'folder' ? entry : undefined}>{
+                folder => <Folder folder={folder()} children={props.children} />
+            }</Show>
+
+            <Show when={entry.kind === 'file' ? entry : undefined}>{
+                file => <span use:selectable={file()} ondblclick={() => context?.open(file().meta)}><AiFillFile /> {props.children(file)}</span>
+            }</Show>
+        </>
+    }</For>
 }
 
 const Folder: Component<{ folder: FolderEntry, children: (file: Accessor<FileEntry>) => JSX.Element }> = (props) => {
     const [open, setOpen] = createSignal(false);
 
-    return <details open={open()} on:toggle={() => setOpen(o => !o)}>
+    return <details open={open()} ontoggle={() => setOpen(o => !o)}>
         <summary><Show when={open()} fallback={<AiFillFolder />}><AiFillFolderOpen /></Show> {props.folder.name}</summary>
-        <Tree entries={props.folder.entries} children={props.children} />
+        <_Tree entries={props.folder.entries} children={props.children} />
     </details>;
+};
+
+const sort_by = (key: string) => (objA: Record<string, any>, objB: Record<string, any>) => {
+    const a = objA[key];
+    const b = objB[key];
+
+    return Number(a < b) - Number(b < a);
 };

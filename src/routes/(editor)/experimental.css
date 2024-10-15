@@ -1,6 +1,6 @@
 section.index {
     display: grid;
-    grid: 100% / auto 1fr;
+    grid: 100% / auto minmax(0, 1fr);
     inline-size: 100%;
     block-size: 100%;
 
@@ -17,6 +17,11 @@ section.index {
     }
 
     & > section {
+        display: grid;
+        grid: 100% / 100%;
+        inline-size: 100%;
+        block-size: 100%;
+
         padding-inline: 1em;
     }
 }
