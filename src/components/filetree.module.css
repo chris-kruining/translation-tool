@@ -2,24 +2,29 @@
     display: flex;
     flex-direction: column;
     list-style: none;
-    padding-inline-start: 0;
 
     & details {
-        & > summary::marker {
-            content: none;
-            color: var(--text-1) !important;
+        & > summary {
+            padding: var(--padding-s);
+
+            &::marker {
+                content: none;
+                color: var(--text-1) !important;
+            }
         }
 
-        & span {
-            cursor: pointer;
+        &::details-content {
+            display: flex;
+            flex-direction: column;
+            list-style: none;
+            padding-inline-start: 1.25em;
         }
-    }
 
-    & ul {
-        padding-inline-start: 1.25em;
     }
 
     & span {
+        cursor: pointer;
         white-space: nowrap;
+        padding: var(--padding-s);
     }
 }

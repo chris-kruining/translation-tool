@@ -1,72 +1,21 @@
-import { Accessor, children, Component, createContext, createEffect, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, useContext } from "solid-js";
-import { createStore } from "solid-js/store";
+import { Accessor, children, createContext, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, useContext } from "solid-js";
 import css from "./tabs.module.css";
-import { Portal } from "solid-js/web";
 
 interface TabsContextType {
-    isActive(): boolean;
-}
-
-interface TabsState {
-    tabs: TabType[];
-}
-
-interface TabType {
-    id: string;
-    label: string;
-}
-
-const TabsContext = createContext<TabsContextType>();
-
-export const Tabs: Component<{ children?: JSX.Element }> = (props) => {
-    const [state, setState] = createStore<TabsState>({ tabs: [] });
-
-    createEffect(() => {
-        const tabs = children(() => props.children).toArray();
-
-        console.log(tabs);
-
-        setState('tabs', tabs.map(t => ({ id: t.id, label: t.getAttribute('data-label') })))
-    });
-
-    const ctx: TabsContextType = {
-        isActive() {
-            return false;
-        }
-    };
-
-    return <TabsContext.Provider value={ctx}>
-        <header>
-            <For each={state.tabs}>{
-                tab => <button type="button" onpointerdown={() => activate(tab.id)}>{tab.label}</button>
-            }</For>
-        </header>
-
-        {props.children}
-    </TabsContext.Provider>
-};
-
-export const Tab: ParentComponent<{ label: string }> = (props) => {
-    const context = useContext(TabsContext);
-
-    return <div id={createUniqueId()} data-label={props.label}>{props.children}</div>
-}
-
-interface TabsSimpleContextType {
     activate(id: string): void;
     active: Accessor<string | undefined>;
     isActive(id: string): Accessor<boolean>;
 }
 
-const TabsSimpleContext = createContext<TabsSimpleContextType>();
+const TabsContext = createContext<TabsContextType>();
 
-export const TabsSimple: ParentComponent = (props) => {
+export const Tabs: ParentComponent = (props) => {
     const [active, setActive] = createSignal<string | undefined>(undefined);
+    const numberOfTabs = createMemo(() => children(() => props.children).toArray().length);
 
-    return <TabsSimpleContext.Provider value={{
+    return <TabsContext.Provider value={{
         activate(id: string) {
             setActive(id);
-            // setState('active', id);
         },
 
         active,
@@ -75,15 +24,15 @@ export const TabsSimple: ParentComponent = (props) => {
             return createMemo(() => active() === id);
         },
     }}>
-        <div class={css.root}>
+        <div class={css.root} style={{ '--tab-count': numberOfTabs() }}>
             {props.children}
         </div>
-    </TabsSimpleContext.Provider>;
+    </TabsContext.Provider>;
 }
 
-export const TabSimple: ParentComponent<{ label: string }> = (props) => {
+export const Tab: ParentComponent<{ label: string }> = (props) => {
     const id = `tab-${createUniqueId()}`;
-    const context = useContext(TabsSimpleContext);
+    const context = useContext(TabsContext);
 
     if (!context) {
         return undefined;

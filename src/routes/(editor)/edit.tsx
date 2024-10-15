@@ -1,6 +1,6 @@
 import { Menu } from "~/features/menu";
 import { Sidebar } from "~/components/sidebar";
-import { Component, createEffect, createResource, createSignal, For, onMount, Show } from "solid-js";
+import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, Show } from "solid-js";
 import { Grid, load, useFiles } from "~/features/file";
 import { createCommand, Modifier, noop } from "~/features/command";
 import { GridContextType } from "~/features/file/grid";
@@ -108,6 +108,12 @@ export default function Edit(props) {
         }, { key: 'a', modifier: Modifier.Control }),
     } as const;
 
+    const mutated = createMemo(() => Object.values(ctx()?.rows ?? {}).filter(row => Object.values(row).some(lang => lang.original !== lang.value)));
+
+    createEffect(() => {
+        console.log('KAAS', mutated());
+    });
+
     return <div class={css.root}>
         <Menu.Root>
             <Menu.Item label="file">
@@ -131,7 +137,7 @@ export default function Edit(props) {
 
         <Sidebar as="aside">
             <Tree entries={tree().entries}>{
-                file => <span>{file().name}</span>
+                (file, icon) => <span>{icon} {file().name}</span>
             }</Tree>
         </Sidebar>
 

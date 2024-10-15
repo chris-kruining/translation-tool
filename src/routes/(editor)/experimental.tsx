@@ -1,11 +1,12 @@
-import { createEffect, createMemo, createResource, createSignal, For, lazy, onMount, Suspense } from "solid-js";
+import { Component, createEffect, createMemo, createResource, createSignal, For, lazy, onMount, Suspense } from "solid-js";
 import { useFiles } from "~/features/file";
 import { Menu } from "~/features/menu";
-import "./experimental.css";
 import { createCommand, Modifier } from "~/features/command";
 import { emptyFolder, FolderEntry, Tree, walk } from "~/components/filetree";
 import { createStore, produce } from "solid-js/store";
-import { Tab, Tabs, TabSimple, TabsSimple } from "~/components/tabs";
+import { Tab, Tabs } from "~/components/tabs";
+import "./experimental.css";
+import { selectable, SelectionProvider } from "~/features/selectable";
 
 interface ExperimentalState {
   files: File[];
@@ -21,7 +22,7 @@ export default function Experimental() {
   });
   const [showHiddenFiles, setShowHiddenFiles] = createSignal<boolean>(false);
   const filters = createMemo<RegExp[]>(() => showHiddenFiles() ? [/^node_modules$/] : [/^node_modules$/, /^\..+$/]);
-  const [root, { mutate, refetch }] = createResource(() => files.get('root'));
+  const [root, { mutate, refetch }] = createResource(() => files?.get('root'));
 
   createEffect(() => {
     setState('numberOfFiles', state.files.length);
@@ -84,12 +85,6 @@ export default function Experimental() {
     }, { key: 's', modifier: Modifier.Control | Modifier.Shift }),
   } as const;
 
-  const Content = lazy(async () => {
-    const text = Promise.resolve('this is text');
-
-    return { default: () => <>{text}</> };
-  });
-
   return (
     <>
       <Menu.Root>
@@ -107,23 +102,31 @@ export default function Experimental() {
       <section class="index">
         <aside>
           <label><input type="checkbox" on:input={() => setShowHiddenFiles(v => !v)} />Show hidden files</label>
-          <Tree entries={tree().entries}>{
-            file => <span on:dblclick={() => open(file().meta)}>{file().name}</span>
+          <Tree entries={tree().entries} open={open}>{
+            file => file().name
           }</Tree>
         </aside>
 
         <section>
-          <TabsSimple>
+          <Tabs>
             <For each={state.files}>{
-              file => <TabSimple label={file.name}>
-                <pre>
-                  <Suspense><Content /></Suspense>
-                </pre>
-              </TabSimple>
+              file => <Tab label={file.name}>
+                <Content file={file} />
+              </Tab>
             }</For>
-          </TabsSimple>
+          </Tabs>
         </section>
       </section>
     </>
   );
 }
+
+const Content: Component<{ file: File }> = (props) => {
+  const [content] = createResource(async () => {
+    return await props.file.text();
+  });
+
+  return <Suspense fallback={'loading'}>
+    <pre>{content()}</pre>
+  </Suspense>
+};

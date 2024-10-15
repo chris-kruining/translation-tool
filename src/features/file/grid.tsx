@@ -25,9 +25,9 @@ export interface SelectionContextType {
     select(key: string, select: boolean): void;
 }
 export interface GridContextType {
-    mutate(prop: string, lang: string, value: string): void;
-    add(prop: string): void;
+    rows: Record<string, { [lang: string]: { original: string, value: string } }>;
     selection: SelectionContextType;
+    mutate(prop: string, lang: string, value: string): void;
 }
 
 const SelectionContext = createContext<SelectionContextType>();
@@ -77,9 +77,7 @@ const SelectionProvider: ParentComponent<{ rows: Map<string, { [lang: string]: {
     </SelectionContext.Provider>;
 };
 const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, context?: (ctx: GridContextType) => any }> = (props) => {
-    type Entry = { [lang: string]: { original: string, value: string } };
-
-    const [state, setState] = createStore<{ rows: { [prop: string]: Entry }, numberOfRows: number }>({
+    const [state, setState] = createStore<{ rows: GridContextType['rows'], numberOfRows: number }>({
         rows: {},
         numberOfRows: 0,
     });
@@ -96,28 +94,25 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
         setState('numberOfRows', Object.keys(state.rows).length);
     });
 
-    createEffect(() => {
-        console.log(state.rows.toplevel?.nl.value);
-    });
-
     const ctx: GridContextType = {
+        rows: state.rows,
+        selection: undefined!,
+
         mutate(prop: string, lang: string, value: string) {
-            // setState('rows', prop, lang, ({ original }) => ({ original, value }));
             setState('rows', produce(rows => {
                 rows[prop][lang].value = value;
             }));
         },
-
-        add(prop: string) {
-
-        },
-
-        selection: undefined!,
     };
 
     createEffect(() => {
-        console.log(ctx);
         props.context?.(ctx);
+    });
+
+    const mutated = createMemo(() => Object.values(state.rows).filter(entry => Object.values(entry).some(lang => lang.original !== lang.value)));
+
+    createEffect(() => {
+        console.log('tap', mutated());
     });
 
     return <GridContext.Provider value={ctx}>
