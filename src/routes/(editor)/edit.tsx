@@ -117,6 +117,9 @@ export default function Edit(props: ParentProps) {
         selectAll: createCommand('select all', () => {
             api()?.selectAll();
         }, { key: 'a', modifier: Modifier.Control }),
+        clearSelection: createCommand('clear selection', () => {
+            api()?.clear();
+        }),
     } as const;
 
     const mutated = createMemo(() => Object.values(api()?.rows() ?? {}).filter(row => Object.values(row).some(lang => lang.original !== lang.value)));
@@ -144,6 +147,8 @@ export default function Edit(props: ParentProps) {
 
                 <Menu.Item label="selection">
                     <Menu.Item command={commands.selectAll} />
+
+                    <Menu.Item command={commands.clearSelection} />
                 </Menu.Item>
 
                 <Menu.Item label="view" command={noop} />
