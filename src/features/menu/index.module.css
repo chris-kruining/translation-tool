@@ -21,8 +21,8 @@
     grid-template-columns: auto auto;
     place-content: start;
 
-    gap: .5em;
-    padding: .5em 0;
+    gap: var(--padding-m);
+    padding: var(--padding-m) 0;
     inline-size: max-content;
 
     background-color: var(--surface-2);

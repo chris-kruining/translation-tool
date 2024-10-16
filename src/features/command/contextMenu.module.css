@@ -1,15 +1,31 @@
 .menu {
     position: fixed;
     display: grid;
-    grid-template-columns: max-content;
+    grid-template-columns: auto auto;
+    place-content: start;
 
     inset-inline-start: anchor(start);
     inset-block-start: anchor(end);
+
     margin: 0;
+    gap: var(--padding-m);
+    padding: var(--padding-m);
+    font-size: var(--text-s);
 
     background-color: var(--surface-1);
     color: var(--text-1);
-    border: none;
+    border: 1px solid var(--text-1);
+    border-radius: var(--radii-m);
 
-    padding: var(--padding-m);
+    & > li {
+        grid-column: span 2;
+        display: grid;
+        grid-template-columns: subgrid;
+        align-items: center;
+
+        & > sub {
+            color: var(--text-2);
+            text-align: end;
+        }
+    }
 }
