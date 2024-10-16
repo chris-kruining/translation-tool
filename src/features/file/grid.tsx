@@ -1,4 +1,4 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, ParentComponent, Show, useContext } from "solid-js";
+import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import css from './grid.module.css';
@@ -200,25 +200,30 @@ const Group: Component<{ key: string, entry: Entry, path: string[] }> = (props) 
 };
 
 const TextArea: Component<{ key: string, value: string, lang: string, oninput?: (event: InputEvent) => any }> = (props) => {
-    const resize = (element: HTMLElement) => {
+    let element: HTMLTextAreaElement;
+
+    const resize = () => {
         element.style.blockSize = `1px`;
         element.style.blockSize = `${11 + element.scrollHeight}px`;
     };
 
-    const mutate = debounce((element: HTMLTextAreaElement) => {
+    const mutate = debounce(() => {
         props.oninput?.(new InputEvent('input', {
             data: element.value.trim(),
         }))
     }, 300);
 
     const onKeyUp = (e: KeyboardEvent) => {
-        const element = e.target as HTMLTextAreaElement;
-
-        resize(element);
-        mutate(element);
+        resize();
+        mutate();
     };
 
+    onMount(() => {
+        resize();
+    });
+
     return <textarea
+        ref={element}
         value={props.value}
         lang={props.lang}
         placeholder={props.lang}
