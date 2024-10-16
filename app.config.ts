@@ -4,7 +4,25 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
     vite: {
         plugins: [
-            VitePWA({ registerType: 'autoUpdate' }),
+            VitePWA({
+                mode: 'development',
+                // srcDir: 'src',
+                // filename: 'claims-sw.ts',
+                strategies: 'injectManifest',
+                registerType: 'autoUpdate',
+                base: '/',
+                manifest: {
+                    name: 'Translation tool',
+                    short_name: 'T_tool',
+                    theme_color: '#f0f',
+                    icons: [],
+                },
+                devOptions: {
+                    enabled: true,
+                    type: 'module',
+                    navigateFallback: 'index.html',
+                },
+            }),
         ]
     }
 });

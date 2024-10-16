@@ -1,9 +1,15 @@
 .root {
     display: grid;
-    grid: 100% / auto 1fr;
+    grid: 100% / auto minmax(0, 1fr);
+    inline-size: 100%;
+    block-size: 100%;
+    padding-block: var(--padding-l);
 
-    & > aside {
+    & .sidebar {
         z-index: 1;
+        margin-block: calc(-1 * var(--padding-l));
+        padding: var(--padding-l);
+        background-color: var(--surface-2);
 
         & > ul {
             padding: 0;

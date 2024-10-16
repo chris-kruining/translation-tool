@@ -1,7 +1,7 @@
 import { Accessor, Component, createContext, createSignal, For, JSX, Show, useContext } from "solid-js";
-import css from "./filetree.module.css";
 import { AiFillFile, AiFillFolder, AiFillFolderOpen } from "solid-icons/ai";
 import { SelectionProvider, selectable } from "~/features/selectable";
+import css from "./filetree.module.css";
 
 export interface FileEntry {
     name: string;
@@ -45,15 +45,15 @@ interface TreeContextType {
 
 const TreeContext = createContext<TreeContextType>();
 
-export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element, open: TreeContextType['open'] }> = (props) => {
-    const [selection, setSelection] = createSignal();
+export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element, open?: TreeContextType['open'] }> = (props) => {
+    const [selection, setSelection] = createSignal<object[]>([]);
 
     // createEffect(() => {
-    //   console.log(selection());
+    //     console.log(selection());
     // });
 
     const context = {
-        open: props.open,
+        open: props.open ?? (() => { }),
         // open(file: File) {
         //     console.log(`open ${file.name}`)
         // },

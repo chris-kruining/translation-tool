@@ -1,6 +1,6 @@
 import { Menu } from "~/features/menu";
 import { Sidebar } from "~/components/sidebar";
-import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, Show } from "solid-js";
+import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, ParentProps, Show } from "solid-js";
 import { Grid, load, useFiles } from "~/features/file";
 import { createCommand, Modifier, noop } from "~/features/command";
 import { GridContextType } from "~/features/file/grid";
@@ -29,9 +29,9 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
     }
 };
 
-export default function Edit(props) {
+export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
-    const [root, { mutate, refetch }] = createResource(() => filesContext.get('root'));
+    const [root, { mutate, refetch }] = createResource(() => filesContext?.get('root'));
     const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
     const [columns, setColumns] = createSignal(['these', 'are', 'some', 'columns']);
     const [rows, setRows] = createSignal<Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>>(new Map);
@@ -135,9 +135,9 @@ export default function Edit(props) {
             <Menu.Item label="view" command={noop} />
         </Menu.Root>
 
-        <Sidebar as="aside">
+        <Sidebar as="aside" class={css.sidebar}>
             <Tree entries={tree().entries}>{
-                (file, icon) => <span>{icon} {file().name}</span>
+                file => file().name
             }</Tree>
         </Sidebar>
 

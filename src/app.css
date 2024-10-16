@@ -78,6 +78,7 @@ body {
     grid-auto-flow: column;
     justify-content: start;
     position: relative;
+    z-index: 10;
 
     gap: .5em;
     padding-inline-start: 1em;

@@ -1,13 +1,15 @@
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarLeftExpand } from "solid-icons/tb";
-import { createMemo, createSignal, ParentComponent, Show } from "solid-js";
+import { createMemo, createSignal, ParentComponent, Show, splitProps } from "solid-js";
 import { Dynamic } from "solid-js/web";
 import css from "./sidebar.module.css";
 
-export const Sidebar: ParentComponent<{ as?: string, open?: boolean, name?: string }> = (props) => {
-    const [open, setOpen] = createSignal(props.open ?? true);
-    const name = createMemo(() => props.name ?? 'sidebar');
+export const Sidebar: ParentComponent<{ as?: string, open?: boolean, name?: string } & Record<string, any>> = (props) => {
+    const [local, forwarded] = splitProps(props, ['as', 'open', 'name', 'class']);
 
-    return <Dynamic component={props.as ?? 'div'} class={`${css.root} ${open() ? css.open : css.closed}`}>
+    const [open, setOpen] = createSignal(local.open ?? true);
+    const name = createMemo(() => local.name ?? 'sidebar');
+
+    return <Dynamic component={local.as ?? 'div'} class={`${css.root} ${open() ? css.open : css.closed} ${local.class}`} {...forwarded}>
         <button
             role="button"
             onclick={() => setOpen(o => !o)}
