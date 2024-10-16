@@ -231,8 +231,6 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
     });
 
     const onPointerDown = (e: PointerEvent) => {
-        e.preventDefault();
-
         const [latest, setLatest] = internal.latest
         const [modifier] = internal.modifier
 
