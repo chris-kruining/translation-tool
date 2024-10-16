@@ -1,7 +1,8 @@
-import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
-import { Portal, isServer } from "solid-js/web";
+import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
+import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
-import { Command, Modifier } from "../command";
+import { CommandType, Command } from "../command";
+import css from "./index.module.css";
 
 export interface MenuContextType {
     ref: Accessor<JSX.Element | undefined>;
@@ -9,13 +10,13 @@ export interface MenuContextType {
 
     addItems(items: (Item | ItemWithChildren)[]): void;
     items: Accessor<(Item | ItemWithChildren)[]>;
-    commands(): Command[];
+    commands(): CommandType[];
 };
 
 export interface Item {
     id: string;
     label: string;
-    command: Command;
+    command: CommandType;
 }
 
 export interface ItemWithChildren {
@@ -55,7 +56,7 @@ const useMenu = () => {
     return context;
 }
 
-type ItemProps = { label: string, children: JSX.Element } | { label: string, command: Command };
+type ItemProps = { label: string, children: JSX.Element } | { command: CommandType };
 
 const Item: Component<ItemProps> = (props) => {
     const id = createUniqueId();
@@ -77,7 +78,7 @@ const Item: Component<ItemProps> = (props) => {
 const Root: ParentComponent<{}> = (props) => {
     const menu = useMenu();
     const [current, setCurrent] = createSignal<HTMLElement>();
-    const items = children(() => props.children).toArray() as unknown as (Item & ItemWithChildren)[];
+    const items = children(() => props.children).toArray() as unknown as (Item | ItemWithChildren)[];
 
     menu.addItems(items)
 
@@ -91,7 +92,7 @@ const Root: ParentComponent<{}> = (props) => {
         }
     };
 
-    const onExecute = (command?: Command) => {
+    const onExecute = (command?: CommandType) => {
         return command
             ? async () => {
                 await command?.();
@@ -101,31 +102,20 @@ const Root: ParentComponent<{}> = (props) => {
             : () => { }
     };
 
-    const Button: Component<{ label: string, command?: Command } & { [key: string]: any }> = (props) => {
-        const [local, rest] = splitProps(props, ['label', 'command']);
-        return <button class="menu-item" type="button" on:pointerdown={onExecute(local.command)} {...rest}>
-            {local.label}
-            <Show when={local.command?.shortcut}>{
-                shortcut => {
-                    const shift = shortcut().modifier & Modifier.Shift ? 'Shft+' : '';
-                    const ctrl = shortcut().modifier & Modifier.Control ? 'Ctrl+' : '';
-                    const meta = shortcut().modifier & Modifier.Meta ? 'Meta+' : '';
-                    const alt = shortcut().modifier & Modifier.Alt ? 'Alt+' : '';
-
-                    return <sub>{ctrl}{shift}{meta}{alt}{shortcut().key}</sub>;
-                }
-            }</Show>
-        </button>;
+    const Child: Component<{ command: CommandType }> = (props) => {
+        return <button class={css.item} type="button" onpointerdown={onExecute(props.command)}>
+            <Command command={props.command} />
+        </button>
     };
 
     return <Portal mount={menu.ref()}>
         <For each={items}>{
-            item => <>
-                <Show when={item.children}>{
-                    children => <div
-                        class="menu-child"
-                        id={`child-${item.id}`}
-                        style={`position-anchor: --menu-${item.id};`}
+            item => <Show when={Object.hasOwn(item, 'children') ? item as ItemWithChildren : undefined} fallback={<Child command={item.command} />}>{
+                item => <>
+                    <div
+                        class={css.child}
+                        id={`child-${item().id}`}
+                        style={`position-anchor: --menu-${item().id};`}
                         popover
                         on:toggle={(e: ToggleEvent) => {
                             if (e.newState === 'open' && e.target !== null) {
@@ -133,17 +123,21 @@ const Root: ParentComponent<{}> = (props) => {
                             }
                         }}
                     >
-                        <For each={children()}>
-                            {(child) => <Button label={child.label} command={child.command} />}
+                        <For each={item().children}>
+                            {(child) => <Child command={child.command} />}
                         </For>
                     </div>
-                }</Show>
 
-                <Button
-                    label={item.label}
-                    {...(item.children ? { popovertarget: `child-${item.id}`, style: `anchor-name: --menu-${item.id};` } : { command: item.command })}
-                />
-            </>
+                    <button
+                        class={css.item}
+                        type="button"
+                        popovertarget={`child-${item().id}`}
+                        style={`anchor-name: --menu-${item().id};`}
+                    >
+                        {item().label}
+                    </button>
+                </>
+            }</Show>
         }</For>
     </Portal>
 };

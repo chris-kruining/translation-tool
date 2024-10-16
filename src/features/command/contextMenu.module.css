@@ -1,0 +1,15 @@
+.menu {
+    position: fixed;
+    display: grid;
+    grid-template-columns: max-content;
+
+    inset-inline-start: anchor(start);
+    inset-block-start: anchor(end);
+    margin: 0;
+
+    background-color: var(--surface-1);
+    color: var(--text-1);
+    border: none;
+
+    padding: var(--padding-m);
+}

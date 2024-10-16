@@ -20,10 +20,18 @@ const debounce = <T extends (...args: any[]) => void>(callback: T, delay: number
 interface Leaf extends Record<string, string> { }
 export interface Entry extends Record<string, Entry | Leaf> { }
 
+type Rows = Record<string, { [lang: string]: { original: string, value: string } }>;
+
 export interface GridContextType {
-    rows: Record<string, { [lang: string]: { original: string, value: string } }>;
-    selection: Accessor<object[]>;
+    readonly rows: Accessor<Rows>;
+    readonly selection: Accessor<object[]>;
     mutate(prop: string, lang: string, value: string): void;
+}
+
+export interface GridApi {
+    readonly rows: Accessor<Rows>;
+    selectAll(): void;
+    clear(): void;
 }
 
 const GridContext = createContext<GridContextType>();
@@ -31,9 +39,9 @@ const GridContext = createContext<GridContextType>();
 const isLeaf = (entry: Entry | Leaf): entry is Leaf => Object.values(entry).some(v => typeof v === 'string');
 const useGrid = () => useContext(GridContext)!;
 
-const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, context?: (ctx: GridContextType) => any }> = (props) => {
+const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }> }> = (props) => {
     const [selection, setSelection] = createSignal<object[]>([]);
-    const [state, setState] = createStore<{ rows: GridContextType['rows'], numberOfRows: number }>({
+    const [state, setState] = createStore<{ rows: Rows, numberOfRows: number }>({
         rows: {},
         numberOfRows: 0,
     });
@@ -46,13 +54,12 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
         setState('rows', Object.fromEntries(rows));
     });
 
-
     createEffect(() => {
         setState('numberOfRows', Object.keys(state.rows).length);
     });
 
     const ctx: GridContextType = {
-        rows: state.rows,
+        rows: createMemo(() => state.rows),
         selection,
 
         mutate(prop: string, lang: string, value: string) {
@@ -62,15 +69,7 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
         },
     };
 
-    createEffect(() => {
-        props.context?.(ctx);
-    });
-
     const mutated = createMemo(() => Object.values(state.rows).filter(entry => Object.values(entry).some(lang => lang.original !== lang.value)));
-
-    createEffect(() => {
-        console.log('tap', mutated());
-    });
 
     return <GridContext.Provider value={ctx}>
         <SelectionProvider selection={setSelection} multiSelect>
@@ -79,7 +78,7 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
     </GridContext.Provider>;
 };
 
-export const Grid: Component<{ class?: string, columns: string[], rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, context?: (ctx: GridContextType) => any }> = (props) => {
+export const Grid: Component<{ class?: string, columns: string[], rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, api?: (api: GridApi) => any }> = (props) => {
     const columnCount = createMemo(() => props.columns.length - 1);
     const root = createMemo<Entry>(() => {
         return props.rows
@@ -107,7 +106,9 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Map<stri
     });
 
     return <section class={`${css.table} ${props.class}`} style={{ '--columns': columnCount() }}>
-        <GridProvider rows={props.rows} context={props.context}>
+        <GridProvider rows={props.rows}>
+            <Api api={props.api} />
+
             <Head headers={props.columns} />
 
             <main class={css.main}>
@@ -115,6 +116,27 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Map<stri
             </main>
         </GridProvider>
     </section>
+};
+
+const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => {
+    const gridContext = useGrid();
+    const selectionContext = useSelection();
+
+    const api: GridApi = {
+        rows: gridContext.rows,
+        selectAll() {
+            selectionContext.selectAll();
+        },
+        clear() {
+            selectionContext.clear();
+        },
+    };
+
+    createEffect(() => {
+        props.api?.(api);
+    });
+
+    return null;
 };
 
 const Head: Component<{ headers: string[] }> = (props) => {
