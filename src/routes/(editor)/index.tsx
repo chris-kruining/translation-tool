@@ -1,8 +1,8 @@
 import { Component, createEffect, createMemo, createResource, createSignal, For, onMount, Show } from "solid-js";
 import { useFiles } from "~/features/file";
 import { AiFillFile, AiFillFolder, AiFillFolderOpen } from "solid-icons/ai";
-import "./index.css";
 import { A } from "@solidjs/router";
+import css from "./index.module.css";
 
 interface FileEntry {
   name: string;
@@ -40,7 +40,7 @@ async function* walk(directory: FileSystemDirectoryHandle, filters: RegExp[] = [
 
 export default function Index() {
   return (
-    <>
+    <main class={css.main}>
       <h1>Hi, welcome!</h1>
       <b>Lets get started</b>
 
@@ -48,6 +48,6 @@ export default function Index() {
         <li><A href="/edit">Start editing</A></li>
         <li><A href="/experimental">Try new features</A></li>
       </ul>
-    </>
+    </main>
   );
 }

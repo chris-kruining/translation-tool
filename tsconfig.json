@@ -10,10 +10,17 @@
     "allowJs": true,
     "strict": true,
     "noEmit": true,
-    "types": ["vinxi/types/client", "@types/wicg-file-system-access"],
+    "types": [
+      "@solidjs/start/env",
+      "vinxi/types/client",
+      "@types/wicg-file-system-access",
+      "vite-plugin-pwa/solid"
+    ],
     "isolatedModules": true,
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": [
+        "./src/*"
+      ]
     }
   }
 }

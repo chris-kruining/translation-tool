@@ -1,17 +1,7 @@
-import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, onCleanup, onMount, ParentComponent, useContext } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, onCleanup, onMount, ParentComponent, Setter, Signal, useContext } from "solid-js";
+import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import css from "./index.module.css";
-
-export interface SelectionContextType {
-    selection(): object[];
-    select(selection: string[], options?: Partial<{ append: boolean }>): void;
-    selectAll(): void;
-    clear(): void;
-    isSelected(key: string): Accessor<boolean>;
-    add(key: string, value: object, element: HTMLElement): void;
-}
-export type SelectionHandler = (selection: object[]) => any;
 
 enum Modifier {
     None = 0,
@@ -19,9 +9,33 @@ enum Modifier {
     Control = 1 << 1,
 }
 
-const SelectionContext = createContext<SelectionContextType>();
+enum SelectionMode {
+    Normal,
+    Replace,
+    Append,
+    Toggle,
+}
 
-const useSelection = () => {
+export interface SelectionContextType {
+    readonly selection: Accessor<object[]>;
+    readonly length: Accessor<number>;
+    select(selection: string[], options?: Partial<{ mode: SelectionMode }>): void;
+    selectAll(): void;
+    clear(): void;
+    isSelected(key: string): Accessor<boolean>;
+}
+interface InternalSelectionContextType {
+    readonly latest: Signal<HTMLElement | undefined>,
+    readonly modifier: Signal<Modifier>,
+    readonly selectables: Signal<HTMLElement[]>,
+    add(key: string, value: object, element: HTMLElement): void;
+}
+export type SelectionHandler = (selection: object[]) => any;
+
+const SelectionContext = createContext<SelectionContextType>();
+const InternalSelectionContext = createContext<InternalSelectionContextType>();
+
+export const useSelection = () => {
     const context = useContext(SelectionContext);
 
     if (context === undefined) {
@@ -30,24 +44,45 @@ const useSelection = () => {
 
     return context;
 };
+const useInternalSelection = () => useContext(InternalSelectionContext)!;
 
 interface State {
-    selection: string[],
-    data: { key: string, value: Accessor<any>, element: HTMLElement }[]
+    selection: string[];
+    data: { key: string, value: Accessor<any>, element: WeakRef<HTMLElement> }[];
 }
 
-export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler }> = (props) => {
+export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, multiSelect?: true }> = (props) => {
     const [state, setState] = createStore<State>({ selection: [], data: [] });
     const selection = createMemo(() => state.data.filter(({ key }) => state.selection.includes(key)));
+    const length = createMemo(() => state.data.length);
 
     createEffect(() => {
         props.selection?.(selection().map(({ value }) => value()));
     });
 
-    const context = {
+    const context: SelectionContextType = {
         selection,
-        select(selection: string[]) {
-            setState('selection', selection);
+        length,
+        select(selection, { mode = SelectionMode.Normal } = {}) {
+            if (props.multiSelect === true && mode === SelectionMode.Normal) {
+                mode = SelectionMode.Append;
+            }
+
+            setState('selection', existing => {
+                switch (mode) {
+                    case SelectionMode.Toggle: {
+                        return [...existing.filter(i => !selection.includes(i)), ...selection.filter(i => !existing.includes(i))];
+                    }
+
+                    case SelectionMode.Append: {
+                        return existing.concat(selection);
+                    }
+
+                    default: {
+                        return selection;
+                    }
+                }
+            });
         },
         selectAll() {
             setState('selection', state.data.map(({ key }) => key));
@@ -58,112 +93,61 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler }
         isSelected(key: string) {
             return createMemo(() => state.selection.includes(key));
         },
+    };
+
+    const internal: InternalSelectionContextType = {
+        modifier: createSignal<Modifier>(Modifier.None),
+        latest: createSignal<HTMLElement>(),
+        selectables: createSignal<HTMLElement[]>([]),
         add(key: string, value: Accessor<any>, element: HTMLElement) {
-            setState('data', data => [...data, { key, value, element }]);
-        }
+            setState('data', data => [...data, { key, value, element: new WeakRef(element) }]);
+        },
     };
 
     return <SelectionContext.Provider value={context}>
-        <Root>{props.children}</Root>
+        <InternalSelectionContext.Provider value={internal}>
+            <Root>{props.children}</Root>
+        </InternalSelectionContext.Provider>
     </SelectionContext.Provider>;
 };
 
 const Root: ParentComponent = (props) => {
-    const context = useSelection();
+    const internal = useInternalSelection();
     const c = children(() => props.children);
 
-    const [modifier, setModifier] = createSignal<Modifier>(Modifier.None);
-    const [latest, setLatest] = createSignal<HTMLElement>();
     const [root, setRoot] = createSignal<HTMLElement>();
-    const selectables = createMemo(() => {
+    const [, setSelectables] = internal.selectables;
+    const [, setModifier] = internal.modifier;
+
+    createEffect(() => {
         const r = root();
 
-        if (!r) {
-            return [];
-        }
+        if (!isServer && r) {
+            const findSelectables = () => {
+                setSelectables(Array.from((function* () {
+                    const iterator = document.createTreeWalker(r, NodeFilter.SHOW_ELEMENT, {
+                        acceptNode: (node: HTMLElement) => node.dataset.selectionKey ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
+                    });
 
-        return Array.from((function* () {
-            const iterator = document.createTreeWalker(r, NodeFilter.SHOW_ELEMENT, {
-                acceptNode: (node: HTMLElement) => node.dataset.selectionKey ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
+                    while (iterator.nextNode()) {
+                        yield iterator.currentNode as HTMLElement;
+                    }
+                })()));
+            };
+
+            const observer = new MutationObserver(entries => {
+                const shouldRecalculate = entries.some(r => r.addedNodes.values().some(node => node instanceof HTMLElement && node.dataset.selectionKey));
+
+                if (shouldRecalculate) {
+                    findSelectables();
+                }
             });
 
-            while (iterator.nextNode()) {
-                yield iterator.currentNode;
-            }
-        })());
+            findSelectables();
+
+            observer.observe(r, { childList: true, attributes: true, attributeFilter: ['data-selection-key'], subtree: true });
+        }
     });
-
-    createRenderEffect(() => {
-        const children = c.toArray();
-        const r = root();
-
-        if (!r) {
-            return;
-        }
-
-        setTimeout(() => {
-            console.log(r, children, Array.from((function* () {
-                const iterator = document.createTreeWalker(r, NodeFilter.SHOW_ELEMENT, {
-                    acceptNode: (node: HTMLElement) => node.dataset.selectionKey ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
-                });
-
-                while (iterator.nextNode()) {
-                    console.log(iterator.currentNode);
-
-                    yield iterator.currentNode;
-                }
-            })()));
-        }, 10);
-    });
-
-    const createRange = (a?: HTMLElement, b?: HTMLElement): string[] => {
-        if (!a && !b) {
-            return [];
-        }
-
-        if (!a) {
-            return [b!.dataset.selecatableKey!];
-        }
-
-        if (!b) {
-            return [a!.dataset.selecatableKey!];
-        }
-
-        if (a === b) {
-            return [a!.dataset.selecatableKey!];
-        }
-
-        const nodes = selectables();
-        const aIndex = nodes.indexOf(a);
-        const bIndex = nodes.indexOf(b);
-        const selection = nodes.slice(Math.min(aIndex, bIndex), Math.max(aIndex, bIndex) + 1);
-
-        console.log(aIndex, bIndex, nodes,);
-
-        return selection.map(n => n.dataset.selectionKey);
-    };
-
-    const onPointerDown = (e: PointerEvent) => {
-        const key = e.target?.dataset.selectionKey;
-
-        if (!key) {
-            return;
-        }
-
-        const shift = Boolean(modifier() & Modifier.Shift);
-        const append = Boolean(modifier() & Modifier.Control);
-
-        // Logic table
-        // shift | control | behavior                                          |
-        // ------|---------|---------------------------------------------------|
-        // true  | true    | create range from latest to current and append    |
-        // true  | false   | create range from latest to current and overwrite |
-        // false | true    | append                                            |
-        // false | false   | overwrite / set                                   |
-
-        context.select(shift ? createRange(latest(), e.target as HTMLElement) : [key], { append });
-        setLatest(e.target);
-    };
 
     const onKeyboardEvent = (e: KeyboardEvent) => {
         if (e.repeat || ['Control', 'Shift'].includes(e.key) === false) {
@@ -190,7 +174,6 @@ const Root: ParentComponent = (props) => {
     };
 
     onMount(() => {
-        document.addEventListener('pointerdown', onPointerDown);
         document.addEventListener('keydown', onKeyboardEvent);
         document.addEventListener('keyup', onKeyboardEvent);
     });
@@ -200,27 +183,85 @@ const Root: ParentComponent = (props) => {
             return;
         }
 
-        document.removeEventListener('pointerdown', onPointerDown);
         document.removeEventListener('keydown', onKeyboardEvent);
         document.removeEventListener('keyup', onKeyboardEvent);
-    });
-
-    createEffect(() => {
-        console.log(selectables());
     });
 
     return <div ref={setRoot} style={{ 'display': 'contents' }}>{c()}</div>;
 };
 
-export const selectable = (element: HTMLElement, value: Accessor<any>) => {
+export const selectable = (element: HTMLElement, options: Accessor<{ value: object, key?: string }>) => {
     const context = useSelection();
-    const key = createUniqueId();
+    const internal = useInternalSelection();
+
+    const key = options().key ?? createUniqueId();
+    const value = createMemo(() => options().value);
     const isSelected = context.isSelected(key);
 
-    context.add(key, value, element);
+    internal.add(key, value, element);
+
+    const createRange = (a?: HTMLElement, b?: HTMLElement): string[] => {
+        if (!a && !b) {
+            return [];
+        }
+
+        if (!a) {
+            return [b!.dataset.selecatableKey!];
+        }
+
+        if (!b) {
+            return [a!.dataset.selecatableKey!];
+        }
+
+        if (a === b) {
+            return [a!.dataset.selecatableKey!];
+        }
+
+        const nodes = internal.selectables[0]();
+        const aIndex = nodes.indexOf(a);
+        const bIndex = nodes.indexOf(b);
+        const selection = nodes.slice(Math.min(aIndex, bIndex), Math.max(aIndex, bIndex) + 1);
+
+        return selection.map(n => n.dataset.selectionKey!);
+    };
+
 
     createRenderEffect(() => {
         element.dataset.selected = isSelected() ? 'true' : undefined;
+    });
+
+    const onPointerDown = (e: PointerEvent) => {
+        e.preventDefault();
+
+        const [latest, setLatest] = internal.latest
+        const [modifier] = internal.modifier
+
+        const withRange = Boolean(modifier() & Modifier.Shift);
+        const append = Boolean(modifier() & Modifier.Control);
+
+        const mode = (() => {
+            if (append) return SelectionMode.Append;
+            if (!withRange && isSelected()) return SelectionMode.Toggle;
+            return SelectionMode.Normal;
+        })();
+
+        context.select(withRange ? createRange(latest(), element) : [key], { mode });
+
+        if (!withRange) {
+            setLatest(element);
+        }
+    };
+
+    onMount(() => {
+        element.addEventListener('pointerdown', onPointerDown);
+    });
+
+    onCleanup(() => {
+        if (isServer) {
+            return;
+        }
+
+        element.removeEventListener('pointerdown', onPointerDown);
     });
 
     element.classList.add(css.selectable);
@@ -230,7 +271,7 @@ export const selectable = (element: HTMLElement, value: Accessor<any>) => {
 declare module "solid-js" {
     namespace JSX {
         interface Directives {
-            selectable: any;
+            selectable: { value: object, key?: string };
         }
     }
 }
