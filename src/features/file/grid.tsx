@@ -203,8 +203,8 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
     let element: HTMLTextAreaElement;
 
     const resize = () => {
-        element.style.blockSize = `1px`;
-        element.style.blockSize = `${11 + element.scrollHeight}px`;
+        element.style.height = `1px`;
+        element.style.height = `${11 + element.scrollHeight}px`;
     };
 
     const mutate = debounce(() => {
