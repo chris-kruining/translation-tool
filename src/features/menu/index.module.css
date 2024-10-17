@@ -9,7 +9,7 @@
     text-align: start;
 
     &:hover {
-        background-color: var(--surface-2);
+        background-color: var(--surface-4);
     }
 }
 
@@ -25,8 +25,8 @@
     padding: var(--padding-m) 0;
     inline-size: max-content;
 
-    background-color: var(--surface-2);
-    border: 1px solid var(--surface-3);
+    background-color: var(--surface-4);
+    border: 1px solid var(--surface-5);
     border-block-start-width: 0;
     margin: unset;
 
@@ -40,10 +40,10 @@
         grid-template-columns: subgrid;
         align-items: center;
 
-        background-color: var(--surface-2);
+        background-color: var(--surface-4);
 
         &:hover {
-            background-color: var(--surface-3);
+            background-color: var(--surface-5);
         }
 
         & > sub {
@@ -54,5 +54,5 @@
 }
 
 :popover-open + .item {
-    background-color: var(--surface-2);
+    background-color: var(--surface-4);
 }

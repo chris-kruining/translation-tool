@@ -55,6 +55,7 @@
         position: sticky;
         inset-block-start: 0;
         background-color: var(--surface-1);
+        border-block-end: 1px solid var(--surface-5);
     }
 
     & .row {

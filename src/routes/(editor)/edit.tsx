@@ -112,8 +112,6 @@ export default function Edit(props: ParentProps) {
             });
 
         }, { key: 's', modifier: Modifier.Control | Modifier.Shift }),
-        edit: createCommand('edit', () => {
-        }),
         selectAll: createCommand('select all', () => {
             api()?.selectAll();
         }, { key: 'a', modifier: Modifier.Control }),
@@ -143,7 +141,7 @@ export default function Edit(props: ParentProps) {
                     <Menu.Item command={commands.save} />
                 </Menu.Item>
 
-                <Menu.Item command={commands.edit} />
+                <Menu.Item command={noop.withLabel('edit')} />
 
                 <Menu.Item label="selection">
                     <Menu.Item command={commands.selectAll} />
@@ -151,7 +149,7 @@ export default function Edit(props: ParentProps) {
                     <Menu.Item command={commands.clearSelection} />
                 </Menu.Item>
 
-                <Menu.Item label="view" command={noop} />
+                <Menu.Item command={noop.withLabel('view')} />
             </Menu.Root>
 
             <Sidebar as="aside" class={css.sidebar}>

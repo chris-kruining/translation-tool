@@ -32,7 +32,16 @@ export const createCommand = (label: string, command: () => any, shortcut?: Comm
     });
 };
 
-export const noop = createCommand('noop', () => { });
+export const noop = Object.defineProperties(createCommand('noop', () => { }), {
+    withLabel: {
+        value(label: string) {
+            return createCommand(label, () => { });
+        },
+        configurable: false,
+        writable: false,
+    },
+}) as CommandType & { withLabel(label: string): CommandType };
+
 
 export const Command: Component<{ command: CommandType }> = (props) => {
     return <>

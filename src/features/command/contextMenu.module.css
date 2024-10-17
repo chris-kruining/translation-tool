@@ -1,6 +1,6 @@
 .menu {
     position: fixed;
-    display: grid;
+    display: none;
     grid-template-columns: auto auto;
     place-content: start;
 
@@ -27,5 +27,9 @@
             color: var(--text-2);
             text-align: end;
         }
+    }
+
+    &:popover-open {
+        display: grid;
     }
 }

@@ -1,9 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght,GRAD@8..144,400,45;8..144,400,50;8..144,1000,0&family=Roboto+Serif:opsz,GRAD@8..144,71&display=swap");
 
 :root {
-  --surface-1: #eee;
-  --surface-2: #f8f8f8;
-  --surface-3: #fff;
+  --surface-1: #ddd;
+  --surface-2: #e8e8e8;
+  --surface-3: #eee;
+  --surface-4: #f8f8f8;
+  --surface-5: #fff;
   --text-1: #222;
   --text-2: #282828;
   --primary: #41c6b3;
@@ -33,9 +35,11 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --surface-1: #333;
-    --surface-2: #383838;
-    --surface-3: #444;
+    --surface-1: #222;
+    --surface-2: #282828;
+    --surface-3: #333;
+    --surface-4: #383838;
+    --surface-5: #444;
     --text-1: #eee;
     --text-2: #d8d8d8;
 
@@ -71,6 +75,10 @@ body {
 
   * {
     box-sizing: border-box;
+
+    &:focus-visible {
+      outline: 1px solid var(--info);
+    }
   }
 
   & .menu-root {
@@ -84,7 +92,7 @@ body {
     padding-inline-start: 1em;
     block-size: 2em;
 
-    background-color: var(--surface-2);
+    background-color: var(--surface-3);
     color: var(--text-1);
 
     & > .logo {

@@ -69,8 +69,6 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
         },
     };
 
-    const mutated = createMemo(() => Object.values(state.rows).filter(entry => Object.values(entry).some(lang => lang.original !== lang.value)));
-
     return <GridContext.Provider value={ctx}>
         <SelectionProvider selection={setSelection} multiSelect>
             {props.children}
@@ -204,7 +202,7 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
 
     const resize = () => {
         element.style.height = `1px`;
-        element.style.height = `${11 + element.scrollHeight}px`;
+        element.style.height = `${2 + element.scrollHeight}px`;
     };
 
     const mutate = debounce(() => {
