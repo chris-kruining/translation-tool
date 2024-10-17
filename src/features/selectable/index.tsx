@@ -240,6 +240,7 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
         const mode = (() => {
             if (append) return SelectionMode.Append;
             if (!withRange && isSelected()) return SelectionMode.Toggle;
+            if (withRange) return SelectionMode.Replace;
             return SelectionMode.Normal;
         })();
 

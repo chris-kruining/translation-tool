@@ -28,13 +28,20 @@
 
     & .cell {
         display: grid;
-        place-content: center stretch;
         padding: .5em;
         border: 1px solid transparent;
         border-radius: var(--radii-m);
 
         &:has(textarea:focus) {
             border-color: var(--info);
+        }
+
+        & > span {
+            align-self: center;
+        }
+
+        & > textarea {
+            min-block-size: 100%;
         }
     }
 
