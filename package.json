@@ -2,13 +2,13 @@
   "name": "example-basic",
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.7",
-    "@solidjs/start": "^1.0.8",
+    "@solidjs/router": "^0.14.10",
+    "@solidjs/start": "^1.0.9",
     "dexie": "^4.0.8",
     "iterator-helpers-polyfill": "^3.0.1",
     "solid-icons": "^1.1.0",
-    "solid-js": "^1.9.1",
-    "vinxi": "^0.4.1"
+    "solid-js": "^1.9.2",
+    "vinxi": "^0.4.3"
   },
   "engines": {
     "node": ">=18"
