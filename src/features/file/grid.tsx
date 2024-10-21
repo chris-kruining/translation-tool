@@ -1,5 +1,5 @@
 import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
-import { createStore } from "solid-js/store";
+import { createStore, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
 import css from './grid.module.css';
@@ -12,12 +12,14 @@ export interface Entry extends Record<string, Entry | Leaf> { }
 type Rows = Map<string, Record<string, string>>;
 
 export interface GridContextType {
+    readonly rows: Accessor<Record<string, Record<string, string>>>;
     readonly mutations: Accessor<Mutation[]>;
     readonly selection: Accessor<object[]>;
     mutate(prop: string, lang: string, value: string): void;
 }
 
 export interface GridApi {
+    readonly rows: Accessor<Record<string, Record<string, string>>>;
     readonly mutations: Accessor<Mutation[]>;
     selectAll(): void;
     clear(): void;
@@ -37,6 +39,7 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
     });
 
     const mutations = createMemo(() => deepDiff(state.snapshot, state.rows).toArray());
+    const rows = createMemo(() => Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, unwrap(row)] as const)));
 
     createEffect(() => {
         setState('rows', Object.fromEntries(deepCopy(props.rows).entries()));
@@ -48,6 +51,7 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
     });
 
     const ctx: GridContextType = {
+        rows,
         mutations,
         selection,
 
@@ -105,6 +109,7 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => 
     const selectionContext = useSelection();
 
     const api: GridApi = {
+        rows: gridContext.rows,
         mutations: gridContext.mutations,
         selectAll() {
             selectionContext.selectAll();

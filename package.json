@@ -8,6 +8,7 @@
     "iterator-helpers-polyfill": "^3.0.1",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.2",
+    "ts-pattern": "^5.5.0",
     "vinxi": "^0.4.3"
   },
   "engines": {

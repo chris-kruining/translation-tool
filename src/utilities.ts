@@ -41,10 +41,15 @@ export const deepCopy = <T>(original: T): T => {
     ) as T;
 }
 
-type Added = { kind: 'added', value: any };
-type Updated = { kind: 'updated', value: any, original: any };
-type Removed = { kind: 'removed' };
-export type Mutation = { key: string } & (Added | Updated | Removed);
+export enum MutarionKind {
+    Create = 'created',
+    Update = 'updated',
+    Delete = 'deleted',
+}
+type Created = { kind: MutarionKind.Create, value: any };
+type Updated = { kind: MutarionKind.Update, value: any, original: any };
+type Deleted = { kind: MutarionKind.Delete };
+export type Mutation = { key: string } & (Created | Updated | Deleted);
 
 export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, path: string[] = []): Generator<Mutation, void, unknown> {
     if (!isIterable(a) || !isIterable(b)) {
@@ -59,14 +64,14 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         }
 
         if (!keyA && keyB) {
-            yield { key: path.concat(keyB.toString()).join('.'), kind: 'added', value: valueB };
+            yield { key: path.concat(keyB.toString()).join('.'), kind: MutarionKind.Create, value: valueB };
 
             continue;
         }
 
         if (keyA && !keyB) {
             // value was added
-            yield { key: path.concat(keyA.toString()).join('.'), kind: 'removed' };
+            yield { key: path.concat(keyA.toString()).join('.'), kind: MutarionKind.Delete };
 
             continue;
         }
@@ -84,10 +89,10 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         const key = path.concat(keyA!.toString()).join('.');
 
         yield ((): Mutation => {
-            if (valueA === null || valueA === undefined) return { key, kind: 'added', value: valueB };
-            if (valueB === null || valueB === undefined) return { key, kind: 'removed' };
+            if (valueA === null || valueA === undefined) return { key, kind: MutarionKind.Create, value: valueB };
+            if (valueB === null || valueB === undefined) return { key, kind: MutarionKind.Delete };
 
-            return { key, kind: 'updated', value: valueB, original: valueA };
+            return { key, kind: MutarionKind.Update, value: valueB, original: valueA };
         })();
     }
 };
