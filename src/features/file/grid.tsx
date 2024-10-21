@@ -1,35 +1,24 @@
 import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
-import { createStore, produce } from "solid-js/store";
+import { createStore } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
+import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
 import css from './grid.module.css';
 
 selectable // prevents removal of import
 
-const debounce = <T extends (...args: any[]) => void>(callback: T, delay: number): T => {
-    let handle: ReturnType<typeof setTimeout> | undefined;
-
-    return (...args: any[]) => {
-        if (handle) {
-            clearTimeout(handle);
-        }
-
-        handle = setTimeout(() => callback(...args), delay);
-    }
-};
-
 interface Leaf extends Record<string, string> { }
 export interface Entry extends Record<string, Entry | Leaf> { }
 
-type Rows = Record<string, { [lang: string]: { original: string, value: string } }>;
+type Rows = Map<string, Record<string, string>>;
 
 export interface GridContextType {
-    readonly rows: Accessor<Rows>;
+    readonly mutations: Accessor<Mutation[]>;
     readonly selection: Accessor<object[]>;
     mutate(prop: string, lang: string, value: string): void;
 }
 
 export interface GridApi {
-    readonly rows: Accessor<Rows>;
+    readonly mutations: Accessor<Mutation[]>;
     selectAll(): void;
     clear(): void;
 }
@@ -39,19 +28,19 @@ const GridContext = createContext<GridContextType>();
 const isLeaf = (entry: Entry | Leaf): entry is Leaf => Object.values(entry).some(v => typeof v === 'string');
 const useGrid = () => useContext(GridContext)!;
 
-const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }> }> = (props) => {
+const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
     const [selection, setSelection] = createSignal<object[]>([]);
-    const [state, setState] = createStore<{ rows: Rows, numberOfRows: number }>({
+    const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, snapshot: Rows, numberOfRows: number }>({
         rows: {},
+        snapshot: new Map,
         numberOfRows: 0,
     });
 
-    createEffect(() => {
-        const rows = props.rows
-            .entries()
-            .map(([prop, entry]) => [prop, Object.fromEntries(Object.entries(entry).map(([lang, { value }]) => [lang, { original: value, value }]))]);
+    const mutations = createMemo(() => deepDiff(state.snapshot, state.rows).toArray());
 
-        setState('rows', Object.fromEntries(rows));
+    createEffect(() => {
+        setState('rows', Object.fromEntries(deepCopy(props.rows).entries()));
+        setState('snapshot', props.rows);
     });
 
     createEffect(() => {
@@ -59,13 +48,11 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
     });
 
     const ctx: GridContextType = {
-        rows: createMemo(() => state.rows),
+        mutations,
         selection,
 
         mutate(prop: string, lang: string, value: string) {
-            setState('rows', produce(rows => {
-                rows[prop][lang].value = value;
-            }));
+            setState('rows', prop, lang, value);
         },
     };
 
@@ -76,32 +63,29 @@ const GridProvider: ParentComponent<{ rows: Map<string, { [lang: string]: { valu
     </GridContext.Provider>;
 };
 
-export const Grid: Component<{ class?: string, columns: string[], rows: Map<string, { [lang: string]: { value: string, handle: FileSystemFileHandle } }>, api?: (api: GridApi) => any }> = (props) => {
+export const Grid: Component<{ class?: string, columns: string[], rows: Rows, api?: (api: GridApi) => any }> = (props) => {
     const columnCount = createMemo(() => props.columns.length - 1);
-    const root = createMemo<Entry>(() => {
-        return props.rows
-            ?.entries()
-            .map(([key, value]) => [key, Object.fromEntries(Object.entries(value).map(([lang, { value }]) => [lang, value]))] as const)
-            .reduce((aggregate, [key, entry]) => {
-                let obj: any = aggregate;
-                const parts = key.split('.');
+    const root = createMemo<Entry>(() => props.rows
+        ?.entries()
+        .reduce((aggregate, [key, value]) => {
+            let obj: any = aggregate;
+            const parts = key.split('.');
 
-                for (const [i, part] of parts.entries()) {
-                    if (Object.hasOwn(obj, part) === false) {
-                        obj[part] = {};
-                    }
-
-                    if (i === (parts.length - 1)) {
-                        obj[part] = entry;
-                    }
-                    else {
-                        obj = obj[part];
-                    }
+            for (const [i, part] of parts.entries()) {
+                if (Object.hasOwn(obj, part) === false) {
+                    obj[part] = {};
                 }
 
-                return aggregate;
-            }, {});
-    });
+                if (i === (parts.length - 1)) {
+                    obj[part] = value;
+                }
+                else {
+                    obj = obj[part];
+                }
+            }
+
+            return aggregate;
+        }, {}));
 
     return <section class={`${css.table} ${props.class}`} style={{ '--columns': columnCount() }}>
         <GridProvider rows={props.rows}>
@@ -121,7 +105,7 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => 
     const selectionContext = useSelection();
 
     const api: GridApi = {
-        rows: gridContext.rows,
+        mutations: gridContext.mutations,
         selectAll() {
             selectionContext.selectAll();
         },
@@ -171,7 +155,7 @@ const Row: Component<{ entry: Entry, path?: string[] }> = (props) => {
             return <Show when={isLeaf(value)} fallback={<Group key={key} entry={value as Entry} path={path} />}>
                 <div class={css.row} use:selectable={{ value, key: k }}>
                     <div class={css.cell}>
-                        <input type="checkbox" checked={isSelected()} oninput={() => context.select([k], { append: true })} />
+                        <input type="checkbox" checked={isSelected()} oninput={() => context.select([k])} />
                     </div>
 
                     <div class={css.cell}>
@@ -229,5 +213,6 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         spellcheck
         wrap="soft"
         onkeyup={onKeyUp}
+        on:pointerdown={(e: PointerEvent) => e.stopPropagation()}
     />
 };

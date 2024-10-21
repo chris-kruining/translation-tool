@@ -65,7 +65,7 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, 
         length,
         select(selection, { mode = SelectionMode.Normal } = {}) {
             if (props.multiSelect === true && mode === SelectionMode.Normal) {
-                mode = SelectionMode.Append;
+                mode = SelectionMode.Toggle;
             }
 
             setState('selection', existing => {
@@ -238,8 +238,7 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
         const append = Boolean(modifier() & Modifier.Control);
 
         const mode = (() => {
-            if (append) return SelectionMode.Append;
-            if (!withRange && isSelected()) return SelectionMode.Toggle;
+            if (append) return SelectionMode.Toggle;
             if (withRange) return SelectionMode.Replace;
             return SelectionMode.Normal;
         })();

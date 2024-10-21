@@ -16,4 +16,12 @@
             margin: 0;
         }
     }
+
+    .mutated {
+        color: var(--warn);
+
+        &::after {
+            content: ' •';
+        }
+    }
 }
