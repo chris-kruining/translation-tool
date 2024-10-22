@@ -11,6 +11,8 @@ export interface FileEntry {
     id: string;
     kind: 'file';
     meta: File;
+    handle: FileSystemFileHandle;
+    directory: FileSystemDirectoryHandle;
 }
 
 export interface FolderEntry {
@@ -37,7 +39,7 @@ export async function* walk(directory: FileSystemDirectoryHandle, filters: RegEx
         const id = await handle.getUniqueId();
 
         if (handle.kind === 'file') {
-            yield { name: handle.name, id, kind: 'file', meta: await handle.getFile() };
+            yield { name: handle.name, id, kind: 'file', meta: await handle.getFile(), handle, directory };
         }
         else {
             yield { name: handle.name, id, kind: 'folder', entries: await Array.fromAsync(walk(handle, filters, depth + 1)) };

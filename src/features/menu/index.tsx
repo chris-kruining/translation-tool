@@ -247,12 +247,6 @@ export const CommandPalette: Component<{ api?: (api: CommandPaletteApi) => any, 
         }
     });
 
-    // temp debug code 
-    createEffect(() => {
-        search()?.searchFor('c');
-        setOpen(true);
-    });
-
     const onSubmit = (command: CommandType) => {
         setOpen(false);
         props.onSubmit?.(command);
@@ -296,7 +290,7 @@ interface SearchableListProps<T> {
 function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
     const [term, setTerm] = createSignal<string>('');
     const [input, setInput] = createSignal<HTMLInputElement>();
-    const [selected, setSelected] = createSignal<number>();
+    const [selected, setSelected] = createSignal<number>(0);
     const id = createUniqueId();
 
     const results = createMemo(() => {
@@ -309,20 +303,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         return props.items.filter(item => props.filter ? props.filter(item, search) : props.keySelector(item).includes(search));
     });
 
-    const value = createMemo(() => {
-        const index = selected();
-
-        if (index === undefined) {
-            return undefined;
-        }
-
-        return results().at(index);
-    });
-    const inputValue = createMemo(() => {
-        const v = value();
-
-        return v !== undefined ? props.keySelector(v) : term();
-    });
+    const value = createMemo(() => results().at(selected()));
 
     const ctx = {
         filter: term,
@@ -333,7 +314,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         },
         clear() {
             setTerm('');
-            setSelected(undefined);
+            setSelected(0);
         },
     };
 
@@ -349,13 +330,13 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
 
     const onKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'ArrowUp') {
-            setSelected(current => current !== undefined && current > 0 ? current - 1 : undefined);
+            setSelected(current => Math.max(0, current - 1));
 
             e.preventDefault();
         }
 
         if (e.key === 'ArrowDown') {
-            setSelected(current => current !== undefined ? Math.min(results().length - 1, current + 1) : 0);
+            setSelected(current => Math.min(results().length - 1, current + 1));
 
             e.preventDefault();
         }
@@ -363,10 +344,6 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
 
     const onSubmit = (e: SubmitEvent) => {
         e.preventDefault();
-
-        if (selected() === undefined && term() !== '') {
-            setSelected(0);
-        }
 
         const v = value();
 
@@ -379,7 +356,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
     };
 
     return <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
-        <input id={`search-${id}`} ref={setInput} value={inputValue()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus />
+        <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" />
 
         <output for={`search-${id}`}>
             <For each={results()}>{

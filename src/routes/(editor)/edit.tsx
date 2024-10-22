@@ -1,4 +1,4 @@
-import { children, createEffect, createMemo, createResource, createSignal, onMount, ParentProps } from "solid-js";
+import { children, createEffect, createMemo, createResource, createSignal, createUniqueId, onMount, ParentProps } from "solid-js";
 import { MutarionKind, splitAt } from "~/utilities";
 import { Sidebar } from "~/components/sidebar";
 import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree, FileEntry, Entry } from "~/components/filetree";
@@ -132,7 +132,7 @@ export default function Edit(props: ParentProps) {
             filesContext.set('root', directory);
             mutate(directory);
         }),
-        save: createCommand('save', () => {
+        save: createCommand('save', async () => {
             const mutations = api()?.mutations() ?? [];
 
             if (mutations.length === 0) {
@@ -154,8 +154,8 @@ export default function Edit(props: ParentProps) {
             // 3) When a file has 0 keys, we can remove it.
 
             for (const mutation of mutations) {
-                const [key, lang] = splitAt(mutation.key, mutation.key.lastIndexOf('.'));
-                const entry = _entries.get(key);
+                const [k, lang] = splitAt(mutation.key, mutation.key.lastIndexOf('.'));
+                const entry = _entries.get(k);
                 const localEntry = entry?.[lang];
 
                 // TODO :: try to resolve to a file
@@ -178,36 +178,62 @@ export default function Edit(props: ParentProps) {
                     throw new Error('invalid edge case???');
                 }
 
-                if (localEntry.id === undefined) {
-                    const [, alternativeLocalEntry] = Object.entries(entry).find(([l, e]) => l !== lang && e.id !== undefined) ?? [];
+                const [handle, path = []] = await (async () => {
+                    if (localEntry.id === undefined) {
+                        const [, alternativeLocalEntry] = Object.entries(entry).find(([l, e]) => l !== lang && e.id !== undefined) ?? [];
 
-                    if (alternativeLocalEntry === undefined) {
-                        // unable to find alternative. show a picker instead?
-                        return;
+                        const { directory, path } = alternativeLocalEntry ? findFile(tree(), alternativeLocalEntry.id) ?? {} : {};
+
+                        // Short circuit if the mutation type is delete.
+                        // Otherwise we would create a new file handle,
+                        // and then immediately remove it again.
+                        if (mutation.kind === MutarionKind.Delete) {
+                            return [undefined, path] as const;
+                        }
+
+                        const handle = await window.showSaveFilePicker({
+                            suggestedName: `${lang}.json`,
+                            startIn: directory ?? root(),
+                            excludeAcceptAllOption: true,
+                            types: [
+                                { accept: { 'application/json': ['.json'] }, description: 'JSON' },
+                            ]
+                        });
+
+                        return [handle, path] as const;
                     }
 
-                    const file = findFile(tree(), alternativeLocalEntry.id);
+                    const { handle, path } = findFile(tree(), localEntry.id) ?? {};
 
-                    console.log('alt', file);
-                }
+                    return [handle, path] as const;
+                })();
 
-                const file = findFile(tree(), localEntry.id);
-                const fileExists = file !== undefined;
+                console.log(k, path.join('.'));
 
-                console.log(key, file?.path.join('.'));
+                const createNewFile = async (lang: string, directory: FileSystemDirectoryHandle) => {
+                    const handle = await window.showSaveFilePicker({
+                        suggestedName: `${lang}.json`,
+                        startIn: directory,
+                        excludeAcceptAllOption: true,
+                        types: [
+                            { accept: { 'application/json': ['.json'] }, description: 'JSON' },
+                        ]
+                    });
+                };
 
-                const fileLocalKey = key.slice(file?.path.join('.'));
+                const key = k.slice(path.join('.').length);
+                const { handle, path } = findFile(tree(), localEntry.id) ?? {};
 
-                const result = match([fileExists, mutation.kind])
-                    .with([true, MutarionKind.Create], () => ({ action: MutarionKind.Create, key, value: rows[key][lang], file: file?.meta }))
+                const result = match([handle !== undefined, mutation.kind])
+                    .with([true, MutarionKind.Create], () => ({ action: MutarionKind.Create, key, value: rows[key][lang], handle }))
                     .with([false, MutarionKind.Create], () => '2')
-                    .with([true, MutarionKind.Update], () => ({ action: MutarionKind.Update, key, value: rows[key][lang], file: file?.meta }))
+                    .with([true, MutarionKind.Update], () => ({ action: MutarionKind.Update, key, value: rows[key][lang], handle }))
                     .with([false, MutarionKind.Update], () => '4')
-                    .with([true, MutarionKind.Delete], () => ({ action: MutarionKind.Delete, key, file: file?.meta }))
+                    .with([true, MutarionKind.Delete], () => ({ action: MutarionKind.Delete, key, handle }))
                     .with([false, MutarionKind.Delete], () => '6')
                     .exhaustive();
 
-                console.log(mutation, key, lang, entry, file, result);
+                console.log(mutation, key, lang, entry, result);
             }
 
             // for (const fileId of files) {

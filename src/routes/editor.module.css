@@ -1,0 +1,7 @@
+.layout {
+    display: grid;
+    grid: auto minmax(0, 1fr) / 100%;
+    inline-size: 100%;
+    block-size: 100%;
+    overflow: clip;
+}

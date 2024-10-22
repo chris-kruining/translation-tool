@@ -1,11 +1,12 @@
 import { Title } from "@solidjs/meta";
-import { Component, createEffect, createMemo, createSignal, For, ParentProps, Show } from "solid-js";
+import { createSignal, ParentProps, Show } from "solid-js";
 import { BsTranslate } from "solid-icons/bs";
 import { FilesProvider } from "~/features/file";
-import { CommandPalette, CommandPaletteApi, MenuProvider, asMenuRoot, useMenu } from "~/features/menu";
+import { CommandPalette, CommandPaletteApi, MenuProvider, asMenuRoot } from "~/features/menu";
 import { isServer } from "solid-js/web";
 import { A } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
+import css from "./editor.module.css";
 
 asMenuRoot // prevents removal of import
 
@@ -22,7 +23,7 @@ export default function Editor(props: ParentProps) {
     return <MenuProvider commands={commands}>
         <Title>Translation-Tool</Title>
 
-        <main inert={commandPalette()?.open()}>
+        <main class={css.layout} inert={commandPalette()?.open()}>
             <nav use:asMenuRoot>
                 <A class="logo" href="/"><BsTranslate /></A>
             </nav>
