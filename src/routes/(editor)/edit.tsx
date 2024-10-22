@@ -158,12 +158,8 @@ export default function Edit(props: ParentProps) {
                 const entry = _entries.get(key);
                 const localEntry = entry?.[lang];
 
-                console.log(entry, localEntry);
-
-                // TODO :: this is not really a matrix, we should resolve the file when one does not exist
-                // 
-                // happy path :: When we do have both an entry and localEntry and the localEntry has an id and that file is found
-
+                // TODO :: try to resolve to a file
+                //
                 // |   | entry | localEntry | id | file |
                 // |---|-------!------------|----!------!
                 // | 1 | x     | x          | x  | x    |
@@ -171,9 +167,28 @@ export default function Edit(props: ParentProps) {
                 // | 3 | x     | x          |    |      |
                 // | 4 | x     |            |    |      |
                 // | 5 |       |            |    |      |
+                //
+                // 1. happy path
+                // 2. weird edge case
+                // 3. this language never had a file before. peek at at another language and create a new file with a mathing path
+                // 4. error?
+                // 5. error?
 
                 if (!localEntry) {
                     throw new Error('invalid edge case???');
+                }
+
+                if (localEntry.id === undefined) {
+                    const [, alternativeLocalEntry] = Object.entries(entry).find(([l, e]) => l !== lang && e.id !== undefined) ?? [];
+
+                    if (alternativeLocalEntry === undefined) {
+                        // unable to find alternative. show a picker instead?
+                        return;
+                    }
+
+                    const file = findFile(tree(), alternativeLocalEntry.id);
+
+                    console.log('alt', file);
                 }
 
                 const file = findFile(tree(), localEntry.id);

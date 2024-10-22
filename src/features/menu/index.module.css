@@ -56,3 +56,47 @@
 :popover-open + .item {
     background-color: var(--surface-4);
 }
+
+.commandPalette {
+    display: none;
+    background-color: var(--surface-1);
+    color: var(--text-1);
+    gap: var(--padding-m);
+    padding: var(--padding-l);
+    border: 1px solid var(--surface-3);
+
+    &[open] {
+        display: grid;
+    }
+
+    &::backdrop {
+        background-color: color(from var(--surface-1) xyz x y z / .2);
+        backdrop-filter: blur(.25em);
+        pointer-events: all !important;
+    }
+}
+
+.search {
+    display: grid;
+    gap: var(--padding-m);
+
+    & > input {
+        background-color: var(--surface-2);
+        color: var(--text-1);
+        border: none;
+        padding: var(--padding-m);
+    }
+
+    & > output {
+        display: contents;
+        color: var(--text-2);
+
+        & > .selected {
+            background-color: color(from var(--info) xyz x y z / .5);
+        }
+
+        & b {
+            color: var(--text-1);
+        }
+    }
+}

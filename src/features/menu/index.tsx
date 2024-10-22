@@ -1,12 +1,13 @@
-import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, splitProps, useContext } from "solid-js";
+import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { CommandType, Command } from "../command";
 import css from "./index.module.css";
+import { join } from "vinxi/dist/types/lib/path";
 
 export interface MenuContextType {
-    ref: Accessor<JSX.Element | undefined>;
-    setRef: Setter<JSX.Element | undefined>;
+    ref: Accessor<Node | undefined>;
+    setRef: Setter<Node | undefined>;
 
     addItems(items: (Item | ItemWithChildren)[]): void;
     items: Accessor<(Item | ItemWithChildren)[]>;
@@ -14,12 +15,14 @@ export interface MenuContextType {
 };
 
 export interface Item {
+    kind: 'leaf';
     id: string;
     label: string;
     command: CommandType;
 }
 
 export interface ItemWithChildren {
+    kind: 'node';
     id: string;
     label: string;
     children: Item[];
@@ -27,23 +30,34 @@ export interface ItemWithChildren {
 
 const MenuContext = createContext<MenuContextType>();
 
-export const MenuProvider: ParentComponent = (props) => {
-    const [ref, setRef] = createSignal<JSX.Element | undefined>();
-    const [_items, setItems] = createSignal<Map<string, Item & { children?: Map<string, Item> }>>(new Map());
-
+export const MenuProvider: ParentComponent<{ commands?: CommandType[] }> = (props) => {
+    const [ref, setRef] = createSignal<Node | undefined>();
     const [store, setStore] = createStore<{ items: Record<string, Item | ItemWithChildren> }>({ items: {} });
 
-    const addItems = (items: (Item | ItemWithChildren)[]) => setStore('items', values => {
-        for (const item of items) {
-            values[item.id] = item;
-        }
+    const ctx = {
+        ref,
+        setRef,
+        addItems(items: (Item | ItemWithChildren)[]) {
+            return setStore('items', values => {
+                for (const item of items) {
+                    values[item.id] = item;
+                }
 
-        return values;
-    });
-    const items = () => Object.values(store.items);
-    const commands = () => Object.values(store.items).map(item => item.children?.map(c => c.command) ?? item.command).flat();
+                return values;
+            })
+        },
+        items() {
+            return Object.values(store.items);
+        },
+        commands() {
+            return Object.values(store.items)
+                .map(item => item.kind === 'node' ? item.children.map(c => c.command) : item.command)
+                .flat()
+                .concat(props.commands ?? []);
+        },
+    };
 
-    return <MenuContext.Provider value={{ ref, setRef, addItems, items, commands }}>{props.children}</MenuContext.Provider>;
+    return <MenuContext.Provider value={ctx}>{props.children}</MenuContext.Provider>;
 }
 
 const useMenu = () => {
@@ -62,13 +76,14 @@ const Item: Component<ItemProps> = (props) => {
     const id = createUniqueId();
 
     if (props.command) {
-        return mergeProps(props, { id }) as unknown as JSX.Element;
+        return mergeProps(props, { id, kind: 'leaf' }) as unknown as JSX.Element;
     }
 
     const childItems = children(() => props.children);
 
     return mergeProps(props, {
         id,
+        kind: 'node',
         get children() {
             return childItems.toArray();
         }
@@ -193,3 +208,183 @@ export const asMenuRoot = (element: Element) => {
 };
 
 export const Menu = { Root, Item } as const;
+
+export interface CommandPaletteApi {
+    readonly open: Accessor<boolean>;
+    show(): void;
+    hide(): void;
+}
+
+export const CommandPalette: Component<{ api?: (api: CommandPaletteApi) => any, onSubmit?: SubmitHandler<CommandType> }> = (props) => {
+    const [open, setOpen] = createSignal<boolean>(false);
+    const [root, setRoot] = createSignal<HTMLDialogElement>();
+    const [search, setSearch] = createSignal<SearchContext<CommandType>>();
+    const context = useMenu();
+
+    const api = {
+        open,
+        show() {
+            setOpen(true);
+        },
+        hide() {
+            setOpen(false);
+        },
+    };
+
+    createEffect(() => {
+        props.api?.(api);
+    });
+
+
+    createEffect(() => {
+        const isOpen = open();
+
+        if (isOpen) {
+            search()?.clear();
+            root()?.showModal();
+        } else {
+            root()?.close();
+        }
+    });
+
+    // temp debug code 
+    createEffect(() => {
+        search()?.searchFor('c');
+        setOpen(true);
+    });
+
+    const onSubmit = (command: CommandType) => {
+        setOpen(false);
+        props.onSubmit?.(command);
+
+        command();
+    };
+
+    return <dialog ref={setRoot} class={css.commandPalette} onClose={() => setOpen(false)}>
+        <SearchableList<CommandType> items={context.commands()} keySelector={item => item.label} context={setSearch} onSubmit={onSubmit}>{
+            (item, ctx) => <For each={item.label.split(ctx.filter())}>{
+                (part, index) => <>
+                    <Show when={index() !== 0}><b>{ctx.filter()}</b></Show>
+                    {part}
+                </>
+            }</For>
+        }</SearchableList>
+    </dialog>;
+};
+
+interface SubmitHandler<T> {
+    (item: T): any;
+}
+
+interface SearchContext<T> {
+    readonly filter: Accessor<string>;
+    readonly results: Accessor<T[]>;
+    readonly value: Accessor<T | undefined>;
+    searchFor(term: string): void;
+    clear(): void;
+}
+
+interface SearchableListProps<T> {
+    items: T[];
+    keySelector(item: T): string;
+    filter?: (item: T, search: string) => boolean;
+    children(item: T, context: SearchContext<T>): JSX.Element;
+    context?: (context: SearchContext<T>) => any,
+    onSubmit?: SubmitHandler<T>;
+}
+
+function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
+    const [term, setTerm] = createSignal<string>('');
+    const [input, setInput] = createSignal<HTMLInputElement>();
+    const [selected, setSelected] = createSignal<number>();
+    const id = createUniqueId();
+
+    const results = createMemo(() => {
+        const search = term();
+
+        if (search === '') {
+            return [];
+        }
+
+        return props.items.filter(item => props.filter ? props.filter(item, search) : props.keySelector(item).includes(search));
+    });
+
+    const value = createMemo(() => {
+        const index = selected();
+
+        if (index === undefined) {
+            return undefined;
+        }
+
+        return results().at(index);
+    });
+    const inputValue = createMemo(() => {
+        const v = value();
+
+        return v !== undefined ? props.keySelector(v) : term();
+    });
+
+    const ctx = {
+        filter: term,
+        results,
+        value,
+        searchFor(term: string) {
+            setTerm(term);
+        },
+        clear() {
+            setTerm('');
+            setSelected(undefined);
+        },
+    };
+
+    createEffect(() => {
+        props.context?.(ctx);
+    });
+
+    createEffect(() => {
+        const length = results().length - 1;
+
+        setSelected(current => current !== undefined ? Math.min(current, length) : undefined);
+    });
+
+    const onKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowUp') {
+            setSelected(current => current !== undefined && current > 0 ? current - 1 : undefined);
+
+            e.preventDefault();
+        }
+
+        if (e.key === 'ArrowDown') {
+            setSelected(current => current !== undefined ? Math.min(results().length - 1, current + 1) : 0);
+
+            e.preventDefault();
+        }
+    };
+
+    const onSubmit = (e: SubmitEvent) => {
+        e.preventDefault();
+
+        if (selected() === undefined && term() !== '') {
+            setSelected(0);
+        }
+
+        const v = value();
+
+        if (v === undefined) {
+            return;
+        }
+
+        ctx.clear();
+        props.onSubmit?.(v);
+    };
+
+    return <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
+        <input id={`search-${id}`} ref={setInput} value={inputValue()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus />
+
+        <output for={`search-${id}`}>
+            <For each={results()}>{
+                (result, index) => <div classList={{ [css.selected]: index() === selected() }}>{props.children(result, ctx)}</div>
+            }</For>
+        </output>
+    </form>;
+};
