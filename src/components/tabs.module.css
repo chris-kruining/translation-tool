@@ -1,13 +1,41 @@
-.root {
+.tabs {
+    position: relative;
     display: grid;
-    grid: auto minmax(0, 1fr) / repeat(var(--tab-count), auto);
+    grid: auto minmax(0, 1fr) / 100%;
     justify-content: start;
 
     inline-size: 100%;
     block-size: 100%;
 
+    & > header {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+
+        border-block-end: 1px solid var(--surface-5);
+
+        & > button {
+            background-color: var(--surface-1);
+            color: var(--text-2);
+            padding: var(--padding-m) var(--padding-l);
+            border: none;
+
+            &.active {
+                background-color: var(--surface-3);
+                color: var(--text-1);
+            }
+        }
+    }
+
     .tab {
-        display: contents;
+        position: absolute;
+        grid-area: 2 / 1 / span 1 / span 1;
+        inline-size: 100%;
+        block-size: 100%;
+
+        &:not(.active) {
+            display: none;
+        }
 
         & > summary {
             grid-row: 1 / 1;

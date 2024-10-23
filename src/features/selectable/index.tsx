@@ -2,6 +2,7 @@ import { Accessor, children, createContext, createEffect, createMemo, createRend
 import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import css from "./index.module.css";
+import { isFocusable } from "~/utilities";
 
 enum Modifier {
     None = 0,
@@ -67,6 +68,8 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, 
             if (props.multiSelect === true && mode === SelectionMode.Normal) {
                 mode = SelectionMode.Toggle;
             }
+
+            console.log(selection, mode);
 
             setState('selection', existing => {
                 switch (mode) {
@@ -230,7 +233,9 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
         element.dataset.selected = isSelected() ? 'true' : undefined;
     });
 
-    const onPointerDown = (e: PointerEvent) => {
+    const onPointerDown = (e: Event) => {
+        // TODO :: find out if the cell clicked is editable and early exit after that
+
         const [latest, setLatest] = internal.latest
         const [modifier] = internal.modifier
 

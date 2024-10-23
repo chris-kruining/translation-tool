@@ -1,13 +1,11 @@
 import Dexie, { EntityTable } from "dexie";
-import { createContext, useContext } from "solid-js";
+import { createContext, ParentComponent, useContext } from "solid-js";
 import { isServer } from "solid-js/web";
 import * as json from './parser/json';
 
-type Handle = FileSystemFileHandle | FileSystemDirectoryHandle;
-
 interface FileEntity {
     name: string;
-    handle: Handle;
+    handle: FileSystemDirectoryHandle;
 }
 
 type Store = Dexie & {
@@ -15,9 +13,9 @@ type Store = Dexie & {
 };
 
 interface FilesContextType {
-    set(name: string, handle: Handle): Promise<void>;
-    get(name: string): Promise<Handle | undefined>;
-    list(): Promise<Handle[]>;
+    set(name: string, handle: FileSystemDirectoryHandle): Promise<void>;
+    get(name: string): Promise<FileSystemDirectoryHandle | undefined>;
+    list(): Promise<FileSystemDirectoryHandle[]>;
 }
 
 const FilesContext = createContext<FilesContextType>();
@@ -30,7 +28,7 @@ const clientContext = (): FilesContextType => {
     });
 
     return {
-        async set(name: string, handle: Handle) {
+        async set(name: string, handle: FileSystemDirectoryHandle) {
             await db.files.put({ name, handle });
         },
         async get(name: string) {
@@ -52,11 +50,11 @@ const serverContext = (): FilesContextType => ({
         return Promise.resolve(undefined);
     },
     list() {
-        return Promise.resolve<Handle[]>([]);
+        return Promise.resolve<FileSystemDirectoryHandle[]>([]);
     },
 });
 
-export const FilesProvider = (props) => {
+export const FilesProvider: ParentComponent = (props) => {
     const ctx = isServer ? serverContext() : clientContext();
 
     return <FilesContext.Provider value={ctx}>{props.children}</FilesContext.Provider>;

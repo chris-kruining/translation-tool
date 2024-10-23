@@ -127,5 +127,18 @@ const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable
 
         yield [entryA, entryB] as const;
     }
+};
+
+export interface filter {
+    <T, S extends T>(subject: AsyncIterableIterator<T>, predicate: (value: T) => value is S): AsyncGenerator<S, void, unknown>;
+    <T>(subject: AsyncIterableIterator<T>, predicate: (value: T) => unknown): AsyncGenerator<T, void, unknown>;
 }
+
+export const filter = async function*<T, S extends T>(subject: AsyncIterableIterator<T>, predicate: (value: T) => value is S): AsyncGenerator<S, void, unknown> {
+    for await (const value of subject) {
+        if (predicate(value)) {
+            yield value;
+        }
+    }
+};
 

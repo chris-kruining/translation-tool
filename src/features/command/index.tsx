@@ -42,7 +42,6 @@ export const noop = Object.defineProperties(createCommand('noop', () => { }), {
     },
 }) as CommandType & { withLabel(label: string): CommandType };
 
-
 export const Command: Component<{ command: CommandType }> = (props) => {
     return <>
         {props.command.label}

@@ -1,46 +1,83 @@
-import { Accessor, children, createContext, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, useContext } from "solid-js";
+import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, JSX, onMount, ParentComponent, Show, useContext } from "solid-js";
 import css from "./tabs.module.css";
 
 interface TabsContextType {
-    activate(id: string): void;
-    active: Accessor<string | undefined>;
-    isActive(id: string): Accessor<boolean>;
+    register(id: string, label: string): Accessor<boolean>;
 }
 
 const TabsContext = createContext<TabsContextType>();
 
+const useTabs = () => {
+    const context = useContext(TabsContext);
+
+    if (context === undefined) {
+        throw new Error('<Tab /> is used outside of a <Tabs />')
+    }
+
+    return context!;
+}
+
 export const Tabs: ParentComponent = (props) => {
     const [active, setActive] = createSignal<string | undefined>(undefined);
-    const numberOfTabs = createMemo(() => children(() => props.children).toArray().length);
+    const [tabs, setTabs] = createSignal<{ id: string, label: string }[]>([]);
+    // const resolved = children(() => props.children);
+    // const resolvedArray = createMemo(() => resolved.toArray());
+    // const tabs = createMemo(() => resolvedArray().map(t => ({ id: t.id, label: t.dataset?.label ?? '' })));
 
-    return <TabsContext.Provider value={{
-        activate(id: string) {
-            setActive(id);
-        },
+    // createEffect(() => {
+    //     for (const t of resolvedArray()) {
+    //         console.log(t);
+    //     }
+    // });
 
-        active,
+    createEffect(() => {
+        setActive(tabs().at(-1)?.id);
+    });
 
-        isActive(id: string) {
+    // createRenderEffect(() => {
+    //     if (isServer) {
+    //         return;
+    //     }
+
+    //     for (const t of resolvedArray().filter(t => t instanceof HTMLElement)) {
+    //         if (active() === t.id) {
+    //             t.classList.add(css.active);
+    //         } else {
+    //             t.classList.remove(css.active);
+    //         }
+    //     }
+    // });
+
+    const ctx = {
+        register(id: string, label: string) {
+            setTabs(tabs => [...tabs, { id, label }]);
+
             return createMemo(() => active() === id);
         },
-    }}>
-        <div class={css.root} style={{ '--tab-count': numberOfTabs() }}>
+    };
+
+    createEffect(() => {
+        console.log(tabs());
+    });
+
+    return <TabsContext.Provider value={ctx}>
+        <div class={css.tabs}>
+            <header>
+                <For each={tabs()}>{
+                    tab => <button onpointerdown={() => setActive(tab.id)} classList={{ [css.active]: active() === tab.id }}>{tab.label}</button>
+                }</For>
+            </header>
+
             {props.children}
         </div>
     </TabsContext.Provider>;
 }
 
-export const Tab: ParentComponent<{ label: string }> = (props) => {
-    const id = `tab-${createUniqueId()}`;
-    const context = useContext(TabsContext);
+export const Tab: ParentComponent<{ id: string, label: string }> = (props) => {
+    const context = useTabs();
 
-    if (!context) {
-        return undefined;
-    }
+    const isActive = context.register(props.id, props.label);
+    const resolved = children(() => props.children);
 
-    return <details class={css.tab} id={id} open={context.active() === id} ontoggle={(e: ToggleEvent) => e.newState === 'open' && context.activate(id)}>
-        <summary>{props.label}</summary>
-
-        {props.children}
-    </details>
+    return <Show when={isActive()}>{resolved()}</Show>;
 }

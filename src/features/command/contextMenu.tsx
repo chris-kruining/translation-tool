@@ -1,4 +1,4 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, useContext } from "solid-js";
+import { Accessor, Component, createContext, createEffect, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, splitProps, useContext } from "solid-js";
 import { CommandType } from "./index";
 import css from "./contextMenu.module.css";
 
@@ -69,16 +69,19 @@ const Menu: Component<{ children: (command: CommandType) => JSX.Element }> = (pr
     </ul>;
 };
 
-const Handle: ParentComponent = (props) => {
-    const context = useContext(ContextMenu)!;
+const Handle: ParentComponent<Record<string, any>> = (props) => {
+    const [local, rest] = splitProps(props, ['children']);
 
-    return <span style={`anchor-name: --context-menu-handle-${createUniqueId()};`} oncontextmenu={(e) => {
+    const context = useContext(ContextMenu)!;
+    const [handle, setHandle] = createSignal<HTMLElement>();
+
+    return <span {...rest} ref={setHandle} style={`anchor-name: --context-menu-handle-${createUniqueId()};`} oncontextmenu={(e) => {
         e.preventDefault();
 
-        context.show(e.target as HTMLElement);
+        context.show(handle()!);
 
         return false;
-    }}>{props.children}</span>;
+    }}>{local.children}</span>;
 };
 
 export const Context = { Root, Menu, Handle };

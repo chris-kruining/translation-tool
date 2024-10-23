@@ -10,21 +10,22 @@ export interface FileEntry {
     name: string;
     id: string;
     kind: 'file';
-    meta: File;
     handle: FileSystemFileHandle;
     directory: FileSystemDirectoryHandle;
+    meta: File;
 }
 
 export interface FolderEntry {
     name: string;
     id: string;
     kind: 'folder';
+    handle: FileSystemDirectoryHandle;
     entries: Entry[];
 }
 
 export type Entry = FileEntry | FolderEntry;
 
-export const emptyFolder: FolderEntry = { name: '', id: '', kind: 'folder', entries: [] } as const;
+export const emptyFolder: FolderEntry = { name: '', id: '', kind: 'folder', entries: [], handle: undefined as unknown as FileSystemDirectoryHandle } as const;
 
 export async function* walk(directory: FileSystemDirectoryHandle, filters: RegExp[] = [], depth = 0): AsyncGenerator<Entry, void, never> {
     if (depth === 10) {
@@ -39,10 +40,10 @@ export async function* walk(directory: FileSystemDirectoryHandle, filters: RegEx
         const id = await handle.getUniqueId();
 
         if (handle.kind === 'file') {
-            yield { name: handle.name, id, kind: 'file', meta: await handle.getFile(), handle, directory };
+            yield { name: handle.name, id, handle, kind: 'file', meta: await handle.getFile(), directory };
         }
         else {
-            yield { name: handle.name, id, kind: 'folder', entries: await Array.fromAsync(walk(handle, filters, depth + 1)) };
+            yield { name: handle.name, id, handle, kind: 'folder', entries: await Array.fromAsync(walk(handle, filters, depth + 1)) };
         }
     }
 }
@@ -53,7 +54,7 @@ interface TreeContextType {
 
 const TreeContext = createContext<TreeContextType>();
 
-export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element, open?: TreeContextType['open'] }> = (props) => {
+export const Tree: Component<{ entries: Entry[], children: readonly [(folder: Accessor<FolderEntry>) => JSX.Element, (file: Accessor<FileEntry>) => JSX.Element], open?: TreeContextType['open'] }> = (props) => {
     const [selection, setSelection] = createSignal<object[]>([]);
 
     const context = {
@@ -67,7 +68,7 @@ export const Tree: Component<{ entries: Entry[], children: (file: Accessor<FileE
     </SelectionProvider>;
 }
 
-const _Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>) => JSX.Element }> = (props) => {
+const _Tree: Component<{ entries: Entry[], children: readonly [(folder: Accessor<FolderEntry>) => JSX.Element, (file: Accessor<FileEntry>) => JSX.Element] }> = (props) => {
     const context = useContext(TreeContext);
 
     return <For each={props.entries.sort(sort_by('kind'))}>{
@@ -77,17 +78,17 @@ const _Tree: Component<{ entries: Entry[], children: (file: Accessor<FileEntry>)
             }</Show>
 
             <Show when={entry.kind === 'file' ? entry : undefined}>{
-                file => <span use:selectable={{ value: file() }} ondblclick={() => context?.open(file().meta)}><AiFillFile /> {props.children(file)}</span>
+                file => <span use:selectable={{ value: file() }} ondblclick={() => context?.open(file().meta)}><AiFillFile /> {props.children[1](file)}</span>
             }</Show>
         </>
     }</For>
 }
 
-const Folder: Component<{ folder: FolderEntry, children: (file: Accessor<FileEntry>) => JSX.Element }> = (props) => {
+const Folder: Component<{ folder: FolderEntry, children: readonly [(folder: Accessor<FolderEntry>) => JSX.Element, (file: Accessor<FileEntry>) => JSX.Element] }> = (props) => {
     const [open, setOpen] = createSignal(true);
 
     return <details open={open()} ontoggle={() => debounce(() => setOpen(o => !o), 1)}>
-        <summary><Show when={open()} fallback={<AiFillFolder />}><AiFillFolderOpen /></Show> {props.folder.name}</summary>
+        <summary><Show when={open()} fallback={<AiFillFolder />}><AiFillFolderOpen /></Show> {props.children[0](() => props.folder)}</summary>
         <_Tree entries={props.folder.entries} children={props.children} />
     </details>;
 };

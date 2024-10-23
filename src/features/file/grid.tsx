@@ -1,4 +1,4 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
+import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
 import { createStore, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
@@ -160,7 +160,7 @@ const Row: Component<{ entry: Entry, path?: string[] }> = (props) => {
             return <Show when={isLeaf(value)} fallback={<Group key={key} entry={value as Entry} path={path} />}>
                 <div class={css.row} use:selectable={{ value, key: k }}>
                     <div class={css.cell}>
-                        <input type="checkbox" checked={isSelected()} oninput={() => context.select([k])} />
+                        <input type="checkbox" checked={isSelected()} on:input={() => context.select([k])} />
                     </div>
 
                     <div class={css.cell}>
@@ -187,16 +187,22 @@ const Group: Component<{ key: string, entry: Entry, path: string[] }> = (props) 
 };
 
 const TextArea: Component<{ key: string, value: string, lang: string, oninput?: (event: InputEvent) => any }> = (props) => {
-    let element: HTMLTextAreaElement;
+    const [element, setElement] = createSignal<HTMLTextAreaElement>();
 
     const resize = () => {
-        element.style.height = `1px`;
-        element.style.height = `${2 + element.scrollHeight}px`;
+        const el = element();
+
+        if (!el) {
+            return;
+        }
+
+        el.style.height = `1px`;
+        el.style.height = `${2 + element()!.scrollHeight}px`;
     };
 
     const mutate = debounce(() => {
         props.oninput?.(new InputEvent('input', {
-            data: element.value.trim(),
+            data: element()?.value.trim(),
         }))
     }, 300);
 
@@ -205,12 +211,14 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         mutate();
     };
 
-    onMount(() => {
+    createEffect(() => {
+        props.value;
+
         resize();
     });
 
     return <textarea
-        ref={element}
+        ref={setElement}
         value={props.value}
         lang={props.lang}
         placeholder={props.lang}
@@ -218,6 +226,5 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         spellcheck
         wrap="soft"
         onkeyup={onKeyUp}
-        on:pointerdown={(e: PointerEvent) => e.stopPropagation()}
     />
 };
