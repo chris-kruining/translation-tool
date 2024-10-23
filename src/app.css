@@ -65,7 +65,7 @@ body {
   overflow: clip;
 
   display: grid;
-  grid: auto minmax(0, 1fr) / 100%;
+  grid: 100% / 100%;
 
   background-color: var(--surface-1);
 

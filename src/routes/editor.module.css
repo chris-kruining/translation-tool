@@ -4,4 +4,5 @@
     inline-size: 100%;
     block-size: 100%;
     overflow: clip;
+    background-color: var(--surface-1);
 }
