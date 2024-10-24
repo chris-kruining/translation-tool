@@ -1,4 +1,4 @@
-import { Accessor, Component, For, JSX, ParentComponent, Setter, Show, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
+import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { CommandType, Command } from "../command";
@@ -9,8 +9,8 @@ export interface MenuContextType {
     ref: Accessor<Node | undefined>;
     setRef: Setter<Node | undefined>;
 
-    addItems(items: (Item | ItemWithChildren)[]): void;
-    items: Accessor<(Item | ItemWithChildren)[]>;
+    addItems(items: (Item | Separator | ItemWithChildren)[]): void;
+    items: Accessor<(Item | Separator | ItemWithChildren)[]>;
     commands(): CommandType[];
 };
 
@@ -21,11 +21,15 @@ export interface Item {
     command: CommandType;
 }
 
+export interface Separator {
+    kind: 'separator';
+}
+
 export interface ItemWithChildren {
     kind: 'node';
     id: string;
     label: string;
-    children: Item[];
+    children: (Item | Separator)[];
 }
 
 const MenuContext = createContext<MenuContextType>();
@@ -51,7 +55,7 @@ export const MenuProvider: ParentComponent<{ commands?: CommandType[] }> = (prop
         },
         commands() {
             return Object.values(store.items)
-                .map(item => item.kind === 'node' ? item.children.map(c => c.command) : item.command)
+                .map(item => item.kind === 'node' ? item.children.filter(c => c.kind === 'leaf').map(c => c.command) : item.command)
                 .flat()
                 .concat(props.commands ?? []);
         },
@@ -90,6 +94,10 @@ const Item: Component<ItemProps> = (props) => {
     }) as unknown as JSX.Element;
 }
 
+const Separator: Component = (props) => {
+    return mergeProps(props, { kind: 'separator' }) as unknown as JSX.Element;
+}
+
 const Root: ParentComponent<{}> = (props) => {
     const menu = useMenu();
     const [current, setCurrent] = createSignal<HTMLElement>();
@@ -125,34 +133,46 @@ const Root: ParentComponent<{}> = (props) => {
 
     return <Portal mount={menu.ref()}>
         <For each={items}>{
-            item => <Show when={Object.hasOwn(item, 'children') ? item as ItemWithChildren : undefined} fallback={<Child command={item.command} />}>{
-                item => <>
-                    <div
-                        class={css.child}
-                        id={`child-${item().id}`}
-                        style={`position-anchor: --menu-${item().id};`}
-                        popover
-                        on:toggle={(e: ToggleEvent) => {
-                            if (e.newState === 'open' && e.target !== null) {
-                                return setCurrent(e.target as HTMLElement);
-                            }
-                        }}
-                    >
-                        <For each={item().children}>
-                            {(child) => <Child command={child.command} />}
-                        </For>
-                    </div>
+            item => <Switch>
+                <Match when={item.kind === 'node' ? item as ItemWithChildren : undefined}>{
+                    item => <>
+                        <div
+                            class={css.child}
+                            id={`child-${item().id}`}
+                            style={`position-anchor: --menu-${item().id};`}
+                            popover
+                            on:toggle={(e: ToggleEvent) => {
+                                if (e.newState === 'open' && e.target !== null) {
+                                    return setCurrent(e.target as HTMLElement);
+                                }
+                            }}
+                        >
+                            <For each={item().children}>{
+                                child => <Switch>
+                                    <Match when={child.kind === 'leaf' ? child as Item : undefined}>{
+                                        item => <Child command={item().command} />
+                                    }</Match>
 
-                    <button
-                        class={css.item}
-                        type="button"
-                        popovertarget={`child-${item().id}`}
-                        style={`anchor-name: --menu-${item().id};`}
-                    >
-                        {item().label}
-                    </button>
-                </>
-            }</Show>
+                                    <Match when={child.kind === 'separator'}><hr class={css.separator} /></Match>
+                                </Switch>
+                            }</For>
+                        </div>
+
+                        <button
+                            class={css.item}
+                            type="button"
+                            popovertarget={`child-${item().id}`}
+                            style={`anchor-name: --menu-${item().id};`}
+                        >
+                            {item().label}
+                        </button>
+                    </>
+                }</Match>
+
+                <Match when={item.kind === 'leaf' ? item as Item : undefined}>{
+                    item => <Child command={item().command} />
+                }</Match>
+            </Switch>
         }</For>
     </Portal>
 };
@@ -207,7 +227,7 @@ export const asMenuRoot = (element: Element) => {
     menu.setRef(element);
 };
 
-export const Menu = { Root, Item } as const;
+export const Menu = { Root, Item, Separator } as const;
 
 export interface CommandPaletteApi {
     readonly open: Accessor<boolean>;

@@ -15,7 +15,7 @@
         }
     }
 
-    .mutated {
+    :is(details, div):has(.mutated) > :is(summary, span:has(.mutated)) {
         color: var(--warn);
 
         &::after {

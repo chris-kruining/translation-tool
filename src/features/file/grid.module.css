@@ -17,7 +17,7 @@
 
     & textarea {
         resize: vertical;
-        min-block-size: 2em;
+        min-block-size: max(2em, 100%);
         max-block-size: 50em;
 
         background-color: var(--surface-1);
@@ -38,10 +38,6 @@
 
         & > span {
             align-self: center;
-        }
-
-        & > textarea {
-            min-block-size: 100%;
         }
     }
 

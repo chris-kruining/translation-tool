@@ -1,4 +1,4 @@
-import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, JSX, onMount, ParentComponent, Show, useContext } from "solid-js";
+import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, JSX, onMount, ParentComponent, Setter, Show, useContext } from "solid-js";
 import css from "./tabs.module.css";
 
 interface TabsContextType {
@@ -17,36 +17,17 @@ const useTabs = () => {
     return context!;
 }
 
-export const Tabs: ParentComponent = (props) => {
+export const Tabs: ParentComponent<{ active?: Setter<string | undefined> }> = (props) => {
     const [active, setActive] = createSignal<string | undefined>(undefined);
     const [tabs, setTabs] = createSignal<{ id: string, label: string }[]>([]);
-    // const resolved = children(() => props.children);
-    // const resolvedArray = createMemo(() => resolved.toArray());
-    // const tabs = createMemo(() => resolvedArray().map(t => ({ id: t.id, label: t.dataset?.label ?? '' })));
 
-    // createEffect(() => {
-    //     for (const t of resolvedArray()) {
-    //         console.log(t);
-    //     }
-    // });
+    createEffect(() => {
+        props.active?.(active());
+    });
 
     createEffect(() => {
         setActive(tabs().at(-1)?.id);
     });
-
-    // createRenderEffect(() => {
-    //     if (isServer) {
-    //         return;
-    //     }
-
-    //     for (const t of resolvedArray().filter(t => t instanceof HTMLElement)) {
-    //         if (active() === t.id) {
-    //             t.classList.add(css.active);
-    //         } else {
-    //             t.classList.remove(css.active);
-    //         }
-    //     }
-    // });
 
     const ctx = {
         register(id: string, label: string) {
@@ -55,10 +36,6 @@ export const Tabs: ParentComponent = (props) => {
             return createMemo(() => active() === id);
         },
     };
-
-    createEffect(() => {
-        console.log(tabs());
-    });
 
     return <TabsContext.Provider value={ctx}>
         <div class={css.tabs}>

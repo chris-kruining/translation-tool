@@ -1,5 +1,5 @@
 .item {
-    padding: .5em 1em;
+    padding: var(--padding-m) var(--padding-l);
 
     background-color: inherit;
     color: var(--text-1);
@@ -32,6 +32,13 @@
 
     &:popover-open {
         display: grid;
+    }
+
+    & > .separator {
+        grid-column: span 2;
+        inline-size: calc(100% - (2 * var(--padding-m)));
+        margin-block: 0;
+        border: 1px solid var(--surface-5);
     }
 
     & > .item {

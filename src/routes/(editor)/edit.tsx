@@ -1,5 +1,5 @@
-import { children, Component, createEffect, createMemo, createResource, createSignal, createUniqueId, For, onMount, ParentProps, Show } from "solid-js";
-import { filter, MutarionKind, splitAt } from "~/utilities";
+import { Accessor, children, Component, createEffect, createMemo, createResource, createSignal, createUniqueId, For, onMount, ParentProps, Setter, Show } from "solid-js";
+import { filter, MutarionKind, Mutation, splitAt } from "~/utilities";
 import { Sidebar } from "~/components/sidebar";
 import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree, FileEntry, Entry } from "~/components/filetree";
 import { Menu } from "~/features/menu";
@@ -50,26 +50,110 @@ const findFile = (folder: FolderEntry, id: string) => {
     return breadthFirstTraverse(folder).find((entry): entry is { path: string[] } & FileEntry => entry.kind === 'file' && entry.id === id);
 }
 
+interface Entries extends Map<string, Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { }
+
+interface ContentTabType {
+    handle: FileSystemDirectoryHandle;
+    readonly api: Accessor<GridApi | undefined>;
+    readonly setApi: Setter<GridApi | undefined>;
+    readonly entries: Accessor<Entries>;
+    readonly setEntries: Setter<Entries>;
+}
+
 export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
     const [root, { refetch: getRoot, mutate: updateRoot }] = createResource(() => filesContext?.get('__root__'));
-    const [tabs, { refetch: getTabs }] = createResource<FileSystemDirectoryHandle[]>(async () => (await filesContext?.list()) ?? [], { initialValue: [], ssrLoadFrom: 'initial' });
+    const [tabs, { refetch: getTabs }] = createResource<ContentTabType[]>(async () => {
+        const handles = (await filesContext?.list()) ?? [];
+
+        return await Promise.all(handles.map(handle => {
+            const [api, setApi] = createSignal<GridApi>();
+            const [entries, setEntries] = createSignal<Entries>(new Map());
+            const files = handle.entries()
+
+            return ({ handle, api, setApi, entries, setEntries });
+        }));
+    }, { initialValue: [], ssrLoadFrom: 'initial' });
+    const [active, setActive] = createSignal<string>();
+    const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
     const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
     const [entries, setEntries] = createSignal<Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>>(new Map);
-    const [api, setApi] = createSignal<GridApi>();
 
-    const mutatedFiles = createMemo(() => {
-        const mutations = api()?.mutations() ?? [];
-        const files = entries();
+    const tab = createMemo(() => {
+        const name = active();
+        return tabs().find(t => t.handle.name === name);
+    });
+    const api = createMemo(() => tab()?.api());
 
-        return new Set(mutations
-            .map(mutation => {
-                const [key, lang] = splitAt(mutation.key, mutation.key.lastIndexOf('.'));
+    const mutations = createMemo<(Mutation & { file?: { value: string, handle: FileSystemFileHandle, id: string } })[]>(() => tabs().flatMap(tab => {
+        const entries = tab.entries();
+        const mutations = tab.api()?.mutations() ?? [];
 
-                return files.get(key)?.[lang]?.id;
-            })
-            .filter(file => file !== undefined)
-        );
+        return mutations.map(m => {
+            const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
+
+            return { ...m, key, file: entries.get(key)?.[lang] };
+        });
+    }));
+
+    const mutatedFiles = createMemo(() =>
+        new Set((mutations()).map(({ file }) => file).filter(file => file !== undefined))
+    );
+
+    const mutatedData = createMemo(() => {
+        const muts = mutations();
+        const files = contents();
+        const entries = mutatedFiles().values();
+
+        if (muts.length === 0) {
+            return [];
+        }
+
+        const groupedByFileId = Object.groupBy(muts, m => m.file?.id ?? 'undefined');
+
+        return entries.map(({ id, handle }) => {
+            const existing = new Map(files.get(id)!);
+            const mutations = groupedByFileId[id]!;
+
+            for (const mutation of mutations) {
+                switch (mutation.kind) {
+                    case MutarionKind.Delete: {
+                        existing.delete(mutation.key);
+                        break;
+                    }
+
+                    case MutarionKind.Update:
+                    case MutarionKind.Create: {
+                        existing.set(mutation.key, mutation.value);
+                        break;
+                    }
+                }
+            }
+
+            return [
+                handle,
+                existing.entries().reduce((aggregate, [key, value]) => {
+                    let obj = aggregate;
+                    const [k, lastPart] = splitAt(key, key.lastIndexOf('.'));
+
+                    for (const part of k.split('.')) {
+                        if (!Object.hasOwn(obj, part)) {
+                            obj[part] = {};
+                        }
+
+                        obj = obj[part];
+                    }
+
+                    obj[lastPart] = value;
+
+                    return aggregate;
+                }, {} as Record<string, any>)
+            ] as const;
+        }).toArray();
+    });
+
+    createEffect(() => {
+        console.log(mutatedData());
     });
 
     // Since the files are stored in indexedDb we need to refetch on the client in order to populate on page load
@@ -78,30 +162,37 @@ export default function Edit(props: ParentProps) {
         getTabs();
     });
 
-    createEffect(async () => {
+    createEffect(() => {
         const directory = root();
 
         if (root.state === 'ready' && directory?.kind === 'directory') {
-            const contents = await Array.fromAsync(walk(directory));
-            const languages = new Set(contents.map(c => c.lang));
-            const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
 
-            const merged = contents.reduce((aggregate, { id, handle, path, lang, entries }) => {
-                for (const [key, value] of entries.entries()) {
-                    const k = [...path, key].join('.');
+            (async () => {
+                const contents = await Array.fromAsync(walk(directory));
 
-                    if (!aggregate.has(k)) {
-                        aggregate.set(k, Object.fromEntries(template));
+                console.log(contents);
+
+                setContents(new Map(contents.map(({ id, entries }) => [id, entries] as const)))
+
+                const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
+
+                const merged = contents.reduce((aggregate, { id, handle, path, lang, entries }) => {
+                    for (const [key, value] of entries.entries()) {
+                        const k = [...path, key].join('.');
+
+                        if (!aggregate.has(k)) {
+                            aggregate.set(k, Object.fromEntries(template));
+                        }
+
+                        aggregate.get(k)![lang] = { value, handle, id };
                     }
 
-                    aggregate.get(k)![lang] = { value, handle, id };
-                }
+                    return aggregate;
+                }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
 
-                return aggregate;
-            }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
-
-            setFiles({ name: directory.name, id: '', kind: 'folder', entries: await Array.fromAsync(fileTreeWalk(directory)) });
-            setEntries(merged);
+                setFiles({ name: directory.name, id: '', kind: 'folder', handle: directory, entries: await Array.fromAsync(fileTreeWalk(directory)) });
+                setEntries(merged);
+            })();
         }
     });
 
@@ -131,63 +222,51 @@ export default function Edit(props: ParentProps) {
             updateRoot(directory);
         }),
         save: createCommand('save', async () => {
-            const mutations = api()?.mutations() ?? [];
+            const results = await Promise.allSettled(mutatedData().map(async ([handle, data]) => {
+                const stream = await handle.createWritable({ keepExistingData: false });
 
-            if (mutations.length === 0) {
-                return;
-            }
-
-            const rows = api()?.rows() ?? {};
-            const _entries = entries();
-
-            // Cases we can encounter:
-            // |         | file extsis               | no existing file     |
-            // |---------|---------------------------|----------------------!
-            // | created | insert new key into file  | create new file      |
-            // | updated | update value              | create new file (*1) |
-            // | deleted | remove key from file (*3) | no-op/skip (*2)(*3)  |
-            //
-            // 1) This can happen if the key already exists in another language (so when adding a new language for example).
-            // 2) The same as with 1, when you delete a key, and there are not files for each language, then this is a valid case.
-            // 3) When a file has 0 keys, we can remove it.
-
-            const fileMutations = await Promise.all(mutations.map(async (mutation) => {
-                const [k, lang] = splitAt(mutation.key, mutation.key.lastIndexOf('.'));
-                const entry = _entries.get(k);
-                const localEntry = entry?.[lang];
-
-                if (!localEntry) {
-                    throw new Error('invalid edge case???');
-                }
-
-                const createNewFile = async () => {
-                    const [, alternativeLocalEntry] = Object.entries(entry).find(([l, e]) => l !== lang && e.id !== undefined) ?? [];
-                    const { directory, path } = alternativeLocalEntry ? findFile(tree(), alternativeLocalEntry.id) ?? {} : {};
-
-                    const handle = await window.showSaveFilePicker({
-                        suggestedName: `${lang}.json`,
-                        startIn: directory,
-                        excludeAcceptAllOption: true,
-                        types: [
-                            { accept: { 'application/json': ['.json'] }, description: 'JSON' },
-                        ]
-                    });
-
-                    // TODO :: patch the tree with this new entry
-                    // console.log(localEntry, tree());
-
-                    return { handle, path };
-                };
-
-                const { handle, path } = findFile(tree(), localEntry.id) ?? (mutation.kind !== MutarionKind.Delete ? await createNewFile() : {});
-                const id = await handle?.getUniqueId();
-                const key = path ? k.slice(path.join('.').length + 1) : k;
-                const value = rows[k][lang];
-
-                return { action: mutation.kind, key, id, value, handle };
+                stream.write(JSON.stringify(data, null, 4));
             }));
 
-            console.log(rows, entries(), Object.groupBy(fileMutations, m => m.id ?? 'undefined'))
+            console.log(results);
+
+            // const fileMutations = await Promise.all(mutations.map(async (mutation) => {
+            //     const [k, lang] = splitAt(mutation.key, mutation.key.lastIndexOf('.'));
+            //     const entry = _entries.get(k);
+            //     const localEntry = entry?.[lang];
+
+            //     if (!localEntry) {
+            //         throw new Error('invalid edge case???');
+            //     }
+
+            //     const createNewFile = async () => {
+            //         const [, alternativeLocalEntry] = Object.entries(entry).find(([l, e]) => l !== lang && e.id !== undefined) ?? [];
+            //         const { directory, path } = alternativeLocalEntry ? findFile(tree(), alternativeLocalEntry.id) ?? {} : {};
+
+            //         const handle = await window.showSaveFilePicker({
+            //             suggestedName: `${lang}.json`,
+            //             startIn: directory,
+            //             excludeAcceptAllOption: true,
+            //             types: [
+            //                 { accept: { 'application/json': ['.json'] }, description: 'JSON' },
+            //             ]
+            //         });
+
+            //         // TODO :: patch the tree with this new entry
+            //         // console.log(localEntry, tree());
+
+            //         return { handle, path };
+            //     };
+
+            //     const { handle, path } = findFile(tree(), localEntry.id) ?? (mutation.kind !== MutarionKind.Delete ? await createNewFile() : {});
+            //     const id = await handle?.getUniqueId();
+            //     const key = path ? k.slice(path.join('.').length + 1) : k;
+            //     const value = rows[k][lang];
+
+            //     return { action: mutation.kind, key, id, value, handle };
+            // }));
+
+            // console.log(rows, entries(), Object.groupBy(fileMutations, m => m.id ?? 'undefined'))
         }, { key: 's', modifier: Modifier.Control }),
         saveAs: createCommand('save as', (handle?: FileSystemFileHandle) => {
             console.log('save as ...', handle);
@@ -209,6 +288,9 @@ export default function Edit(props: ParentProps) {
         clearSelection: createCommand('clear selection', () => {
             api()?.clear();
         }),
+        delete: createCommand('delete selected items', () => {
+            console.log(api()?.selection())
+        }, { key: 'delete', modifier: Modifier.None }),
     } as const;
 
     return <div class={css.root}>
@@ -226,7 +308,15 @@ export default function Edit(props: ParentProps) {
                     <Menu.Item command={commands.save} />
                 </Menu.Item>
 
-                <Menu.Item command={noop.withLabel('edit')} />
+                <Menu.Item label="edit">
+                    <Menu.Item command={noop.withLabel('insert new key')} />
+
+                    <Menu.Item command={noop.withLabel('insert new language')} />
+
+                    <Menu.Separator />
+
+                    <Menu.Item command={commands.delete} />
+                </Menu.Item>
 
                 <Menu.Item label="selection">
                     <Menu.Item command={commands.selectAll} />
@@ -247,30 +337,40 @@ export default function Edit(props: ParentProps) {
                             }}>{folder().name}</span>;
                         },
                         file => {
-                            const mutated = createMemo(() => mutatedFiles().has(file().id));
+                            const mutated = createMemo(() => mutatedFiles().values().find(({ id }) => id === file().id) !== undefined);
 
-                            return <Context.Handle classList={{ [css.mutated]: mutated() }}>{file().name}</Context.Handle>;
+                            return <Context.Handle classList={{ [css.mutated]: mutated() }} onDblClick={() => {
+                                const folder = file().directory;
+                                filesContext?.set(folder.name, folder);
+                                getTabs();
+                            }}>{file().name}</Context.Handle>;
                         },
                     ] as const}</Tree>
                 </Show>
             </Sidebar>
 
-            <Tabs>
+            <Tabs active={setActive}>
                 <For each={tabs()}>{
-                    directory => <Tab id={createUniqueId()} label={directory.name}>{'some text in front'}<Kaas directory={directory} /></Tab>
+                    ({ handle, setApi, setEntries }) => <Tab id={handle.name} label={handle.name}><Content directory={handle} api={setApi} entries={setEntries} /></Tab>
                 }</For>
             </Tabs>
         </Context.Root>
     </div>
 }
 
-const Kaas: Component<{ directory: FileSystemDirectoryHandle }> = (props) => {
-    const filesContext = useFiles();
-    const [root, { mutate, refetch }] = createResource(() => filesContext?.get('root'));
+const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<GridApi | undefined>, entries?: Setter<Entries> }> = (props) => {
+    const [entries, setEntries] = createSignal<Entries>(new Map());
     const [columns, setColumns] = createSignal<string[]>([]);
     const [rows, setRows] = createSignal<Map<string, Record<string, string>>>(new Map);
-    const [entries, setEntries] = createSignal<Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>>(new Map);
     const [api, setApi] = createSignal<GridApi>();
+
+    createEffect(() => {
+        props.entries?.(entries());
+    });
+
+    createEffect(() => {
+        props.api?.(api());
+    });
 
     createEffect(() => {
         const directory = props.directory;
@@ -307,12 +407,9 @@ const Kaas: Component<{ directory: FileSystemDirectoryHandle }> = (props) => {
             }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
 
             setColumns(['key', ...languages]);
+            setEntries(merged);
             setRows(new Map(merged.entries().map(([key, langs]) => [key, Object.fromEntries(Object.entries(langs).map(([lang, { value }]) => [lang, value]))] as const)));
         })();
-    });
-
-    createEffect(() => {
-        // console.log(columns(), rows());
     });
 
     return <Grid columns={columns()} rows={rows()} api={setApi} />;

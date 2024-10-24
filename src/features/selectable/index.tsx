@@ -2,7 +2,6 @@ import { Accessor, children, createContext, createEffect, createMemo, createRend
 import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import css from "./index.module.css";
-import { isFocusable } from "~/utilities";
 
 enum Modifier {
     None = 0,
@@ -17,8 +16,8 @@ enum SelectionMode {
     Toggle,
 }
 
-export interface SelectionContextType {
-    readonly selection: Accessor<object[]>;
+export interface SelectionContextType<T extends object = object> {
+    readonly selection: Accessor<T[]>;
     readonly length: Accessor<number>;
     select(selection: string[], options?: Partial<{ mode: SelectionMode }>): void;
     selectAll(): void;
@@ -31,19 +30,21 @@ interface InternalSelectionContextType {
     readonly selectables: Signal<HTMLElement[]>,
     add(key: string, value: object, element: HTMLElement): void;
 }
-export type SelectionHandler = (selection: object[]) => any;
+export interface SelectionHandler<T extends object = object> {
+    (selection: T[]): any;
+}
 
 const SelectionContext = createContext<SelectionContextType>();
 const InternalSelectionContext = createContext<InternalSelectionContextType>();
 
-export const useSelection = () => {
+export function useSelection<T extends object = object>(): SelectionContextType<T> {
     const context = useContext(SelectionContext);
 
     if (context === undefined) {
         throw new Error('selection context is used outside of a provider');
     }
 
-    return context;
+    return context as SelectionContextType<T>;
 };
 const useInternalSelection = () => useContext(InternalSelectionContext)!;
 
@@ -68,8 +69,6 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, 
             if (props.multiSelect === true && mode === SelectionMode.Normal) {
                 mode = SelectionMode.Toggle;
             }
-
-            console.log(selection, mode);
 
             setState('selection', existing => {
                 switch (mode) {
@@ -127,15 +126,17 @@ const Root: ParentComponent = (props) => {
 
         if (!isServer && r) {
             const findSelectables = () => {
-                setSelectables(Array.from((function* () {
-                    const iterator = document.createTreeWalker(r, NodeFilter.SHOW_ELEMENT, {
-                        acceptNode: (node: HTMLElement) => node.dataset.selectionKey ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
-                    });
+                setTimeout(() => {
+                    setSelectables(Array.from((function* () {
+                        const iterator = document.createTreeWalker(r, NodeFilter.SHOW_ELEMENT, {
+                            acceptNode: (node: HTMLElement) => node.dataset.selectionKey ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_SKIP,
+                        });
 
-                    while (iterator.nextNode()) {
-                        yield iterator.currentNode as HTMLElement;
-                    }
-                })()));
+                        while (iterator.nextNode()) {
+                            yield iterator.currentNode as HTMLElement;
+                        }
+                    })()));
+                }, 100);
             };
 
             const observer = new MutationObserver(entries => {
@@ -191,6 +192,7 @@ const Root: ParentComponent = (props) => {
     });
 
     return <div ref={setRoot} style={{ 'display': 'contents' }}>{c()}</div>;
+    // return <div ref={setRoot}>{c()}</div>;
 };
 
 export const selectable = (element: HTMLElement, options: Accessor<{ value: object, key?: string }>) => {
@@ -228,14 +230,11 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
         return selection.map(n => n.dataset.selectionKey!);
     };
 
-
     createRenderEffect(() => {
         element.dataset.selected = isSelected() ? 'true' : undefined;
     });
 
     const onPointerDown = (e: Event) => {
-        // TODO :: find out if the cell clicked is editable and early exit after that
-
         const [latest, setLatest] = internal.latest
         const [modifier] = internal.modifier
 

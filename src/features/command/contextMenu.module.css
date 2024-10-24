@@ -9,12 +9,12 @@
 
     margin: 0;
     gap: var(--padding-m);
-    padding: var(--padding-m);
+    padding: var(--padding-m) 0;
     font-size: var(--text-s);
 
     background-color: var(--surface-1);
     color: var(--text-1);
-    border: 1px solid var(--text-1);
+    border: 1px solid var(--surface-5);
     border-radius: var(--radii-m);
 
     & > li {
@@ -23,9 +23,15 @@
         grid-template-columns: subgrid;
         align-items: center;
 
+        padding: var(--padding-s) var(--padding-m);
+
         & > sub {
             color: var(--text-2);
             text-align: end;
+        }
+
+        &:hover {
+            background-color: var(--surface-4);
         }
     }
 

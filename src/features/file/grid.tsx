@@ -1,4 +1,4 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, For, onMount, ParentComponent, Show, useContext } from "solid-js";
+import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, onMount, ParentComponent, Show, useContext } from "solid-js";
 import { createStore, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
@@ -10,15 +10,17 @@ interface Leaf extends Record<string, string> { }
 export interface Entry extends Record<string, Entry | Leaf> { }
 
 type Rows = Map<string, Record<string, string>>;
+type SelectionItem = { key: string, value: Accessor<Record<string, string>>, element: WeakRef<HTMLElement> };
 
 export interface GridContextType {
     readonly rows: Accessor<Record<string, Record<string, string>>>;
     readonly mutations: Accessor<Mutation[]>;
-    readonly selection: Accessor<object[]>;
+    readonly selection: Accessor<SelectionItem[]>;
     mutate(prop: string, lang: string, value: string): void;
 }
 
 export interface GridApi {
+    readonly selection: Accessor<Record<string, Record<string, string>>>;
     readonly rows: Accessor<Record<string, Record<string, string>>>;
     readonly mutations: Accessor<Mutation[]>;
     selectAll(): void;
@@ -31,7 +33,7 @@ const isLeaf = (entry: Entry | Leaf): entry is Leaf => Object.values(entry).some
 const useGrid = () => useContext(GridContext)!;
 
 const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
-    const [selection, setSelection] = createSignal<object[]>([]);
+    const [selection, setSelection] = createSignal<SelectionItem[]>([]);
     const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, snapshot: Rows, numberOfRows: number }>({
         rows: {},
         snapshot: new Map,
@@ -106,9 +108,14 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
 
 const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => {
     const gridContext = useGrid();
-    const selectionContext = useSelection();
+    const selectionContext = useSelection<{ key: string, value: Accessor<Record<string, string>>, element: WeakRef<HTMLElement> }>();
 
     const api: GridApi = {
+        selection: createMemo(() => {
+            const selection = selectionContext.selection();
+
+            return Object.fromEntries(selection.map(({ key, value }) => [key, value()] as const));
+        }),
         rows: gridContext.rows,
         mutations: gridContext.mutations,
         selectAll() {
@@ -160,7 +167,7 @@ const Row: Component<{ entry: Entry, path?: string[] }> = (props) => {
             return <Show when={isLeaf(value)} fallback={<Group key={key} entry={value as Entry} path={path} />}>
                 <div class={css.row} use:selectable={{ value, key: k }}>
                     <div class={css.cell}>
-                        <input type="checkbox" checked={isSelected()} on:input={() => context.select([k])} />
+                        <input type="checkbox" checked={isSelected()} on:input={() => context.select([k])} on:pointerdown={e => e.stopPropagation()} />
                     </div>
 
                     <div class={css.cell}>
@@ -217,6 +224,13 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         resize();
     });
 
+    const observer = new MutationObserver((e) => {
+        if (element()?.isConnected) {
+            resize();
+        }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+
     return <textarea
         ref={setElement}
         value={props.value}
@@ -226,5 +240,7 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         spellcheck
         wrap="soft"
         onkeyup={onKeyUp}
+        on:keydown={e => e.stopPropagation()}
+        on:pointerdown={e => e.stopPropagation()}
     />
 };
