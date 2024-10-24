@@ -89,7 +89,7 @@ const states = {
 async function* parse(stream: ReadableStream<Uint8Array>): AsyncGenerator<any, void, unknown> {
     let state = states.none();
 
-    for await (const token of take(tokenize(read(toGenerator(stream))), 100)) {
+    for await (const token of tokenize(read(toGenerator(stream)))) {
         try {
             state = state(token);
         }

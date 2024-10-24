@@ -152,10 +152,6 @@ export default function Edit(props: ParentProps) {
         }).toArray();
     });
 
-    createEffect(() => {
-        console.log(mutatedData());
-    });
-
     // Since the files are stored in indexedDb we need to refetch on the client in order to populate on page load
     onMount(() => {
         getRoot();
@@ -226,6 +222,8 @@ export default function Edit(props: ParentProps) {
                 const stream = await handle.createWritable({ keepExistingData: false });
 
                 stream.write(JSON.stringify(data, null, 4));
+                stream.write('\n');
+                stream.close();
             }));
 
             console.log(results);
