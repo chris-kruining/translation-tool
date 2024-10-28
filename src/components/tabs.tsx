@@ -19,19 +19,23 @@ const useTabs = () => {
 
 export const Tabs: ParentComponent<{ active?: Setter<string | undefined> }> = (props) => {
     const [active, setActive] = createSignal<string | undefined>(undefined);
-    const [tabs, setTabs] = createSignal<{ id: string, label: string }[]>([]);
+    const [tabs, setTabs] = createSignal<Map<string, string>>(new Map());
 
     createEffect(() => {
         props.active?.(active());
     });
 
     createEffect(() => {
-        setActive(tabs().at(-1)?.id);
+        setActive(tabs().keys().toArray().at(-1));
     });
 
     const ctx = {
         register(id: string, label: string) {
-            setTabs(tabs => [...tabs, { id, label }]);
+            setTabs(tabs => {
+                tabs.set(id, label);
+
+                return new Map(tabs);
+            });
 
             return createMemo(() => active() === id);
         },
@@ -40,8 +44,8 @@ export const Tabs: ParentComponent<{ active?: Setter<string | undefined> }> = (p
     return <TabsContext.Provider value={ctx}>
         <div class={css.tabs}>
             <header>
-                <For each={tabs()}>{
-                    tab => <button onpointerdown={() => setActive(tab.id)} classList={{ [css.active]: active() === tab.id }}>{tab.label}</button>
+                <For each={tabs().entries().toArray()}>{
+                    ([id, label]) => <button onpointerdown={() => setActive(id)} classList={{ [css.active]: active() === id }}>{label}</button>
                 }</For>
             </header>
 
