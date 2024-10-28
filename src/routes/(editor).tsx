@@ -1,17 +1,17 @@
-import { Title } from "@solidjs/meta";
-import { createSignal, ParentProps, Show } from "solid-js";
+import { Meta, Title } from "@solidjs/meta";
+import { createSignal, For, ParentProps, Show } from "solid-js";
 import { BsTranslate } from "solid-icons/bs";
 import { FilesProvider } from "~/features/file";
-import { CommandPalette, CommandPaletteApi, MenuProvider, asMenuRoot } from "~/features/menu";
+import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { isServer } from "solid-js/web";
 import { A } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
+import { ColorScheme, ColorSchemePicker } from "~/components/colorschemepicker";
 import css from "./editor.module.css";
-
-asMenuRoot // prevents removal of import
 
 export default function Editor(props: ParentProps) {
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
+    const [colorScheme, setColorScheme] = createSignal<ColorScheme>(ColorScheme.Auto);
 
     const supported = isServer || typeof window.showDirectoryPicker === 'function';
     const commands = [
@@ -22,10 +22,17 @@ export default function Editor(props: ParentProps) {
 
     return <MenuProvider commands={commands}>
         <Title>Translation-Tool</Title>
+        <Meta name="color-scheme" content={colorScheme()} />
 
         <main class={css.layout} inert={commandPalette()?.open()}>
-            <nav use:asMenuRoot>
-                <A class="logo" href="/"><BsTranslate /></A>
+            <nav class={css.menu}>
+                <A class={css.logo} href="/"><BsTranslate /></A>
+
+                <Menu.Mount />
+
+                <section class={css.right}>
+                    <ColorSchemePicker value={[colorScheme, setColorScheme]} />
+                </section>
             </nav>
 
             <Show when={supported} fallback={<span>too bad, so sad. Your browser does not support the File Access API</span>}>

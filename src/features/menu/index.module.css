@@ -1,3 +1,9 @@
+.root {
+    & > div {
+        display: contents;
+    }
+}
+
 .item {
     padding: var(--padding-m) var(--padding-l);
 

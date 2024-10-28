@@ -23,6 +23,11 @@ export default defineConfig({
                     navigateFallback: 'index.html',
                 },
             }),
-        ]
-    }
+        ],
+    },
+    solid: {
+        babel: {
+            compact: true,
+        },
+    },
 });

@@ -189,10 +189,9 @@ declare module "solid-js" {
     }
 }
 
-export const asMenuRoot = (element: Element) => {
+const Mount: Component = (props) => {
     const menu = useMenu();
 
-    const c = 'menu-root';
     const listener = (e: KeyboardEvent) => {
         const key = e.key.toLowerCase();
         const modifiers =
@@ -214,20 +213,10 @@ export const asMenuRoot = (element: Element) => {
         return false;
     };
 
-    onMount(() => {
-        element.classList.add(c);
-        document.addEventListener('keydown', listener);
-    });
-
-    onCleanup(() => {
-        element.classList.remove(c);
-        document.removeEventListener('keydown', listener);
-    });
-
-    menu.setRef(element);
+    return <div class={css.root} ref={menu.setRef} onKeyDown={listener}></div>;
 };
 
-export const Menu = { Root, Item, Separator } as const;
+export const Menu = { Mount, Root, Item, Separator } as const;
 
 export interface CommandPaletteApi {
     readonly open: Accessor<boolean>;

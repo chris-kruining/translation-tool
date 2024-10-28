@@ -5,4 +5,40 @@
     block-size: 100%;
     overflow: clip;
     background-color: var(--surface-1);
+
+    .menu {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-auto-flow: column;
+        justify-content: start;
+        position: relative;
+        z-index: 10;
+
+        gap: .5em;
+        padding-inline: 1em;
+        block-size: 2em;
+
+        background-color: var(--surface-3);
+        color: var(--text-1);
+
+        & > .logo {
+            inline-size: 3em;
+            block-size: 3em;
+            padding: .75em;
+            margin-block-end: -1em;
+            background-color: inherit;
+            color: inherit;
+            border-radius: .25em;
+
+            & > svg {
+                inline-size: 100%;
+                block-size: 100%;
+            }
+        }
+
+        & .right {
+            display: grid;
+            align-content: center;
+        }
+    }
 }

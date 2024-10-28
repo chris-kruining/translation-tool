@@ -218,26 +218,13 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
         mutate();
     };
 
-    createEffect(() => {
-        props.value;
-
-        resize();
-    });
-
-    const observer = new MutationObserver((e) => {
-        if (element()?.isConnected) {
-            resize();
-        }
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-
     return <textarea
         ref={setElement}
         value={props.value}
         lang={props.lang}
-        placeholder={props.lang}
+        placeholder={`${props.key} in ${props.lang}`}
         name={`${props.key}:${props.lang}`}
-        spellcheck
+        spellcheck={true}
         wrap="soft"
         onkeyup={onKeyUp}
         on:keydown={e => e.stopPropagation()}

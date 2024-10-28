@@ -1,22 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght,GRAD@8..144,400,45;8..144,400,50;8..144,1000,0&family=Roboto+Serif:opsz,GRAD@8..144,71&display=swap");
 
 :root {
-  --surface-1: #ddd;
-  --surface-2: #e8e8e8;
-  --surface-3: #eee;
-  --surface-4: #f8f8f8;
-  --surface-5: #fff;
-  --text-1: #222;
-  --text-2: #282828;
-  --primary: #41c6b3;
+  --surface-1: light-dark(#ddd, #222);
+  --surface-2: light-dark(#e8e8e8, #282828);
+  --surface-3: light-dark(#eee, #333);
+  --surface-4: light-dark(#f8f8f8, #383838);
+  --surface-5: light-dark(#fff, #444);
+  --text-1: light-dark(#222, #eee);
+  --text-2: light-dark(#282828, #d8d8d8);
+  --primary: light-dark(#41c6b3, #6be8d6);
 
   color: var(--text-1);
   accent-color: var(--primary);
 
-  --info: oklch(.71 .17 249);
-  --fail: oklch(.64 .21 25.3);
-  --warn: oklch(.82 .18 78.9);
-  --succ: oklch(.86 .28 150);
+  --info: light-dark(oklch(.71 .17 249), oklch(.71 .17 249));
+  --fail: light-dark(oklch(.64 .21 25.3), oklch(.64 .21 25.3));
+  --warn: light-dark(oklch(.82 .18 78.9), oklch(.82 .18 78.9));
+  --succ: light-dark(oklch(.86 .28 150), oklch(.86 .28 150));
 
   --radii-s: .125em;
   --radii-m: .25em;
@@ -31,25 +31,6 @@
   --padding-s: .25em;
   --padding-m: .5em;
   --padding-l: 1em;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --surface-1: #222;
-    --surface-2: #282828;
-    --surface-3: #333;
-    --surface-4: #383838;
-    --surface-5: #444;
-    --text-1: #eee;
-    --text-2: #d8d8d8;
-
-    --primary: #6be8d6;
-
-    --info: oklch(.71 .17 249);
-    --fail: oklch(.64 .21 25.3);
-    --warn: oklch(.82 .18 78.9);
-    --succ: oklch(.86 .28 150);
-  }
 }
 
 html {
@@ -78,40 +59,6 @@ body {
 
     &:focus-visible {
       outline: 1px solid var(--info);
-    }
-  }
-
-  & .menu-root {
-    display: grid;
-    grid-auto-flow: column;
-    justify-content: start;
-    position: relative;
-    z-index: 10;
-
-    gap: .5em;
-    padding-inline-start: 1em;
-    block-size: 2em;
-
-    background-color: var(--surface-3);
-    color: var(--text-1);
-
-    & > .logo {
-      inline-size: 3em;
-      block-size: 3em;
-      padding: .75em;
-      margin-block-end: -1em;
-      background-color: inherit;
-      color: inherit;
-      border-radius: .25em;
-
-      & > svg {
-        inline-size: 100%;
-        block-size: 100%;
-      }
-    }
-
-    & > div {
-      display: contents;
     }
   }
 }

@@ -24,6 +24,15 @@
         color: var(--text-1);
         border-color: var(--text-2);
         border-radius: var(--radii-s);
+
+        &:has(::spelling-error, ::grammar-error) {
+            border-color: var(--fail);
+        }
+
+        & ::spelling-error {
+            outline: 1px solid var(--fail);
+            text-decoration: yellow underline;
+        }
     }
 
     & .cell {
