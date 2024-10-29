@@ -1,7 +1,7 @@
 import { Accessor, children, createContext, createEffect, createMemo, createSignal, For, JSX, onCleanup, ParentComponent, Setter, Show, useContext } from "solid-js";
-import { IoCloseCircleOutline } from "solid-icons/io";
-import css from "./tabs.module.css";
 import { Command, CommandType, noop, useCommands } from "~/features/command";
+import { AiOutlineClose } from "solid-icons/ai";
+import css from "./tabs.module.css";
 
 interface TabsContextType {
     activate(id: string | undefined): void;
@@ -72,7 +72,7 @@ const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType
                     <span class={css.handle} classList={{ [css.active]: props.active === id }}>
                         <button onpointerdown={() => tabsContext.activate(id)}>{label}</button>
                         <Show when={closable}>
-                            <button onPointerDown={onClose}> <IoCloseCircleOutline /></button>
+                            <button onPointerDown={onClose}> <AiOutlineClose /></button>
                         </Show>
                     </span>
                 </Command.Context>

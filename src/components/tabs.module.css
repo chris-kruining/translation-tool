@@ -30,6 +30,7 @@
                 color: inherit;
                 padding: var(--padding-m) 0;
                 border: none;
+                cursor: pointer;
 
                 &:first-child {
                     padding-inline-start: var(--padding-l);
