@@ -146,6 +146,10 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         })();
     });
 
+    createEffect(() => {
+        console.log(mutations());
+    });
+
     const commands = {
         close: createCommand('close folder', async () => {
             filesContext.remove('__root__');
@@ -183,7 +187,13 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             api()?.clear();
         }),
         delete: createCommand('delete selected items', () => {
-            console.log(api()?.selection())
+            const { selection, remove } = api() ?? {};
+
+            if (!selection || !remove) {
+                return;
+            }
+
+            remove(Object.keys(selection()));
         }, { key: 'delete', modifier: Modifier.None }),
     } as const;
 
@@ -242,6 +252,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                     }}>{file().name}</Context.Handle>;
                 },
             ] as const}</Tree>
+
+            <span>Total mutation: {mutations().length}</span>
         </Sidebar>
 
         <Tabs active={setActive} onClose={commands.closeTab}>

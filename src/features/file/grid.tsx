@@ -1,5 +1,5 @@
 import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, onMount, ParentComponent, Show, useContext } from "solid-js";
-import { createStore, unwrap } from "solid-js/store";
+import { createStore, produce, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
 import css from './grid.module.css';
@@ -17,6 +17,7 @@ export interface GridContextType {
     readonly mutations: Accessor<Mutation[]>;
     readonly selection: Accessor<SelectionItem[]>;
     mutate(prop: string, lang: string, value: string): void;
+    remove(props: string[]): void;
 }
 
 export interface GridApi {
@@ -25,6 +26,7 @@ export interface GridApi {
     readonly mutations: Accessor<Mutation[]>;
     selectAll(): void;
     clear(): void;
+    remove(keys: string[]): void;
 }
 
 const GridContext = createContext<GridContextType>();
@@ -59,6 +61,20 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
 
         mutate(prop: string, lang: string, value: string) {
             setState('rows', prop, lang, value);
+        },
+
+        remove(props: string[]) {
+            console.log(props);
+
+
+            setState('rows', produce(rows => {
+                for (const prop of props) {
+                    delete rows[prop];
+                }
+
+                return rows;
+            }));
+
         },
     };
 
@@ -123,6 +139,9 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => 
         },
         clear() {
             selectionContext.clear();
+        },
+        remove(props: string[]) {
+            gridContext.remove(props);
         },
     };
 
