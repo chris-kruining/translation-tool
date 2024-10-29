@@ -7,6 +7,7 @@
     & .sidebar {
         z-index: 1;
         padding: var(--padding-l);
+        padding-block-start: calc(2 * var(--padding-l));
         background-color: var(--surface-2);
 
         & > ul {

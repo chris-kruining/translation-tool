@@ -3,7 +3,6 @@ import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { CommandType, Command } from "../command";
 import css from "./index.module.css";
-import { join } from "vinxi/dist/types/lib/path";
 
 export interface MenuContextType {
     ref: Accessor<Node | undefined>;
@@ -61,7 +60,9 @@ export const MenuProvider: ParentComponent<{ commands?: CommandType[] }> = (prop
         },
     };
 
-    return <MenuContext.Provider value={ctx}>{props.children}</MenuContext.Provider>;
+    return <Command.Root commands={ctx.commands()}>
+        <MenuContext.Provider value={ctx}>{props.children}</MenuContext.Provider>
+    </Command.Root>;
 }
 
 const useMenu = () => {
@@ -127,7 +128,7 @@ const Root: ParentComponent<{}> = (props) => {
 
     const Child: Component<{ command: CommandType }> = (props) => {
         return <button class={css.item} type="button" onpointerdown={onExecute(props.command)}>
-            <Command command={props.command} />
+            <Command.Handle command={props.command} />
         </button>
     };
 
@@ -177,43 +178,10 @@ const Root: ParentComponent<{}> = (props) => {
     </Portal>
 };
 
-declare module "solid-js" {
-    namespace JSX {
-        interface HTMLAttributes<T> {
-            anchor?: string | undefined;
-        }
-
-        interface Directives {
-            asMenuRoot: true;
-        }
-    }
-}
-
 const Mount: Component = (props) => {
     const menu = useMenu();
 
-    const listener = (e: KeyboardEvent) => {
-        const key = e.key.toLowerCase();
-        const modifiers =
-            (e.shiftKey ? 1 : 0) << 0 |
-            (e.ctrlKey ? 1 : 0) << 1 |
-            (e.metaKey ? 1 : 0) << 2 |
-            (e.altKey ? 1 : 0) << 3;
-
-        const commands = menu.commands();
-        const command = commands.find(c => c.shortcut?.key === key && (c.shortcut.modifier === undefined || c.shortcut.modifier === modifiers));
-
-        if (command === undefined) {
-            return;
-        }
-
-        command();
-
-        e.preventDefault();
-        return false;
-    };
-
-    return <div class={css.root} ref={menu.setRef} onKeyDown={listener}></div>;
+    return <div class={css.root} ref={menu.setRef} />;
 };
 
 export const Menu = { Mount, Root, Item, Separator } as const;
@@ -374,3 +342,11 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         </output>
     </form>;
 };
+
+declare module "solid-js" {
+    namespace JSX {
+        interface HTMLAttributes<T> {
+            anchor?: string | undefined;
+        }
+    }
+}

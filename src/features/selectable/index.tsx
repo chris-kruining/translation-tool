@@ -177,22 +177,7 @@ const Root: ParentComponent = (props) => {
         });
     };
 
-    onMount(() => {
-        document.addEventListener('keydown', onKeyboardEvent);
-        document.addEventListener('keyup', onKeyboardEvent);
-    });
-
-    onCleanup(() => {
-        if (isServer) {
-            return;
-        }
-
-        document.removeEventListener('keydown', onKeyboardEvent);
-        document.removeEventListener('keyup', onKeyboardEvent);
-    });
-
-    return <div ref={setRoot} style={{ 'display': 'contents' }}>{c()}</div>;
-    // return <div ref={setRoot}>{c()}</div>;
+    return <div ref={setRoot} tabIndex={0} onKeyDown={onKeyboardEvent} onKeyUp={onKeyboardEvent} style={{ 'display': 'contents' }}>{c()}</div>;
 };
 
 export const selectable = (element: HTMLElement, options: Accessor<{ value: object, key?: string }>) => {

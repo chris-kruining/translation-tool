@@ -3,6 +3,10 @@
     grid: auto 1fr / 100%;
 
     & > button {
+        display: flex;
+        flex-flow: row;
+        gap: var(--padding-s);
+        align-items: center;
         inline-size: max-content;
         padding: 0;
         background-color: var(--surface-1);

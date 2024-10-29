@@ -1,0 +1,33 @@
+{
+    "short_name": "T-Tool",
+    "name": "Translation Tool",
+    "description": "Simple tool to help with maitaining i18n files",
+    "icons": [
+        {
+            "src": "/images/favicon.dark.svg",
+            "type": "image/svg+xml",
+            "sizes": "any"
+        }
+    ],
+    "start_url": ".",
+    "display": "standalone",
+    "display_override": [
+        "window-controls-overlay"
+    ],
+    "theme_color": "#222",
+    "background_color": "#222",
+    "screenshots": [
+        {
+            "src": "/images/screenshots/narrow.png",
+            "type": "image/png",
+            "sizes": "538x1133",
+            "form_factor": "narrow"
+        },
+        {
+            "src": "/images/screenshots/wide.png",
+            "type": "image/png",
+            "sizes": "2092x1295",
+            "form_factor": "wide"
+        }
+    ]
+}

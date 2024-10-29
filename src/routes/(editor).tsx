@@ -1,4 +1,4 @@
-import { Meta, Title } from "@solidjs/meta";
+import { Link, Meta, Title } from "@solidjs/meta";
 import { createSignal, For, ParentProps, Show } from "solid-js";
 import { BsTranslate } from "solid-icons/bs";
 import { FilesProvider } from "~/features/file";
@@ -23,6 +23,9 @@ export default function Editor(props: ParentProps) {
     return <MenuProvider commands={commands}>
         <Title>Translation-Tool</Title>
         <Meta name="color-scheme" content={colorScheme()} />
+        <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
+        <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
+        <Link rel="manifest" href="/manifest.json" />
 
         <main class={css.layout} inert={commandPalette()?.open()}>
             <nav class={css.menu}>

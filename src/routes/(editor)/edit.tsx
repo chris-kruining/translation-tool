@@ -1,13 +1,16 @@
-import { Accessor, children, Component, createEffect, createMemo, createResource, createSignal, createUniqueId, For, onMount, ParentProps, Setter, Show } from "solid-js";
+import { Component, createEffect, createMemo, createSignal, For, ParentProps, Setter, Show } from "solid-js";
 import { filter, MutarionKind, Mutation, splitAt } from "~/utilities";
 import { Sidebar } from "~/components/sidebar";
-import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree, FileEntry, Entry } from "~/components/filetree";
+import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/components/filetree";
 import { Menu } from "~/features/menu";
 import { Grid, load, useFiles } from "~/features/file";
-import { Command, Context, createCommand, Modifier, noop } from "~/features/command";
+import { Command, Context, createCommand, Modifier, noop, useCommands } from "~/features/command";
 import { GridApi } from "~/features/file/grid";
-import css from "./edit.module.css";
 import { Tab, Tabs } from "~/components/tabs";
+import css from "./edit.module.css";
+import { isServer } from "solid-js/web";
+
+const isInstalledPWA = !isServer && window.matchMedia('(display-mode: standalone)').matches;
 
 async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []): AsyncGenerator<{ id: string, handle: FileSystemFileHandle, path: string[], lang: string, entries: Map<string, string> }, void, never> {
     for await (const handle of directory.values()) {
@@ -32,39 +35,30 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
     }
 };
 
-function* breadthFirstTraverse(subject: FolderEntry): Generator<{ path: string[] } & Entry, void, unknown> {
-    const queue: ({ path: string[] } & Entry)[] = subject.entries.map(e => ({ path: [], ...e }));
+const open = createCommand('open folder', async () => {
+    const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
 
-    while (queue.length > 0) {
-        const entry = queue.shift()!;
-
-        yield entry;
-
-        if (entry.kind === 'folder') {
-            queue.push(...entry.entries.map(e => ({ path: [...entry.path, entry.name], ...e })));
-        }
-    }
-}
-
-const findFile = (folder: FolderEntry, id: string) => {
-    return breadthFirstTraverse(folder).find((entry): entry is { path: string[] } & FileEntry => entry.kind === 'file' && entry.id === id);
-}
+    useFiles().set('__root__', directory);
+}, { key: 'o', modifier: Modifier.Control });
 
 interface Entries extends Map<string, Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { }
-
-interface ContentTabType {
-    handle: FileSystemDirectoryHandle;
-    readonly api: Accessor<GridApi | undefined>;
-    readonly setApi: Setter<GridApi | undefined>;
-    readonly entries: Accessor<Entries>;
-    readonly setEntries: Setter<Entries>;
-}
 
 export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
 
     const root = filesContext.get('__root__');
-    const tabs = createMemo(() => filesContext.files().map(({ key, handle }) => {
+
+    return <Context.Root commands={[open]}>
+        <Show when={root()} fallback={<button onpointerdown={() => open()}>open a folder</button>}>{
+            root => <Editor root={root()} />
+        }</Show>
+    </Context.Root>;
+}
+
+const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
+    const filesContext = useFiles();
+
+    const tabs = createMemo(() => filesContext.files().map(({ handle }) => {
         const [api, setApi] = createSignal<GridApi>();
         const [entries, setEntries] = createSignal<Entries>(new Map());
 
@@ -73,14 +67,12 @@ export default function Edit(props: ParentProps) {
     const [active, setActive] = createSignal<string>();
     const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
     const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
-    const [entries, setEntries] = createSignal<Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>>(new Map);
 
     const tab = createMemo(() => {
         const name = active();
         return tabs().find(t => t.handle.name === name);
     });
     const api = createMemo(() => tab()?.api());
-
     const mutations = createMemo<(Mutation & { file?: { value: string, handle: FileSystemFileHandle, id: string } })[]>(() => tabs().flatMap(tab => {
         const entries = tab.entries();
         const mutations = tab.api()?.mutations() ?? [];
@@ -91,11 +83,9 @@ export default function Edit(props: ParentProps) {
             return { ...m, key, file: entries.get(key)?.[lang] };
         });
     }));
-
     const mutatedFiles = createMemo(() =>
         new Set((mutations()).map(({ file }) => file).filter(file => file !== undefined))
     );
-
     const mutatedData = createMemo(() => {
         const muts = mutations();
         const files = contents();
@@ -149,47 +139,21 @@ export default function Edit(props: ParentProps) {
     });
 
     createEffect(() => {
-        const directory = root();
-
-        if (directory === undefined) {
-            return;
-        }
+        const directory = props.root;
 
         (async () => {
-            const contents = await Array.fromAsync(walk(directory));
-
-            setContents(new Map(contents.map(({ id, entries }) => [id, entries] as const)))
-
-            const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
-
-            const merged = contents.reduce((aggregate, { id, handle, path, lang, entries }) => {
-                for (const [key, value] of entries.entries()) {
-                    const k = [...path, key].join('.');
-
-                    if (!aggregate.has(k)) {
-                        aggregate.set(k, Object.fromEntries(template));
-                    }
-
-                    aggregate.get(k)![lang] = { value, handle, id };
-                }
-
-                return aggregate;
-            }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
-
+            setContents(new Map(await Array.fromAsync(walk(directory), ({ id, entries }) => [id, entries] as const)))
             setFiles({ name: directory.name, id: '', kind: 'folder', handle: directory, entries: await Array.fromAsync(fileTreeWalk(directory)) });
-            setEntries(merged);
         })();
     });
 
     const commands = {
-        open: createCommand('open folder', async () => {
-            const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
-
-            filesContext.set('__root__', directory);
-        }, { key: 'o', modifier: Modifier.Control }),
         close: createCommand('close folder', async () => {
             filesContext.remove('__root__');
         }),
+        closeTab: createCommand('close tab', async (id: string) => {
+            filesContext.remove(id);
+        }, { key: 'w', modifier: Modifier.Control | (isInstalledPWA ? Modifier.None : Modifier.Alt) }),
         save: createCommand('save', async () => {
             await Promise.allSettled(mutatedData().map(async ([handle, data]) => {
                 const stream = await handle.createWritable({ keepExistingData: false });
@@ -203,7 +167,7 @@ export default function Edit(props: ParentProps) {
             console.log('save as ...', handle);
 
             window.showSaveFilePicker({
-                startIn: root(),
+                startIn: props.root,
                 excludeAcceptAllOption: true,
                 types: [
                     { accept: { 'application/json': ['.json'] }, description: 'JSON' },
@@ -224,70 +188,76 @@ export default function Edit(props: ParentProps) {
         }, { key: 'delete', modifier: Modifier.None }),
     } as const;
 
+    const commandCtx = useCommands();
+
     return <div class={css.root}>
-        <Context.Root commands={[commands.saveAs]}>
-            <Context.Menu>{
-                command => <Command command={command} />
-            }</Context.Menu>
+        <Command.Add commands={[commands.saveAs, commands.closeTab]} />
 
-            <Menu.Root>
-                <Menu.Item label="file">
-                    <Menu.Item command={commands.open} />
+        <Context.Menu>{
+            command => <Command.Handle command={command} />
+        }</Context.Menu>
 
-                    <Menu.Item command={commands.close} />
+        <Menu.Root>
+            <Menu.Item label="file">
+                <Menu.Item command={commands.open} />
 
-                    <Menu.Separator />
+                <Menu.Item command={commands.close} />
 
-                    <Menu.Item command={commands.save} />
-                </Menu.Item>
+                <Menu.Separator />
 
-                <Menu.Item label="edit">
-                    <Menu.Item command={noop.withLabel('insert new key')} />
+                <Menu.Item command={commands.save} />
+            </Menu.Item>
 
-                    <Menu.Item command={noop.withLabel('insert new language')} />
+            <Menu.Item label="edit">
+                <Menu.Item command={noop.withLabel('insert new key')} />
 
-                    <Menu.Separator />
+                <Menu.Item command={noop.withLabel('insert new language')} />
 
-                    <Menu.Item command={commands.delete} />
-                </Menu.Item>
+                <Menu.Separator />
 
-                <Menu.Item label="selection">
-                    <Menu.Item command={commands.selectAll} />
+                <Menu.Item command={commands.delete} />
+            </Menu.Item>
 
-                    <Menu.Item command={commands.clearSelection} />
-                </Menu.Item>
+            <Menu.Item label="selection">
+                <Menu.Item command={commands.selectAll} />
 
-                <Menu.Item command={noop.withLabel('view')} />
-            </Menu.Root>
+                <Menu.Item command={commands.clearSelection} />
+            </Menu.Item>
 
-            <Sidebar as="aside" label={tree().name} class={css.sidebar}>
-                <Show when={root()} fallback={<button onpointerdown={() => commands.open()}>open a folder</button>}>
-                    <Tree entries={tree().entries}>{[
-                        folder => {
-                            return <span onDblClick={() => {
-                                filesContext?.set(folder().name, folder().handle);
-                            }}>{folder().name}</span>;
-                        },
-                        file => {
-                            const mutated = createMemo(() => mutatedFiles().values().find(({ id }) => id === file().id) !== undefined);
+            <Menu.Item command={noop.withLabel('view')} />
+        </Menu.Root>
 
-                            return <Context.Handle classList={{ [css.mutated]: mutated() }} onDblClick={() => {
-                                const folder = file().directory;
-                                filesContext?.set(folder.name, folder);
-                            }}>{file().name}</Context.Handle>;
-                        },
-                    ] as const}</Tree>
-                </Show>
-            </Sidebar>
+        <Sidebar as="aside" label={tree().name} class={css.sidebar}>
+            <Tree entries={tree().entries}>{[
+                folder => {
+                    return <span onDblClick={() => {
+                        filesContext?.set(folder().name, folder().handle);
+                    }}>{folder().name}</span>;
+                },
+                file => {
+                    const mutated = createMemo(() => mutatedFiles().values().find(({ id }) => id === file().id) !== undefined);
 
-            <Tabs active={setActive}>
-                <For each={tabs()}>{
-                    ({ handle, setApi, setEntries }) => <Tab id={handle.name} label={handle.name} ><Content directory={handle} api={setApi} entries={setEntries} /></Tab>
-                }</For>
-            </Tabs>
-        </Context.Root>
-    </div>
-}
+                    return <Context.Handle classList={{ [css.mutated]: mutated() }} onDblClick={() => {
+                        const folder = file().directory;
+                        filesContext?.set(folder.name, folder);
+                    }}>{file().name}</Context.Handle>;
+                },
+            ] as const}</Tree>
+        </Sidebar>
+
+        <Tabs active={setActive} onClose={commands.closeTab}>
+            <For each={tabs()}>{
+                ({ handle, setApi, setEntries }) => <Tab
+                    id={handle.name}
+                    label={handle.name}
+                    closable
+                >
+                    <Content directory={handle} api={setApi} entries={setEntries} />
+                </Tab>
+            }</For>
+        </Tabs>
+    </div>;
+};
 
 const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<GridApi | undefined>, entries?: Setter<Entries> }> = (props) => {
     const [entries, setEntries] = createSignal<Entries>(new Map());

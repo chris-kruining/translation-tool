@@ -11,7 +11,7 @@ interface ContextMenuType {
 
 const ContextMenu = createContext<ContextMenuType>()
 
-const Root: ParentComponent<{ commands: CommandType[] }> = (props) => {
+const Root: ParentComponent<{ commands: CommandType<any[]>[] }> = (props) => {
     const [target, setTarget] = createSignal<HTMLElement>();
 
     const context = {

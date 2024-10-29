@@ -14,12 +14,31 @@
 
         border-block-end: 1px solid var(--surface-5);
 
-        & > button {
+        & > .handle {
+            display: grid;
+            grid-auto-flow: column;
+            column-gap: var(--padding-m);
+
             background-color: var(--surface-1);
             color: var(--text-2);
-            padding: var(--padding-m) var(--padding-l);
-            border: none;
             cursor: pointer;
+
+            & > button {
+                display: grid;
+                align-content: center;
+                background-color: inherit;
+                color: inherit;
+                padding: var(--padding-m) 0;
+                border: none;
+
+                &:first-child {
+                    padding-inline-start: var(--padding-l);
+                }
+
+                &:last-child {
+                    padding-inline-end: var(--padding-l);
+                }
+            }
 
             &.active {
                 background-color: var(--surface-3);
