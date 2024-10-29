@@ -31,24 +31,28 @@ const Root: ParentComponent<{ commands: CommandType[] }> = (props) => {
         },
 
         execute<T extends any[] = any[]>(command: CommandType<T>, event: Event): boolean | undefined {
-            const contexts = contextualArguments.get(command);
+            const args = ((): T => {
 
-            if (contexts === undefined) {
-                return;
-            }
+                const contexts = contextualArguments.get(command);
 
-            const element = event.composedPath().find(el => contexts.has(el));
+                if (contexts === undefined) {
+                    return [] as any;
+                }
 
-            if (element === undefined) {
-                return;
-            }
+                const element = event.composedPath().find(el => contexts.has(el));
+
+                if (element === undefined) {
+                    return [] as any;
+                }
+
+                const args = contexts.get(element)! as Accessor<T>;
+                return args();
+            })();
 
             event.preventDefault();
             event.stopPropagation();
 
-            const args = contexts.get(element)! as Accessor<T>;
-
-            command(...args());
+            command(...args);
 
             return false;
         },
@@ -159,17 +163,6 @@ export const createCommand = <TArgs extends any[] = []>(label: string, command: 
     });
 };
 
-export const commandArguments = <T extends any[] = any[]>(element: Element, commandAndArgs: Accessor<[CommandType<T>, T]>) => {
-    const ctx = useContext(CommandContext);
-    const args = createMemo(() => commandAndArgs()[1]);
-
-    if (!ctx) {
-        return;
-    }
-
-    ctx.addContextualArguments(commandAndArgs()[0], element, args);
-}
-
 export const noop = Object.defineProperties(createCommand('noop', () => { }), {
     withLabel: {
         value(label: string) {
@@ -179,13 +172,5 @@ export const noop = Object.defineProperties(createCommand('noop', () => { }), {
         writable: false,
     },
 }) as CommandType & { withLabel(label: string): CommandType };
-
-declare module "solid-js" {
-    namespace JSX {
-        interface Directives {
-            commandArguments<T extends any[] = any[]>(): [CommandType<T>, T];
-        }
-    }
-}
 
 export { Context } from './contextMenu';

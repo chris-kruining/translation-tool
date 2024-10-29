@@ -1,5 +1,6 @@
 import { Accessor, Component, createEffect, createSignal, For, Setter } from "solid-js";
 import css from './colorschemepicker.module.css';
+import { CgDarkMode } from "solid-icons/cg";
 
 export enum ColorScheme {
     Auto = 'light dark',
@@ -31,13 +32,17 @@ export const ColorSchemePicker: Component<ColorSchemePickerProps> = (props) => {
         setter(currentValue);
     });
 
-    return <select class={css.picker} name="color-scheme-picker" value={value()} onInput={(e) => {
-        if (e.target.value !== value()) {
-            setValue(e.target.value as any);
-        }
-    }}>
-        <For each={colorSchemeEntries}>{
-            ([value, label]) => <option value={value}>{label}</option>
-        }</For>
-    </select>;
+    return <label class={css.picker}>
+        <CgDarkMode />
+
+        <select name="color-scheme-picker" value={value()} onInput={(e) => {
+            if (e.target.value !== value()) {
+                setValue(e.target.value as any);
+            }
+        }}>
+            <For each={colorSchemeEntries}>{
+                ([value, label]) => <option value={value}>{label}</option>
+            }</For>
+        </select>
+    </label>;
 };

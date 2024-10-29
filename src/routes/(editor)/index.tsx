@@ -46,7 +46,9 @@ export default function Index() {
 
       <ul>
         <li><A href="/edit">Start editing</A></li>
-        <li><A href="/experimental">Try new features</A></li>
+        {/* <li><A href="/experimental">Try new features</A></li> */}
+        <li><A href="/instructions">Read the instructions</A></li>
+        <li><A href="/about">About this app</A></li>
       </ul>
     </main>
   );

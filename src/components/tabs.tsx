@@ -1,17 +1,12 @@
-import { Accessor, children, createContext, createEffect, createMemo, createSignal, For, onCleanup, ParentComponent, Setter, Show, useContext } from "solid-js";
+import { Accessor, children, createContext, createEffect, createMemo, createSignal, For, JSX, onCleanup, ParentComponent, Setter, Show, useContext } from "solid-js";
 import { IoCloseCircleOutline } from "solid-icons/io";
 import css from "./tabs.module.css";
-import { Command, CommandType, commandArguments, noop, useCommands } from "~/features/command";
-
-commandArguments;
+import { Command, CommandType, noop, useCommands } from "~/features/command";
 
 interface TabsContextType {
-    register(id: string, label: string, options?: Partial<TabOptions>): Accessor<boolean>;
+    activate(id: string | undefined): void;
+    isActive(id: string): Accessor<boolean>;
     readonly onClose: Accessor<CommandType<[string]> | undefined>
-}
-
-interface TabOptions {
-    closable: boolean;
 }
 
 const TabsContext = createContext<TabsContextType>();
@@ -29,28 +24,38 @@ const useTabs = () => {
 export const Tabs: ParentComponent<{ active?: Setter<string | undefined>, onClose?: CommandType<[string]> }> = (props) => {
     const commandsContext = useCommands();
     const [active, setActive] = createSignal<string | undefined>(undefined);
-    const [tabs, setTabs] = createSignal<Map<string, { label: string, options: Partial<TabOptions> }>>(new Map());
 
     createEffect(() => {
         props.active?.(active());
     });
 
-    createEffect(() => {
-        setActive(tabs().keys().toArray().at(-1));
-    });
-
     const ctx = {
-        register(id: string, label: string, options: Partial<TabOptions>) {
-            setTabs(tabs => {
-                tabs.set(id, { label, options });
+        activate(id: string) {
+            setActive(id);
+        },
 
-                return new Map(tabs);
-            });
-
+        isActive(id: string) {
             return createMemo(() => active() === id);
         },
+
         onClose: createMemo(() => props.onClose),
     };
+
+    return <TabsContext.Provider value={ctx}>
+        <_Tabs active={active()} onClose={props.onClose}>{props.children}</_Tabs>
+    </TabsContext.Provider >;
+}
+
+const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType<[string]> }> = (props) => {
+    const commandsContext = useCommands();
+    const tabsContext = useTabs();
+
+    const resolved = children(() => props.children);
+    const tabs = createMemo(() => resolved.toArray().filter(c => c instanceof HTMLElement).map(({ id, dataset }, i) => ({ id, label: dataset.tabLabel, options: { closable: dataset.tabClosable } })));
+
+    createEffect(() => {
+        tabsContext.activate(tabs().at(-1)?.id);
+    });
 
     const onClose = (e: Event) => {
         if (!commandsContext || !props.onClose) {
@@ -60,33 +65,44 @@ export const Tabs: ParentComponent<{ active?: Setter<string | undefined>, onClos
         return commandsContext.execute(props.onClose, e);
     };
 
-    return <TabsContext.Provider value={ctx}>
-        <div class={css.tabs}>
-            <header>
-                <For each={tabs().entries().toArray()}>{
-                    ([id, { label, options: { closable = false } }]) => <Command.Context for={props.onClose} with={[id]}>
-                        <span class={css.handle} classList={{ [css.active]: active() === id }}>
-                            <button onpointerdown={() => setActive(id)}>{label}</button>
-                            <Show when={closable}>
-                                <button onPointerDown={onClose}> <IoCloseCircleOutline /></button>
-                            </Show>
-                        </span>
-                    </Command.Context>
-                }</For>
-            </header>
+    return <div class={css.tabs}>
+        <header>
+            <For each={tabs()}>{
+                ({ id, label, options: { closable = false } }) => <Command.Context for={props.onClose} with={[id]}>
+                    <span class={css.handle} classList={{ [css.active]: props.active === id }}>
+                        <button onpointerdown={() => tabsContext.activate(id)}>{label}</button>
+                        <Show when={closable}>
+                            <button onPointerDown={onClose}> <IoCloseCircleOutline /></button>
+                        </Show>
+                    </span>
+                </Command.Context>
+            }</For>
+        </header>
 
-            {props.children}
-        </div>
-    </TabsContext.Provider >;
-}
+        {resolved()}
+    </div>;
+};
 
 export const Tab: ParentComponent<{ id: string, label: string, closable?: boolean }> = (props) => {
     const context = useTabs();
-
-    const isActive = context.register(props.id, props.label, {
-        closable: props.closable ?? false
-    });
     const resolved = children(() => props.children);
+    const isActive = context.isActive(props.id);
+    const [ref, setRef] = createSignal();
 
-    return <Show when={isActive()}><Command.Context for={context.onClose()} with={[props.id]}>{resolved()}</Command.Context></Show>;
+    // const isActive = context.register(props.id, props.label, {
+    //     closable: props.closable ?? false,
+    //     ref: ref,
+    // });
+
+    return <div
+        ref={setRef()}
+        id={props.id}
+        data-tab-label={props.label}
+        data-tab-closable={props.closable}
+        style="dispay: contents;"
+    >
+        <Show when={isActive()}>
+            <Command.Context for={context.onClose() ?? noop} with={[props.id]}>{resolved()}</Command.Context>
+        </Show>
+    </div>;
 }

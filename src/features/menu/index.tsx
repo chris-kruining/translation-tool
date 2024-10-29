@@ -1,7 +1,7 @@
 import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
-import { CommandType, Command } from "../command";
+import { CommandType, Command, useCommands } from "../command";
 import css from "./index.module.css";
 
 export interface MenuContextType {
@@ -35,7 +35,7 @@ const MenuContext = createContext<MenuContextType>();
 
 export const MenuProvider: ParentComponent<{ commands?: CommandType[] }> = (props) => {
     const [ref, setRef] = createSignal<Node | undefined>();
-    const [store, setStore] = createStore<{ items: Record<string, Item | ItemWithChildren> }>({ items: {} });
+    const [store, setStore] = createStore<{ items: Map<string, Item | ItemWithChildren> }>({ items: new Map });
 
     const ctx = {
         ref,
@@ -43,19 +43,19 @@ export const MenuProvider: ParentComponent<{ commands?: CommandType[] }> = (prop
         addItems(items: (Item | ItemWithChildren)[]) {
             return setStore('items', values => {
                 for (const item of items) {
-                    values[item.id] = item;
+                    values.set(item.id, item);
                 }
 
-                return values;
+                return new Map(values.entries());
             })
         },
         items() {
-            return Object.values(store.items);
+            return store.items.values();
         },
         commands() {
-            return Object.values(store.items)
-                .map(item => item.kind === 'node' ? item.children.filter(c => c.kind === 'leaf').map(c => c.command) : item.command)
-                .flat()
+            return store.items.values()
+                .flatMap(item => item.kind === 'node' ? item.children.filter(c => c.kind === 'leaf').map(c => c.command) : [item.command])
+                .toArray()
                 .concat(props.commands ?? []);
         },
     };
@@ -100,11 +100,12 @@ const Separator: Component = (props) => {
 }
 
 const Root: ParentComponent<{}> = (props) => {
-    const menu = useMenu();
+    const menuContext = useMenu();
+    const commandContext = useCommands();
     const [current, setCurrent] = createSignal<HTMLElement>();
     const items = children(() => props.children).toArray() as unknown as (Item | ItemWithChildren)[];
 
-    menu.addItems(items)
+    menuContext.addItems(items)
 
     const close = () => {
         const el = current();
@@ -118,10 +119,10 @@ const Root: ParentComponent<{}> = (props) => {
 
     const onExecute = (command?: CommandType) => {
         return command
-            ? async () => {
-                await command?.();
-
+            ? (e: Event) => {
                 close();
+
+                return commandContext?.execute(command, e);
             }
             : () => { }
     };
@@ -132,7 +133,7 @@ const Root: ParentComponent<{}> = (props) => {
         </button>
     };
 
-    return <Portal mount={menu.ref()}>
+    return <Portal mount={menuContext.ref()}>
         <For each={items}>{
             item => <Switch>
                 <Match when={item.kind === 'node' ? item as ItemWithChildren : undefined}>{

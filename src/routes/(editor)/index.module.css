@@ -1,4 +1,13 @@
 .main {
     display: grid;
     place-content: center;
+    gap: var(--padding-m);
+
+    ul {
+        display: flex;
+        flex-flow: column;
+        gap: var(--padding-s);
+        padding-inline-start: var(--padding-l);
+        margin: 0;
+    }
 }

@@ -4,7 +4,7 @@ import { Sidebar } from "~/components/sidebar";
 import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/components/filetree";
 import { Menu } from "~/features/menu";
 import { Grid, load, useFiles } from "~/features/file";
-import { Command, Context, createCommand, Modifier, noop, useCommands } from "~/features/command";
+import { Command, CommandType, Context, createCommand, Modifier, noop, useCommands } from "~/features/command";
 import { GridApi } from "~/features/file/grid";
 import { Tab, Tabs } from "~/components/tabs";
 import css from "./edit.module.css";
@@ -35,21 +35,20 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
     }
 };
 
-const open = createCommand('open folder', async () => {
-    const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
-
-    useFiles().set('__root__', directory);
-}, { key: 'o', modifier: Modifier.Control });
 
 interface Entries extends Map<string, Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { }
 
 export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
 
-    const root = filesContext.get('__root__');
+    const open = createCommand('open folder', async () => {
+        const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+        filesContext.open(directory);
+    }, { key: 'o', modifier: Modifier.Control });
 
     return <Context.Root commands={[open]}>
-        <Show when={root()} fallback={<button onpointerdown={() => open()}>open a folder</button>}>{
+        <Show when={filesContext.root()} fallback={<Blank open={open} />}>{
             root => <Editor root={root()} />
         }</Show>
     </Context.Root>;
@@ -58,11 +57,11 @@ export default function Edit(props: ParentProps) {
 const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const filesContext = useFiles();
 
-    const tabs = createMemo(() => filesContext.files().map(({ handle }) => {
+    const tabs = createMemo(() => filesContext.files().map(({ key, handle }) => {
         const [api, setApi] = createSignal<GridApi>();
         const [entries, setEntries] = createSignal<Entries>(new Map());
 
-        return ({ handle, api, setApi, entries, setEntries });
+        return ({ key, handle, api, setApi, entries, setEntries });
     }));
     const [active, setActive] = createSignal<string>();
     const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
@@ -247,8 +246,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
         <Tabs active={setActive} onClose={commands.closeTab}>
             <For each={tabs()}>{
-                ({ handle, setApi, setEntries }) => <Tab
-                    id={handle.name}
+                ({ key, handle, setApi, setEntries }) => <Tab
+                    id={key}
                     label={handle.name}
                     closable
                 >
@@ -314,4 +313,10 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
     });
 
     return <Grid columns={columns()} rows={rows()} api={setApi} />;
+};
+
+const Blank: Component<{ open: CommandType }> = (props) => {
+    return <div class={css.blank}>
+        <button onpointerdown={() => props.open()}>open a folder</button>
+    </div>
 };

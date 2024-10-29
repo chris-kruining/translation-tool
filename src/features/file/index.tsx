@@ -4,6 +4,8 @@ import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import * as json from './parser/json';
 
+const ROOT = '__root__';
+
 interface FileEntity {
     key: string;
     handle: FileSystemDirectoryHandle;
@@ -25,7 +27,9 @@ interface InternalFilesContextType {
 
 interface FilesContextType {
     readonly files: Accessor<FileEntity[]>,
+    readonly root: Accessor<FileSystemDirectoryHandle | undefined>,
 
+    open(directory: FileSystemDirectoryHandle): void;
     get(key: string): Accessor<FileSystemDirectoryHandle | undefined>
     set(key: string, handle: FileSystemDirectoryHandle): Promise<void>;
     remove(key: string): Promise<void>;
@@ -42,10 +46,16 @@ const clientContext = (): InternalFilesContextType => {
 
     return {
         onChange(hook: (key: string, handle: FileSystemDirectoryHandle) => any) {
-            const callHook = (key: string, handle: FileSystemDirectoryHandle) => setTimeout(() => hook(key, handle), 1);
+            const callHook = (key: string, handle: FileSystemDirectoryHandle) => {
+                if (!key || key === ROOT) {
+                    return;
+                }
+
+                setTimeout(() => hook(key, handle), 1);
+            };
 
             db.files.hook('creating', (_: string, { key, handle }: FileEntity) => { callHook(key, handle); });
-            db.files.hook('deleting', (_: string, { key, handle }: FileEntity) => callHook(key, handle));
+            db.files.hook('deleting', (_: string, { key, handle }: FileEntity = { key: undefined!, handle: undefined! }) => callHook(key, handle));
             db.files.hook('updating', (_1: Object, _2: string, { key, handle }: FileEntity) => callHook(key, handle));
         },
 
@@ -59,13 +69,13 @@ const clientContext = (): InternalFilesContextType => {
             return (await db.files.delete(key));
         },
         async keys() {
-            return (await db.files.toArray()).map(f => f.key);
+            return (await db.files.where('key').notEqual(ROOT).toArray()).map(f => f.key);
         },
         async entries() {
-            return await db.files.toArray();
+            return await db.files.where('key').notEqual(ROOT).toArray();
         },
         async list() {
-            const files = await db.files.toArray();
+            const files = await db.files.where('key').notEqual(ROOT).toArray();
 
             return files.map(f => f.handle)
         },
@@ -99,27 +109,35 @@ const serverContext = (): InternalFilesContextType => ({
 export const FilesProvider: ParentComponent = (props) => {
     const internal = isServer ? serverContext() : clientContext();
 
-    const [state, setState] = createStore<{ files: FileEntity[] }>({ files: [] });
+    const [state, setState] = createStore<{ openedFiles: FileEntity[], root: FileSystemDirectoryHandle | undefined }>({ openedFiles: [], root: undefined });
 
-    const updateFilesInState = async () => {
-        const entities = await internal.entries();
-
-        setState('files', entities);
-    };
-
-    internal.onChange((key: string, handle: FileSystemDirectoryHandle) => {
-        updateFilesInState();
+    internal.onChange(async () => {
+        setState('openedFiles', await internal.entries());
     });
 
     onMount(() => {
-        updateFilesInState();
+        (async () => {
+            const [root, files] = await Promise.all([
+                internal.get(ROOT),
+                internal.entries(),
+            ]);
+
+            setState('root', root);
+            setState('openedFiles', files);
+        })();
     });
 
     const context: FilesContextType = {
-        files: createMemo(() => state.files),
+        files: createMemo(() => state.openedFiles),
+        root: createMemo(() => state.root),
+
+        open(directory: FileSystemDirectoryHandle) {
+            setState('root', directory);
+            internal.set(ROOT, directory);
+        },
 
         get(key: string): Accessor<FileSystemDirectoryHandle | undefined> {
-            return createMemo(() => state.files.find(entity => entity.key === key)?.handle);
+            return createMemo(() => state.openedFiles.find(entity => entity.key === key)?.handle);
         },
 
         async set(key: string, handle: FileSystemDirectoryHandle) {
