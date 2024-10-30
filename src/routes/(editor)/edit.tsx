@@ -79,6 +79,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         return mutations.map(m => {
             const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
 
+            console.log(m.key, key, lang, entries);
+
             return { ...m, key, file: entries.get(key)?.[lang] };
         });
     }));
@@ -195,9 +197,11 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
             remove(Object.keys(selection()));
         }, { key: 'delete', modifier: Modifier.None }),
+        inserNewKey: createCommand('insert new key', () => {
+            api()?.insert('this.is.some.key');
+        }),
+        inserNewLanguage: noop.withLabel('insert new language'),
     } as const;
-
-    const commandCtx = useCommands();
 
     return <div class={css.root}>
         <Command.Add commands={[commands.saveAs, commands.closeTab]} />
@@ -218,9 +222,9 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             </Menu.Item>
 
             <Menu.Item label="edit">
-                <Menu.Item command={noop.withLabel('insert new key')} />
+                <Menu.Item command={commands.inserNewKey} />
 
-                <Menu.Item command={noop.withLabel('insert new language')} />
+                <Menu.Item command={commands.inserNewLanguage} />
 
                 <Menu.Separator />
 

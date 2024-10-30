@@ -58,7 +58,10 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         return;
     }
 
-    for (const [[keyA, valueA], [keyB, valueB]] of zip(entriesOf(a), entriesOf(b))) {
+    for (const [[keyA, valueA], [keyB, valueB]] of zip(entriesOf(a), entriesOf(b)).take(10)) {
+        // console.log('deepdiff', keyA, valueA, keyB, valueB);
+        // continue;
+
         if (!keyA && !keyB) {
             throw new Error('this code should not be reachable, there is a bug with an unhandled/unknown edge case');
         }
@@ -70,7 +73,6 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         }
 
         if (keyA && !keyB) {
-            // value was added
             yield { key: path.concat(keyA.toString()).join('.'), kind: MutarionKind.Delete };
 
             continue;
@@ -113,20 +115,123 @@ const entriesOf = (subject: object): Iterable<readonly [string | number, any]> =
 
     return Object.entries(subject);
 };
-const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable<readonly [string | number, any]>): Generator<readonly [[string | number | undefined, any], [string | number | undefined, any]], void, unknown> {
-    const iterA = Iterator.from(a);
-    const iterB = Iterator.from(b);
+const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable<readonly [string | number, any]>): Generator<readonly [readonly [string | number | undefined, any], readonly [string | number | undefined, any]], void, unknown> {
+    const iterA = bufferredIterator(a);
+    const iterB = bufferredIterator(b);
 
-    while (true) {
-        const { done: doneA, value: entryA = [] } = iterA.next() ?? {};
-        const { done: doneB, value: entryB = [] } = iterB.next() ?? {};
+    const EMPTY = [undefined, undefined] as [string | number | undefined, any];
 
-        if (doneA && doneB) {
-            break;
+    while (!iterA.done || !iterB.done) {
+        // if we have a match on the keys of a and b we can simply consume and yield
+        if (iterA.current.key === iterB.current.key) {
+            yield [iterA.consume(), iterB.consume()];
+
+            iterA.advance();
+            iterB.advance();
         }
 
-        yield [entryA, entryB] as const;
+        // key of a aligns with last key in buffer b
+        // conclusion: a has key(s) that b does not
+        else if (iterA.current.key === iterB.top.key) {
+            const a = iterA.pop()!;
+
+            for (const [key, value] of iterA.flush()) {
+                yield [[key, value], EMPTY];
+            }
+
+            yield [a, iterB.consume()];
+
+            iterB.advance();
+        }
+
+        // the reverse case, key of b is aligns with the last key in buffer a
+        // conclusion: a is missing key(s) the b does have
+        else if (iterB.current.key === iterA.top.key) {
+            const b = iterB.pop()!;
+
+            for (const [key, value] of iterB.flush()) {
+                yield [EMPTY, [key, value]];
+            }
+
+            yield [iterA.consume(), b];
+
+            iterA.advance();
+        }
+
+        // Neiter of the above cases are hit.
+        // conclusion: there still is no alignment.
+        else {
+            iterA.advance();
+            iterB.advance();
+        }
     }
+};
+
+const bufferredIterator = <T extends readonly [string | number, any]>(subject: Iterable<T>) => {
+    const iterator = Iterator.from(subject);
+    const buffer: T[] = [];
+    let cursor: number = 0;
+    let done = false;
+
+    const next = () => {
+        const res = iterator.next();
+        done = res.done ?? false;
+
+        if (!done) {
+            cursor = buffer.push(res.value) - 1;
+        }
+    };
+
+    next();
+
+    return {
+        advance() {
+            if (buffer.length > 0 && cursor < (buffer.length - 1)) {
+                cursor++;
+            }
+            else {
+                next();
+            }
+        },
+
+        consume() {
+            cursor = 0;
+
+            return buffer.shift()!;
+        },
+
+        flush(): T[] {
+            cursor = 0;
+
+            return buffer.splice(0, buffer.length);
+        },
+
+        pop() {
+            cursor--;
+
+            return buffer.pop();
+        },
+
+        get done() {
+            return done && Math.max(0, buffer.length - 1) === cursor;
+        },
+
+        get top() {
+            const [key = undefined, value = undefined] = buffer.at(0) ?? [];
+
+            return { key, value };
+        },
+
+        get current() {
+            const [key = undefined, value = undefined] = buffer.at(cursor) ?? [];
+
+            return { key, value };
+        },
+
+        get entry() {
+            return [this.current.key, this.current.value] as const;
+        }
+    };
 };
 
 export interface filter {

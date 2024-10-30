@@ -1,8 +1,9 @@
 import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, onMount, ParentComponent, Show, useContext } from "solid-js";
-import { createStore, produce, unwrap } from "solid-js/store";
+import { createStore, produce, reconcile, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
 import css from './grid.module.css';
+import diff from "microdiff";
 
 selectable // prevents removal of import
 
@@ -18,6 +19,7 @@ export interface GridContextType {
     readonly selection: Accessor<SelectionItem[]>;
     mutate(prop: string, lang: string, value: string): void;
     remove(props: string[]): void;
+    insert(prop: string): void;
 }
 
 export interface GridApi {
@@ -27,6 +29,7 @@ export interface GridApi {
     selectAll(): void;
     clear(): void;
     remove(keys: string[]): void;
+    insert(prop: string): void;
 }
 
 const GridContext = createContext<GridContextType>();
@@ -54,6 +57,10 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
         setState('numberOfRows', Object.keys(state.rows).length);
     });
 
+    createEffect(() => {
+        console.log(mutations());
+    });
+
     const ctx: GridContextType = {
         rows,
         mutations,
@@ -64,9 +71,6 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
         },
 
         remove(props: string[]) {
-            console.log(props);
-
-
             setState('rows', produce(rows => {
                 for (const prop of props) {
                     delete rows[prop];
@@ -74,7 +78,14 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
 
                 return rows;
             }));
+        },
 
+        insert(prop: string) {
+            setState('rows', produce(rows => {
+                rows[prop] = { en: '' };
+
+                return rows
+            }))
         },
     };
 
@@ -142,6 +153,9 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => 
         },
         remove(props: string[]) {
             gridContext.remove(props);
+        },
+        insert(prop: string) {
+            gridContext.insert(prop);
         },
     };
 
