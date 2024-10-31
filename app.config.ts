@@ -12,8 +12,8 @@ export default defineConfig({
                 registerType: 'autoUpdate',
                 base: '/',
                 manifest: {
-                    name: 'Translation tool',
-                    short_name: 'T_tool',
+                    name: 'Calque',
+                    short_name: 'Calque',
                     theme_color: '#f0f',
                     icons: [],
                 },

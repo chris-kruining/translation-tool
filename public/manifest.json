@@ -1,7 +1,7 @@
 {
-    "short_name": "T-Tool",
-    "name": "Translation Tool",
-    "description": "Simple tool to help with maitaining i18n files",
+    "short_name": "Calque",
+    "name": "Calque",
+    "description": "Simple tool for maitaining i18n files",
     "icons": [
         {
             "src": "/images/favicon.dark.svg",

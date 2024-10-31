@@ -1,5 +1,5 @@
 {
-  "name": "example-basic",
+  "name": "calque",
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
     "@solidjs/router": "^0.14.10",

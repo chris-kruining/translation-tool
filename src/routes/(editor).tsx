@@ -21,7 +21,7 @@ export default function Editor(props: ParentProps) {
     ];
 
     return <MenuProvider commands={commands}>
-        <Title>Translation-Tool</Title>
+        <Title>Calque</Title>
         <Meta name="color-scheme" content={colorScheme()} />
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
