@@ -1,6 +1,6 @@
 {
     "short_name": "Calque",
-    "name": "Calque",
+    "name": "Calque - manage your i18n files",
     "description": "Simple tool for maitaining i18n files",
     "icons": [
         {
@@ -13,8 +13,6 @@
     "display_override": [
         "window-controls-overlay"
     ],
-    "theme_color": "#222",
-    "background_color": "#222",
     "screenshots": [
         {
             "src": "/images/screenshots/narrow.png",

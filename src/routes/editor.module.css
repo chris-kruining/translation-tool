@@ -11,15 +11,22 @@
         grid-template-columns: auto minmax(0, 1fr) auto;
         grid-auto-flow: column;
         justify-content: start;
+        justify-items: start;
         position: relative;
         z-index: 10;
 
         gap: .5em;
         padding-inline: 1em;
-        block-size: 2em;
+        block-size: calc(env(titlebar-area-height, 2em) + .5px);
+        inline-size: env(titlebar-area-width, 100%);
+        -webkit-app-region: drag;
 
         background-color: var(--surface-3);
         color: var(--text-1);
+
+        & > * {
+            -webkit-app-region: no-drag;
+        }
 
         & > .logo {
             inline-size: 3em;
