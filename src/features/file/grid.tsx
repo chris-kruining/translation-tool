@@ -1,9 +1,8 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, For, onMount, ParentComponent, Show, useContext } from "solid-js";
-import { createStore, produce, reconcile, unwrap } from "solid-js/store";
+import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, ParentComponent, Show, useContext } from "solid-js";
+import { createStore, produce, unwrap } from "solid-js/store";
 import { SelectionProvider, useSelection, selectable } from "../selectable";
 import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
 import css from './grid.module.css';
-import diff from "microdiff";
 
 selectable // prevents removal of import
 
@@ -37,7 +36,7 @@ const GridContext = createContext<GridContextType>();
 const isLeaf = (entry: Entry | Leaf): entry is Leaf => Object.values(entry).some(v => typeof v === 'string');
 const useGrid = () => useContext(GridContext)!;
 
-const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
+export const Grid: Component<{ class?: string, columns: string[], rows: Rows, api?: (api: GridApi) => any }> = (props) => {
     const [selection, setSelection] = createSignal<SelectionItem[]>([]);
     const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, snapshot: Rows, numberOfRows: number }>({
         rows: {},
@@ -45,7 +44,12 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
         numberOfRows: 0,
     });
 
-    const mutations = createMemo(() => deepDiff(state.snapshot, state.rows).toArray());
+    const mutations = createMemo(() => {
+        // enumerate all values to make sure the memo is recalculated on any change
+        Object.values(state.rows).map(entry => Object.values(entry));
+
+        return deepDiff(state.snapshot, state.rows).toArray();
+    });
     const rows = createMemo(() => Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, unwrap(row)] as const)));
 
     createEffect(() => {
@@ -55,10 +59,6 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
 
     createEffect(() => {
         setState('numberOfRows', Object.keys(state.rows).length);
-    });
-
-    createEffect(() => {
-        console.log(mutations());
     });
 
     const ctx: GridContextType = {
@@ -82,7 +82,7 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
 
         insert(prop: string) {
             setState('rows', produce(rows => {
-                rows[prop] = { en: '' };
+                rows[prop] = Object.fromEntries(props.columns.slice(1).map(lang => [lang, '']));
 
                 return rows
             }))
@@ -91,15 +91,16 @@ const GridProvider: ParentComponent<{ rows: Rows }> = (props) => {
 
     return <GridContext.Provider value={ctx}>
         <SelectionProvider selection={setSelection} multiSelect>
-            {props.children}
+            <Api api={props.api} />
+
+            <_Grid class={props.class} columns={props.columns} rows={rows()} />
         </SelectionProvider>
     </GridContext.Provider>;
 };
 
-export const Grid: Component<{ class?: string, columns: string[], rows: Rows, api?: (api: GridApi) => any }> = (props) => {
+const _Grid: Component<{ class?: string, columns: string[], rows: Record<string, Record<string, string>> }> = (props) => {
     const columnCount = createMemo(() => props.columns.length - 1);
-    const root = createMemo<Entry>(() => props.rows
-        ?.entries()
+    const root = createMemo<Entry>(() => Object.entries(props.rows)
         .reduce((aggregate, [key, value]) => {
             let obj: any = aggregate;
             const parts = key.split('.');
@@ -121,15 +122,11 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
         }, {}));
 
     return <section class={`${css.table} ${props.class}`} style={{ '--columns': columnCount() }}>
-        <GridProvider rows={props.rows}>
-            <Api api={props.api} />
+        <Head headers={props.columns} />
 
-            <Head headers={props.columns} />
-
-            <main class={css.main}>
-                <Row entry={root()} />
-            </main>
-        </GridProvider>
+        <main class={css.main}>
+            <Row entry={root()} />
+        </main>
     </section>
 };
 

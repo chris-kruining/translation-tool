@@ -2,10 +2,10 @@ export const splitAt = (subject: string, index: number): readonly [string, strin
     return [subject.slice(0, index), subject.slice(index + 1)] as const;
 };
 
-export const debounce = <T extends (...args: any[]) => void>(callback: T, delay: number): T => {
+export const debounce = <T extends (...args: any[]) => void>(callback: T, delay: number): ((...args: Parameters<T>) => void) => {
     let handle: ReturnType<typeof setTimeout> | undefined;
 
-    return (...args: any[]) => {
+    return (...args: Parameters<T>) => {
         if (handle) {
             clearTimeout(handle);
         }
@@ -58,10 +58,7 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         return;
     }
 
-    for (const [[keyA, valueA], [keyB, valueB]] of zip(entriesOf(a), entriesOf(b)).take(10)) {
-        // console.log('deepdiff', keyA, valueA, keyB, valueB);
-        // continue;
-
+    for (const [[keyA, valueA], [keyB, valueB]] of zip(entriesOf(a), entriesOf(b))) {
         if (!keyA && !keyB) {
             throw new Error('this code should not be reachable, there is a bug with an unhandled/unknown edge case');
         }
@@ -125,9 +122,6 @@ const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable
         // if we have a match on the keys of a and b we can simply consume and yield
         if (iterA.current.key === iterB.current.key) {
             yield [iterA.consume(), iterB.consume()];
-
-            iterA.advance();
-            iterB.advance();
         }
 
         // key of a aligns with last key in buffer b
@@ -140,8 +134,6 @@ const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable
             }
 
             yield [a, iterB.consume()];
-
-            iterB.advance();
         }
 
         // the reverse case, key of b is aligns with the last key in buffer a
@@ -154,8 +146,14 @@ const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable
             }
 
             yield [iterA.consume(), b];
+        }
 
-            iterA.advance();
+        else if (iterA.done && !iterB.done) {
+            yield [EMPTY, iterB.consume()];
+        }
+
+        else if (!iterA.done && iterB.done) {
+            yield [iterA.consume(), EMPTY];
         }
 
         // Neiter of the above cases are hit.
@@ -196,8 +194,11 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
 
         consume() {
             cursor = 0;
+            const value = buffer.shift()!;
 
-            return buffer.shift()!;
+            this.advance();
+
+            return value;
         },
 
         flush(): T[] {
@@ -213,7 +214,7 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         },
 
         get done() {
-            return done && Math.max(0, buffer.length - 1) === cursor;
+            return done && buffer.length === 0;
         },
 
         get top() {
@@ -244,6 +245,12 @@ export const filter = async function*<T, S extends T>(subject: AsyncIterableIter
         if (predicate(value)) {
             yield value;
         }
+    }
+};
+
+export const map = async function*<TIn, TResult>(subject: AsyncIterableIterator<TIn>, predicate: (value: TIn) => TResult): AsyncGenerator<TResult, void, unknown> {
+    for await (const value of subject) {
+        yield predicate(value);
     }
 };
 

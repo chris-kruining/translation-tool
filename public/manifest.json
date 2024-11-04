@@ -26,5 +26,15 @@
             "sizes": "2092x1295",
             "form_factor": "wide"
         }
+    ],
+    "file_handlers": [
+        {
+            "action": "/edit",
+            "accept": {
+                "text/*": [
+                    ".json"
+                ]
+            }
+        }
     ]
 }

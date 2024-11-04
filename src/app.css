@@ -78,4 +78,12 @@ h1 {
 
 p {
   line-height: 1.35;
+  margin: 0;
+}
+
+code {
+  padding-inline: var(--padding-s);
+  background-color: var(--surface-3);
+  border: 1px solid var(--surface-5);
+  border-radius: var(--radii-m);
 }

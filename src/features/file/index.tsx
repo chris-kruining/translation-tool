@@ -19,7 +19,7 @@ interface InternalFilesContextType {
     onChange(hook: (key: string, handle: FileSystemDirectoryHandle) => any): void;
     set(key: string, handle: FileSystemDirectoryHandle): Promise<void>;
     get(key: string): Promise<FileSystemDirectoryHandle | undefined>;
-    remove(key: string): Promise<void>;
+    remove(...keys: string[]): Promise<void>;
     keys(): Promise<string[]>;
     entries(): Promise<FileEntity[]>;
     list(): Promise<FileSystemDirectoryHandle[]>;
@@ -65,8 +65,8 @@ const clientContext = (): InternalFilesContextType => {
         async get(key: string) {
             return (await db.files.get(key))?.handle;
         },
-        async remove(key: string) {
-            return (await db.files.delete(key));
+        async remove(...keys: string[]) {
+            await Promise.all(keys.map(key => db.files.delete(key)));
         },
         async keys() {
             return (await db.files.where('key').notEqual(ROOT).toArray()).map(f => f.key);
@@ -92,7 +92,7 @@ const serverContext = (): InternalFilesContextType => ({
     get(key: string) {
         return Promise.resolve(undefined);
     },
-    remove(key: string) {
+    remove(...keys: string[]) {
         return Promise.resolve(undefined);
     },
     keys() {
@@ -131,9 +131,12 @@ export const FilesProvider: ParentComponent = (props) => {
         files: createMemo(() => state.openedFiles),
         root: createMemo(() => state.root),
 
-        open(directory: FileSystemDirectoryHandle) {
+        async open(directory: FileSystemDirectoryHandle) {
+            await internal.remove(...(await internal.keys()));
+
             setState('root', directory);
-            internal.set(ROOT, directory);
+
+            await internal.set(ROOT, directory);
         },
 
         get(key: string): Accessor<FileSystemDirectoryHandle | undefined> {

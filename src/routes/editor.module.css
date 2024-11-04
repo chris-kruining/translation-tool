@@ -11,7 +11,7 @@
         grid-template-columns: auto minmax(0, 1fr) auto;
         grid-auto-flow: column;
         justify-content: start;
-        justify-items: start;
+        place-items: center start;
         position: relative;
         z-index: 10;
 

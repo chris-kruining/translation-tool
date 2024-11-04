@@ -30,4 +30,9 @@ export default defineConfig({
             compact: true,
         },
     },
+    server: {
+        prerender: {
+            crawlLinks: true,
+        },
+    },
 });

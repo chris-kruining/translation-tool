@@ -55,7 +55,7 @@ interface TreeContextType {
 const TreeContext = createContext<TreeContextType>();
 
 export const Tree: Component<{ entries: Entry[], children: readonly [(folder: Accessor<FolderEntry>) => JSX.Element, (file: Accessor<FileEntry>) => JSX.Element], open?: TreeContextType['open'] }> = (props) => {
-    const [selection, setSelection] = createSignal<object[]>([]);
+    const [, setSelection] = createSignal<object[]>([]);
 
     const context = {
         open: props.open ?? (() => { }),

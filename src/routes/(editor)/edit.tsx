@@ -1,4 +1,4 @@
-import { Component, createEffect, createMemo, createSignal, For, ParentProps, Setter, Show } from "solid-js";
+import { Component, createEffect, createMemo, createSignal, For, onMount, ParentProps, Setter, Show } from "solid-js";
 import { filter, MutarionKind, Mutation, splitAt } from "~/utilities";
 import { Sidebar } from "~/components/sidebar";
 import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/components/filetree";
@@ -9,6 +9,7 @@ import { GridApi } from "~/features/file/grid";
 import { Tab, Tabs } from "~/components/tabs";
 import css from "./edit.module.css";
 import { isServer } from "solid-js/web";
+import { Prompt, PromptApi } from "~/components/prompt";
 
 const isInstalledPWA = !isServer && window.matchMedia('(display-mode: standalone)').matches;
 
@@ -60,8 +61,18 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const tabs = createMemo(() => filesContext.files().map(({ key, handle }) => {
         const [api, setApi] = createSignal<GridApi>();
         const [entries, setEntries] = createSignal<Entries>(new Map());
+        const [files, setFiles] = createSignal<Map<string, { key: string, handle: FileSystemFileHandle }>>(new Map());
 
-        return ({ key, handle, api, setApi, entries, setEntries });
+        (async () => {
+            const files = await Array.fromAsync(
+                filter(handle.values(), entry => entry.kind === 'file'),
+                async file => [file.name.split('.').at(0)!, { handle: file, key: await file.getUniqueId() }] as const
+            );
+
+            setFiles(new Map(files));
+        })();
+
+        return ({ key, handle, api, setApi, entries, setEntries, files });
     }));
     const [active, setActive] = createSignal<string>();
     const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
@@ -74,14 +85,27 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const api = createMemo(() => tab()?.api());
     const mutations = createMemo<(Mutation & { file?: { value: string, handle: FileSystemFileHandle, id: string } })[]>(() => tabs().flatMap(tab => {
         const entries = tab.entries();
+        const files = tab.files();
         const mutations = tab.api()?.mutations() ?? [];
 
-        return mutations.map(m => {
-            const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
+        return mutations.flatMap(m => {
+            switch (m.kind) {
+                case MutarionKind.Update: {
+                    const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
 
-            console.log(m.key, key, lang, entries);
+                    return { kind: MutarionKind.Update, key, file: entries.get(key)?.[lang] };
+                }
 
-            return { ...m, key, file: entries.get(key)?.[lang] };
+                case MutarionKind.Create: {
+                    return Object.entries(m.value).map(([lang, value]) => ({ kind: MutarionKind.Create, key: m.key, file: files.get(lang)!, value }));
+                }
+
+                case MutarionKind.Delete: {
+                    return files.values().map(file => ({ kind: MutarionKind.Delete, key: m.key, file })).toArray();
+                }
+
+                default: throw new Error('unreachable code');
+            }
         });
     }));
     const mutatedFiles = createMemo(() =>
@@ -149,10 +173,21 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     });
 
     createEffect(() => {
-        console.log(mutations());
+        console.log(mutatedFiles());
     });
 
+    createEffect(() => {
+        console.log(mutatedData());
+    });
+
+    const [prompt, setPrompt] = createSignal<PromptApi>();
+
     const commands = {
+        open: createCommand('open folder', async () => {
+            const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
+
+            await filesContext.open(directory);
+        }, { key: 'o', modifier: Modifier.Control }),
         close: createCommand('close folder', async () => {
             filesContext.remove('__root__');
         }),
@@ -197,8 +232,15 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
             remove(Object.keys(selection()));
         }, { key: 'delete', modifier: Modifier.None }),
-        inserNewKey: createCommand('insert new key', () => {
-            api()?.insert('this.is.some.key');
+        inserNewKey: createCommand('insert new key', async () => {
+            const formData = await prompt()?.showModal();
+            const key = formData?.get('key')?.toString();
+
+            if (!key) {
+                return;
+            }
+
+            api()?.insert(key);
         }),
         inserNewLanguage: noop.withLabel('insert new language'),
     } as const;
@@ -213,10 +255,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         <Menu.Root>
             <Menu.Item label="file">
                 <Menu.Item command={commands.open} />
-
-                <Menu.Item command={commands.close} />
-
-                <Menu.Separator />
 
                 <Menu.Item command={commands.save} />
             </Menu.Item>
@@ -239,6 +277,10 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
             <Menu.Item command={noop.withLabel('view')} />
         </Menu.Root>
+
+        <Prompt api={setPrompt} title="Which key do you want to create?" description={<>hint: use <code>.</code> to denote nested keys,<br /> i.e. <code>this.is.some.key</code> would be a key that is four levels deep</>}>
+            <input name="key" value="this.is.an.awesome.key" placeholder="name of new key ()" />
+        </Prompt>
 
         <Sidebar as="aside" label={tree().name} class={css.sidebar}>
             <Tree entries={tree().entries}>{[
