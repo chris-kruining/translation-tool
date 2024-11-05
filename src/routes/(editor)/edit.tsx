@@ -77,6 +77,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const [active, setActive] = createSignal<string>();
     const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
     const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
+    const [prompt, setPrompt] = createSignal<PromptApi>();
 
     const tab = createMemo(() => {
         const name = active();
@@ -179,8 +180,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             setFiles({ name: directory.name, id: '', kind: 'folder', handle: directory, entries: await Array.fromAsync(fileTreeWalk(directory)) });
         })();
     });
-
-    const [prompt, setPrompt] = createSignal<PromptApi>();
 
     const commands = {
         open: createCommand('open folder', async () => {
@@ -298,8 +297,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                     }}>{file().name}</Context.Handle>;
                 },
             ] as const}</Tree>
-
-            <span>Total mutation: {mutations().length}</span>
         </Sidebar>
 
         <Tabs active={setActive} onClose={commands.closeTab}>
@@ -321,6 +318,10 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
     const [columns, setColumns] = createSignal<string[]>([]);
     const [rows, setRows] = createSignal<Map<string, Record<string, string>>>(new Map);
     const [api, setApi] = createSignal<GridApi>();
+
+    if (!isServer && !('showDirectoryPicker' in window)) {
+        throw new Error('Unable to manage files');
+    }
 
     createEffect(() => {
         props.entries?.(entries());
