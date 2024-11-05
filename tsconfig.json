@@ -12,8 +12,9 @@
     "noEmit": true,
     "types": [
       "@solidjs/start/env",
-      "vinxi/types/client",
+      "@testing-library/jest-dom",
       "@types/wicg-file-system-access",
+      "vinxi/types/client",
       "vite-plugin-pwa/solid"
     ],
     "isolatedModules": true,
