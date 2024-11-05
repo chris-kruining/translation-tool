@@ -7,6 +7,7 @@
     background-color: var(--surface-1);
 
     .menu {
+        view-transition-name: menu;
         display: grid;
         grid-template-columns: auto minmax(0, 1fr) auto;
         grid-auto-flow: column;
@@ -48,4 +49,53 @@
             align-content: center;
         }
     }
+
+    & > section {
+        view-transition-name: content;
+    }
+}
+
+.error {
+    display: grid;
+    place-content: center;
+
+    background-color: color(from var(--fail) xyz x y z / .3);
+    color: var(--text-2);
+    border: 1px solid var(--fail);
+    border-radius: var(--radii-m);
+
+    margin: var(--padding-l);
+}
+
+@keyframes slide-left {
+    from {
+        translate: 0% 0;
+    }
+
+    to {
+        translate: -100% 0;
+    }
+}
+
+@keyframes slide-right {
+    from {
+        translate: 100% 0;
+    }
+
+    to {
+        translate: 0% 0;
+    }
+}
+
+/* ::view-transition-old(menu),
+::view-transition-new(menu) {
+    z-index: 1;
+} */
+
+::view-transition-old(content) {
+    animation-name: slide-left;
+}
+
+::view-transition-new(content) {
+    animation-name: slide-right;
 }

@@ -1,10 +1,9 @@
 import { Link, Title } from "@solidjs/meta";
-import { createEffect, createMemo, createSignal, ParentProps, Show } from "solid-js";
+import { Component, createMemo, createSignal, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { BsTranslate } from "solid-icons/bs";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
-import { isServer } from "solid-js/web";
-import { A, createAsync } from "@solidjs/router";
+import { A, createAsync, useBeforeLeave } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
 import { ColorScheme, ColorSchemePicker, getColorScheme } from "~/components/colorschemepicker";
 import css from "./editor.module.css";
@@ -20,12 +19,23 @@ export default function Editor(props: ParentProps) {
         [ColorScheme.Dark]: '#333',
     }[ColorScheme[storedColorScheme()]]));
 
-    const supported = isServer || typeof window.showDirectoryPicker === 'function';
     const commands = [
         createCommand('open command palette', () => {
             commandPalette()?.show();
         }, { key: 'p', modifier: Modifier.Control | Modifier.Shift }),
     ];
+
+    const transition = (done: () => void) => {
+        if (!document.startViewTransition) { return done() }
+
+        const transition = document.startViewTransition(done)
+    }
+
+    useBeforeLeave((e) => {
+        e.preventDefault()
+
+        transition(() => { e.retry(true) })
+    });
 
     return <MenuProvider commands={commands}>
         <Title>Calque</Title>
@@ -53,13 +63,19 @@ export default function Editor(props: ParentProps) {
                 </section>
             </nav>
 
-            <Show when={supported} fallback={<span>too bad, so sad. Your browser does not support the File Access API</span>}>
-                <FilesProvider>
-                    {props.children}
-                </FilesProvider>
-            </Show>
+            <section>
+                <ErrorBoundary fallback={err => <ErrorComp error={err.message} />}>
+                    <FilesProvider>
+                        {props.children}
+                    </FilesProvider>
+                </ErrorBoundary>
+            </section>
         </main>
 
         <CommandPalette api={setCommandPalette} />
     </MenuProvider>
 }
+
+const ErrorComp: Component<{ error: string }> = (props) => {
+    return <div class={css.error}>{props.error}</div>
+};
