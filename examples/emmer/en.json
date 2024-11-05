@@ -16,6 +16,34 @@
     },
     "title": "SpreaView"
   },
+  "speaker-dashboard": {
+    "past": {
+      "title": "Past sessions"
+    },
+    "planned": {
+      "title": "Planned sessions"
+    },
+    "title": "Speaker Dashboard",
+    "welcome": {
+      "description": "This is SpreaView, the platform that helps you to gain more insights in the quality of your presentations. With SpreaView, you gain more insigths in how and where to improver your sessions. We do that by collecting session review information from attendees who attended your session. After you finished your session, you can come back to this speaker dashboad to get review your review information. Below are your sessions that have been scheduled in SpeaView, and sessions that have already been reviewed with SpreaView.",
+      "learn-more": "Learn more about SpreaView",
+      "speaker-error": "The system could not succesfully collect your personal speaker information. Please contact the event organizer for more information.",
+      "title": "Welcome on your speaker dashboard",
+      "pin-error": "Too many pincode attempts, please try again later",
+      "pin-create-error": "Creating your pincode failed, try again",
+      "pin-create": "Create pincode"
+    }
+  },
+  "speakers": {
+    "details": {
+      "description": "Change the details of the speaker. Speakers that were imported from an external system cannot be altered",
+      "name": "Name",
+      "profile-picture": "Profile picture",
+      "read-only": "This speaker cannot be altered or deleted because it is imported from an external system.",
+      "title": "Speaker details"
+    },
+    "title": "Speakers"
+  },
   "button": {
     "add-speaker": "Add speaker",
     "cancel": "Cancel",
@@ -336,34 +364,6 @@
       "enter": "Show room information",
       "title": "Select a room"
     }
-  },
-  "speaker-dashboard": {
-    "past": {
-      "title": "Past sessions"
-    },
-    "planned": {
-      "title": "Planned sessions"
-    },
-    "title": "Speaker Dashboard",
-    "welcome": {
-      "description": "This is SpreaView, the platform that helps you to gain more insights in the quality of your presentations. With SpreaView, you gain more insigths in how and where to improver your sessions. We do that by collecting session review information from attendees who attended your session. After you finished your session, you can come back to this speaker dashboad to get review your review information. Below are your sessions that have been scheduled in SpeaView, and sessions that have already been reviewed with SpreaView.",
-      "learn-more": "Learn more about SpreaView",
-      "speaker-error": "The system could not succesfully collect your personal speaker information. Please contact the event organizer for more information.",
-      "title": "Welcome on your speaker dashboard",
-      "pin-error": "Too many pincode attempts, please try again later",
-      "pin-create-error": "Creating your pincode failed, try again",
-      "pin-create": "Create pincode"
-    }
-  },
-  "speakers": {
-    "details": {
-      "description": "Change the details of the speaker. Speakers that were imported from an external system cannot be altered",
-      "name": "Name",
-      "profile-picture": "Profile picture",
-      "read-only": "This speaker cannot be altered or deleted because it is imported from an external system.",
-      "title": "Speaker details"
-    },
-    "title": "Speakers"
   },
   "pincode": {
     "create": {
