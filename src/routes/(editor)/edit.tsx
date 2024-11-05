@@ -61,12 +61,12 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const tabs = createMemo(() => filesContext.files().map(({ key, handle }) => {
         const [api, setApi] = createSignal<GridApi>();
         const [entries, setEntries] = createSignal<Entries>(new Map());
-        const [files, setFiles] = createSignal<Map<string, { key: string, handle: FileSystemFileHandle }>>(new Map());
+        const [files, setFiles] = createSignal<Map<string, { id: string, handle: FileSystemFileHandle }>>(new Map());
 
         (async () => {
             const files = await Array.fromAsync(
                 filter(handle.values(), entry => entry.kind === 'file'),
-                async file => [file.name.split('.').at(0)!, { handle: file, key: await file.getUniqueId() }] as const
+                async file => [file.name.split('.').at(0)!, { handle: file, id: await file.getUniqueId() }] as const
             );
 
             setFiles(new Map(files));
@@ -80,6 +80,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
     const tab = createMemo(() => {
         const name = active();
+
         return tabs().find(t => t.handle.name === name);
     });
     const api = createMemo(() => tab()?.api());
@@ -145,17 +146,24 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 handle,
                 existing.entries().reduce((aggregate, [key, value]) => {
                     let obj = aggregate;
-                    const [k, lastPart] = splitAt(key, key.lastIndexOf('.'));
+                    const i = key.lastIndexOf('.');
 
-                    for (const part of k.split('.')) {
-                        if (!Object.hasOwn(obj, part)) {
-                            obj[part] = {};
+                    if (i !== -1) {
+                        const [k, lastPart] = splitAt(key, i);
+
+                        for (const part of k.split('.')) {
+                            if (!Object.hasOwn(obj, part)) {
+                                obj[part] = {};
+                            }
+
+                            obj = obj[part];
                         }
 
-                        obj = obj[part];
+                        obj[lastPart] = value;
                     }
-
-                    obj[lastPart] = value;
+                    else {
+                        obj[key] = value;
+                    }
 
                     return aggregate;
                 }, {} as Record<string, any>)
@@ -170,14 +178,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             setContents(new Map(await Array.fromAsync(walk(directory), ({ id, entries }) => [id, entries] as const)))
             setFiles({ name: directory.name, id: '', kind: 'folder', handle: directory, entries: await Array.fromAsync(fileTreeWalk(directory)) });
         })();
-    });
-
-    createEffect(() => {
-        console.log(mutatedFiles());
-    });
-
-    createEffect(() => {
-        console.log(mutatedData());
     });
 
     const [prompt, setPrompt] = createSignal<PromptApi>();
