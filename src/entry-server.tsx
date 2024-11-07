@@ -4,20 +4,39 @@ import { installIntoGlobal } from "iterator-helpers-polyfill";
 
 installIntoGlobal();
 
-export default createHandler(() => (
-  <StartServer
-    document={({ assets, children, scripts }) => (
-      <html lang="en">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-          {assets}
-        </head>
-        <body>
-          {children}
-          {scripts}
-        </body>
-      </html>
-    )}
-  />
-));
+export default createHandler(({ nonce }) => {
+  return (
+    <StartServer
+      document={({ assets, children, scripts }) => {
+        return (
+          <html lang="en">
+            <head>
+              <meta charset="utf-8" />
+              <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+              <meta property="csp-nonce" nonce={nonce} />
+              {assets}
+            </head>
+            <body>
+              {children}
+              {scripts}
+            </body>
+          </html>
+        );
+      }} />
+  );
+}, event => {
+  const nonce = crypto.randomUUID();
+  const base = `'self' 'nonce-${nonce}'`;
+
+  const policies = {
+    default: base,
+    connect: `${base} ws://localhost:*`,
+    style: `'self' data: https://fonts.googleapis.com 'unsafe-inline'`,
+    // style: `${base} data: https://fonts.googleapis.com`,
+    font: `${base} https://*.gstatic.com`,
+  } as const;
+
+  event.response.headers.append('Content-Security-Policy', Object.entries(policies).map(([p, v]) => `${p}-src ${v}`).join('; '))
+
+  return { nonce };
+});

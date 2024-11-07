@@ -3,6 +3,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
     vite: {
+        html: {
+            cspNonce: 'KAAS_IS_AWESOME',
+        },
         plugins: [
             VitePWA({
                 mode: 'development',
