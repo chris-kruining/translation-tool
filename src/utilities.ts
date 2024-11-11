@@ -1,5 +1,13 @@
 export const splitAt = (subject: string, index: number): readonly [string, string] => {
-    return [subject.slice(0, index), subject.slice(index + 1)] as const;
+    if (index < 0) {
+        return [subject, ''];
+    }
+
+    if (index > subject.length) {
+        return [subject, ''];
+    }
+
+    return [subject.slice(0, index), subject.slice(index + 1)];
 };
 
 export const debounce = <T extends (...args: any[]) => void>(callback: T, delay: number): ((...args: Parameters<T>) => void) => {
@@ -53,23 +61,19 @@ export type Mutation = { key: string } & (Created | Updated | Deleted);
 
 export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, path: string[] = []): Generator<Mutation, void, unknown> {
     if (!isIterable(a) || !isIterable(b)) {
-        console.log('Edge cases', a, b);
+        console.error('Edge cases', a, b);
 
         return;
     }
 
     for (const [[keyA, valueA], [keyB, valueB]] of zip(entriesOf(a), entriesOf(b))) {
-        if (!keyA && !keyB) {
-            throw new Error('this code should not be reachable, there is a bug with an unhandled/unknown edge case');
-        }
-
-        if (!keyA && keyB) {
+        if (keyA === undefined && keyB) {
             yield { key: path.concat(keyB.toString()).join('.'), kind: MutarionKind.Create, value: valueB };
 
             continue;
         }
 
-        if (keyA && !keyB) {
+        if (keyA && keyB === undefined) {
             yield { key: path.concat(keyA.toString()).join('.'), kind: MutarionKind.Delete };
 
             continue;
@@ -112,40 +116,42 @@ const entriesOf = (subject: object): Iterable<readonly [string | number, any]> =
 
     return Object.entries(subject);
 };
-const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable<readonly [string | number, any]>): Generator<readonly [readonly [string | number | undefined, any], readonly [string | number | undefined, any]], void, unknown> {
+
+type ZippedPair =
+    | readonly [readonly [string | number, any], readonly [string | number, any]]
+    | readonly [readonly [undefined, undefined], readonly [string | number, any]]
+    | readonly [readonly [string | number, any], readonly [undefined, undefined]]
+    ;
+const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable<readonly [string | number, any]>): Generator<ZippedPair, void, unknown> {
     const iterA = bufferredIterator(a);
     const iterB = bufferredIterator(b);
 
-    const EMPTY = [undefined, undefined] as [string | number | undefined, any];
+    const EMPTY = [undefined, undefined] as const;
 
     while (!iterA.done || !iterB.done) {
         // if we have a match on the keys of a and b we can simply consume and yield
         if (iterA.current.key === iterB.current.key) {
+            // When we match keys it could have happened that
+            // there are as many keys added as there are deleted, 
+            // therefor we can now flush both a and b because we are aligned
+            yield* iterA.flush().map(entry => [entry, EMPTY] as const);
+            yield* iterB.flush().map(entry => [EMPTY, entry] as const);
+
             yield [iterA.consume(), iterB.consume()];
         }
 
         // key of a aligns with last key in buffer b
         // conclusion: a has key(s) that b does not
         else if (iterA.current.key === iterB.top.key) {
-            const a = iterA.pop()!;
-
-            for (const [key, value] of iterA.flush()) {
-                yield [[key, value], EMPTY];
-            }
-
-            yield [a, iterB.consume()];
+            yield* iterA.flush().map(entry => [entry, EMPTY] as const);
+            yield [iterA.consume(), iterB.consume()];
         }
 
         // the reverse case, key of b is aligns with the last key in buffer a
         // conclusion: a is missing key(s) the b does have
         else if (iterB.current.key === iterA.top.key) {
-            const b = iterB.pop()!;
-
-            for (const [key, value] of iterB.flush()) {
-                yield [EMPTY, [key, value]];
-            }
-
-            yield [iterA.consume(), b];
+            yield* iterB.flush().map(entry => [EMPTY, entry] as const);
+            yield [iterA.consume(), iterB.consume()];
         }
 
         else if (iterA.done && !iterB.done) {
@@ -168,7 +174,6 @@ const zip = function* (a: Iterable<readonly [string | number, any]>, b: Iterable
 const bufferredIterator = <T extends readonly [string | number, any]>(subject: Iterable<T>) => {
     const iterator = Iterator.from(subject);
     const buffer: T[] = [];
-    let cursor: number = 0;
     let done = false;
 
     const next = () => {
@@ -176,7 +181,7 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         done = res.done ?? false;
 
         if (!done) {
-            cursor = buffer.push(res.value) - 1;
+            buffer.push(res.value)
         }
     };
 
@@ -184,16 +189,10 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
 
     return {
         advance() {
-            if (buffer.length > 0 && cursor < (buffer.length - 1)) {
-                cursor++;
-            }
-            else {
-                next();
-            }
+            next();
         },
 
         consume() {
-            cursor = 0;
             const value = buffer.shift()!;
 
             this.advance();
@@ -202,15 +201,9 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         },
 
         flush(): T[] {
-            cursor = 0;
+            const entries = buffer.splice(0, buffer.length - 1);
 
-            return buffer.splice(0, buffer.length);
-        },
-
-        pop() {
-            cursor--;
-
-            return buffer.pop();
+            return entries;
         },
 
         get done() {
@@ -224,14 +217,10 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         },
 
         get current() {
-            const [key = undefined, value = undefined] = buffer.at(cursor) ?? [];
+            const [key = undefined, value = undefined] = buffer.at(-1) ?? [];
 
             return { key, value };
         },
-
-        get entry() {
-            return [this.current.key, this.current.value] as const;
-        }
     };
 };
 

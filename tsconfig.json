@@ -15,7 +15,8 @@
       "@testing-library/jest-dom",
       "@types/wicg-file-system-access",
       "vinxi/types/client",
-      "vite-plugin-pwa/solid"
+      "vite-plugin-pwa/solid",
+      "bun-types"
     ],
     "isolatedModules": true,
     "paths": {
