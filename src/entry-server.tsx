@@ -1,6 +1,7 @@
 // @refresh reload
 import { createHandler, StartServer } from "@solidjs/start/server";
 import { installIntoGlobal } from "iterator-helpers-polyfill";
+import { isServer } from "solid-js/web";
 
 installIntoGlobal();
 
@@ -26,11 +27,14 @@ export default createHandler(({ nonce }) => {
   );
 }, event => {
   const nonce = crypto.randomUUID();
-  const base = `'self' 'nonce-${nonce}'`;
+  const isDev = process.env.NODE_ENV === 'development';
+
+  const base = `'self' 'nonce-${nonce}' ${isDev ? `'unsafe-eval'` : ''}`;
 
   const policies = {
     default: base,
     connect: `${base} ws://localhost:*`,
+    script: `${base}`,
     style: `'self' data: https://fonts.googleapis.com 'unsafe-inline'`,
     // style: `${base} data: https://fonts.googleapis.com`,
     font: `${base} https://*.gstatic.com`,

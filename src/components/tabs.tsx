@@ -22,7 +22,6 @@ const useTabs = () => {
 }
 
 export const Tabs: ParentComponent<{ active?: Setter<string | undefined>, onClose?: CommandType<[string]> }> = (props) => {
-    const commandsContext = useCommands();
     const [active, setActive] = createSignal<string | undefined>(undefined);
 
     createEffect(() => {
