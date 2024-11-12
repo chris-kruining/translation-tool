@@ -51,6 +51,11 @@
     }
 
     & > section {
+        display: grid;
+        grid: 100% / 100%;
+        inline-size: 100%;
+        block-size: 100%;
+        overflow: clip;
         view-transition-name: content;
     }
 }
@@ -59,7 +64,12 @@
     display: grid;
     place-content: center;
 
-    background-color: color(from var(--fail) xyz x y z / .3);
+    background: repeating-linear-gradient(-45deg,
+            color(from var(--fail) xyz x y z / .05),
+            color(from var(--fail) xyz x y z / .05) 10px,
+            color(from var(--fail) xyz x y z / .25) 10px,
+            color(from var(--fail) xyz x y z / .25) 12px,
+            color(from var(--fail) xyz x y z / .05) 12px);
     color: var(--text-2);
     border: 1px solid var(--fail);
     border-radius: var(--radii-m);

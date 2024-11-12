@@ -64,7 +64,7 @@ export default function Editor(props: ParentProps) {
             </nav>
 
             <section>
-                <ErrorBoundary fallback={err => <ErrorComp error={err.message} />}>
+                <ErrorBoundary fallback={err => <ErrorComp error={err} />}>
                     <FilesProvider>
                         {props.children}
                     </FilesProvider>
@@ -76,6 +76,14 @@ export default function Editor(props: ParentProps) {
     </MenuProvider>
 }
 
-const ErrorComp: Component<{ error: string }> = (props) => {
-    return <div class={css.error}>{props.error}</div>
+const ErrorComp: Component<{ error: Error }> = (props) => {
+    return <div class={css.error}>
+        <b>{props.error.message}</b>
+
+        <Show when={props.error.cause}>{
+            cause => <>{cause().description}</>
+        }</Show>
+
+        <a href="/">Return to start</a>
+    </div>;
 };

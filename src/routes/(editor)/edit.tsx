@@ -42,6 +42,19 @@ interface Entries extends Map<string, Record<string, { value: string, handle: Fi
 export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
 
+    onMount(() => {
+        if (!('showDirectoryPicker' in window)) {
+            throw new Error('Unable to manage files', {
+                cause: {
+                    description: <p>
+                        The browser you are using does not support the File Access API.<br />
+                        This API is crutial for this app.
+                    </p>
+                }
+            });
+        }
+    });
+
     const open = createCommand('open folder', async () => {
         const directory = await window.showDirectoryPicker({ mode: 'readwrite' });
 
@@ -318,10 +331,6 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
     const [columns, setColumns] = createSignal<string[]>([]);
     const [rows, setRows] = createSignal<Map<string, Record<string, string>>>(new Map);
     const [api, setApi] = createSignal<GridApi>();
-
-    if (!isServer && !('showDirectoryPicker' in window)) {
-        throw new Error('Unable to manage files');
-    }
 
     createEffect(() => {
         props.entries?.(entries());
