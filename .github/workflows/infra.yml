@@ -2,13 +2,13 @@ name: Deploy infrastructure
 
 on:
   push:
-    paths:
-      - infrastructure/**
+    paths-ignore:
+      - src/**
     branches:
       - main
   pull_request:
-    paths: 
-      - infrastructure/**
+    paths-ignore:
+      - src/**
     types: [opened, synchronize, reopened, closed]
     branches:
       - main
