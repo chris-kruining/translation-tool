@@ -6,12 +6,6 @@ on:
       - src/**
     branches:
       - main
-  pull_request:
-    paths-ignore:
-      - src/**
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
 
 permissions:
   id-token: write
