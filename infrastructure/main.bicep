@@ -42,5 +42,6 @@ module app 'app.bicep' = {
   scope: calqueResourceGroup
   params: {
     context: context
+    registry: registry.outputs.registry
   }
 }
