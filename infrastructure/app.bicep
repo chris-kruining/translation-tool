@@ -9,7 +9,7 @@ var appName = 'app'
 var version = 'latest'
 
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
-  name: 'acr-${context.locationAbbreviation}-${context.environment}-${context.projectName}'
+  name: 'cea-${context.locationAbbreviation}-${context.environment}-${context.projectName}'
   location: context.location
   properties: {
     appLogsConfiguration: {
@@ -19,7 +19,7 @@ resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
 }
 
 resource app 'Microsoft.App/containerApps@2024-03-01' = {
-  name: 'acr-${context.locationAbbreviation}-${context.environment}-${context.projectName}-app'
+  name: 'ca-${context.locationAbbreviation}-${context.environment}-${context.projectName}-app'
   location: context.location
   identity: {
     type: 'SystemAssigned'
@@ -55,7 +55,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           identity: 'system'
-          server: registry.properties.loginServer
+          server: '${registry.properties.loginServer}@2023-07-01'
         }
       ]
     }
