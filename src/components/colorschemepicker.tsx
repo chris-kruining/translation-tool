@@ -48,7 +48,7 @@ export const ColorSchemePicker: Component<ColorSchemePickerProps> = (props) => {
         props.value?.(ColorScheme[value()]);
     });
 
-    return <label class={css.picker}>
+    return <label class={css.picker} aria-label="Color scheme picker">
         <CgDarkMode />
 
         <select name="color-scheme-picker" onInput={(e) => {

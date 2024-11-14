@@ -4,7 +4,11 @@ import { ColorSchemePicker } from "./colorschemepicker";
 
 // describe('<ColorSchemePicker />', () => {
 //     it('should render', async () => {
-//         render(() => <ColorSchemePicker />);
+//         const { getByLabelText } = render(() => <ColorSchemePicker />);
+
+//         const kaas = getByLabelText('Color scheme picker');
+
+//         console.log(kaas);
 
 //         expect(true).toBe(true);
 //     });
