@@ -2,7 +2,7 @@
   "name": "calque",
   "dependencies": {
     "@solidjs/meta": "^0.29.4",
-    "@solidjs/router": "^0.14.10",
+    "@solidjs/router": "^0.15.0",
     "@solidjs/start": "^1.0.9",
     "dexie": "^4.0.9",
     "iterator-helpers-polyfill": "^3.0.1",
