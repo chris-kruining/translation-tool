@@ -1,0 +1,11 @@
+{
+    "experimentalFeaturesEnabled": {
+        "assertions": true,
+        "testFramework": true,
+        "extensibility": true,
+        "resourceDerivedTypes": true,
+        "resourceTypedParamsAndOutputs": true,
+        "sourceMapping": true,
+        "symbolicNameCodegen": true
+    }
+}
