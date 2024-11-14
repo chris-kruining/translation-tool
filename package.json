@@ -31,7 +31,7 @@
     "@types/wicg-file-system-access": "^2023.10.5",
     "bun-types": "^1.1.34",
     "jsdom": "^25.0.1",
-    "vite-plugin-pwa": "^0.20.5",
+    "vite-plugin-pwa": "^0.21.0",
     "workbox-window": "^7.3.0"
   }
 }
