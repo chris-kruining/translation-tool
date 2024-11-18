@@ -1,0 +1,48 @@
+name: Trigger auto deployment for ca-euw-prd-calque-app
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ main ]
+    paths:
+    - '**'
+    - '.github/workflows/ca-euw-prd-calque-app-AutoDeployTrigger-314a2b7f-2368-4f41-a711-e0e5e34e3434.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.CAEUWPRDCALQUEAPP_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.CAEUWPRDCALQUEAPP_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.CAEUWPRDCALQUEAPP_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}
+          _dockerfilePathKey_: _dockerfilePath_
+          registryUrl: acreuwprdcalque.azurecr.io
+          registryUsername: ${{ secrets.CAEUWPRDCALQUEAPP_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.CAEUWPRDCALQUEAPP_REGISTRY_PASSWORD }}
+          containerAppName: ca-euw-prd-calque-app
+          resourceGroup: rg-euw-prd-calque
+          imageToBuild: acreuwprdcalque.azurecr.io/ca-euw-prd-calque-app:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
