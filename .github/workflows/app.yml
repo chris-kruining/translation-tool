@@ -63,10 +63,10 @@ jobs:
           tenant-id: ${{ secrets.CALQUE_PRD_TENANT_ID }}
           subscription-id: ${{ secrets.CALQUE_PRD_SUBSCRIPTION_ID }}
 
-      # - name: Login to ACR
-      #   uses: azure/docker-login@v2
-      #   with:
-      #     login-server: ${{ secrets.ACR_LOGIN_SERVER }}
+      - name: Login to ACR
+        uses: azure/docker-login@v2
+        with:
+          login-server: ${{ secrets.ACR_LOGIN_SERVER }}
 
       - name: Push container images
         working-directory: src
