@@ -1,4 +1,4 @@
-import { Link, Title } from "@solidjs/meta";
+import { Link, Meta, Title } from "@solidjs/meta";
 import { Component, createMemo, createSignal, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { BsTranslate } from "solid-icons/bs";
 import { FilesProvider } from "~/features/file";
@@ -40,12 +40,12 @@ export default function Editor(props: ParentProps) {
     return <MenuProvider commands={commands}>
         <Title>Calque</Title>
 
-        <meta id="theme-scheme" name="color-scheme" content={colorScheme()} />
-        <meta id="theme-color" name="theme-color" content={color()} />
+        <Meta id="theme-scheme" name="color-scheme" content={colorScheme()} />
+        <Meta id="theme-color" name="theme-color" content={color()} />
 
         <Show when={color() === undefined}>
-            <meta id="theme-auto-light" name="theme-color" media="(prefers-color-scheme: light)" content="#eee" />
-            <meta id="theme-auto-dark" name="theme-color" media="(prefers-color-scheme: dark)" content="#333" />
+            <Meta id="theme-auto-light" name="theme-color" media="(prefers-color-scheme: light)" content="#eee" />
+            <Meta id="theme-auto-dark" name="theme-color" media="(prefers-color-scheme: dark)" content="#333" />
         </Show>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />

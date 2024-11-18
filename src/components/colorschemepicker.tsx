@@ -21,7 +21,7 @@ const getSession = async () => {
     'use server';
 
     return useSession<{ colorScheme: ColorSchemeKey }>({
-        password: process.env.SESSION_SECRET ?? 'some_static_password_because_untill_I_figure_out_env_files...',
+        password: process.env.SESSION_SECRET!,
     });
 };
 
