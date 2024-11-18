@@ -1,4 +1,4 @@
-FROM oven/bun:1 as base
+FROM oven/bun:1 AS base
 WORKDIR /usr/src/app
 
 FROM base AS install
@@ -9,7 +9,6 @@ RUN cd /temp/dev && bun install --frozen-lockfile
 RUN mkdir -p /temp/prod
 COPY package.json bun.lockb /temp/prod/
 RUN cd /temp/prod && bun install --frozen-lockfile --production
-RUN echo "SESSION_SECRET=$(head -c 12 /dev/random | base64)" > .env
 
 FROM base AS prerelease
 COPY --from=install /temp/dev/node_modules node_modules
@@ -20,9 +19,11 @@ ENV SERVER_PRESET=bun
 RUN bun test
 RUN chmod +x node_modules/.bin/*
 RUN bun run build
+RUN echo "SESSION_SECRET=$(head -c 64 /dev/random | base64)" > .env
 
 FROM base AS release
 COPY --from=install /temp/prod/node_modules node_modules
+COPY --from=prerelease /usr/src/app/.env .
 COPY --from=prerelease /usr/src/app/bun.lockb .
 COPY --from=prerelease /usr/src/app/package.json .
 COPY --from=prerelease /usr/src/app/.vinxi .vinxi
