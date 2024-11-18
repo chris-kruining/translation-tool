@@ -34,8 +34,8 @@ export default createHandler(({ nonce }) => {
     default: base,
     connect: `${base} ws://localhost:*`,
     script: `${base}`,
-    // style: `'self' data: https://fonts.googleapis.com 'unsafe-inline'`,
-    style: `${base} data: https://fonts.googleapis.com`,
+    style: `'self' data: https://fonts.googleapis.com 'unsafe-inline'`,
+    // style: `${base} data: https://fonts.googleapis.com`,
     font: `${base} https://*.gstatic.com`,
   } as const;
 
