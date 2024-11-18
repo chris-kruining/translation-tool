@@ -3,10 +3,11 @@ import { Context } from 'types.bicep'
 targetScope = 'resourceGroup'
 
 param context Context
-param registry resource'Microsoft.ContainerRegistry/registries@2023-07-01'
+param version string
+@secure()
+param registryUrl string
 
 var appName = 'app'
-var version = 'latest'
 
 resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'cea-${context.locationAbbreviation}-${context.environment}-${context.projectName}'
@@ -65,7 +66,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           identity: 'system'
-          server: 'acreuwprdcalque.azurecr.io'
+          server: registryUrl
         }
       ]
     }
@@ -73,7 +74,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          image: 'acreuwprdcalque.azurecr.io/${context.projectName}-${appName}:${version}'
+          image: '${registryUrl}/${context.projectName}-${appName}:${version}'
           name: '${context.projectName}-${appName}'
           resources: {
             cpu: json('0.25')

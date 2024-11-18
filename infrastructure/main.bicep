@@ -6,6 +6,9 @@ param locationAbbreviation string
 param location string
 param environment string
 param projectName string
+param version string
+@secure()
+param registryUrl string
 param deployedAt string = utcNow('yyyyMMdd')
 
 var context = {
@@ -42,6 +45,7 @@ module app 'app.bicep' = {
   scope: calqueResourceGroup
   params: {
     context: context
-    registry: registry.outputs.registry
+    version: version
+    registryUrl: registryUrl
   }
 }

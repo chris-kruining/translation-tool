@@ -21,5 +21,3 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
     }
   }
 }
-
-output registry resource'Microsoft.ContainerRegistry/registries@2023-07-01' = registry
