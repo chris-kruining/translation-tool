@@ -6,12 +6,12 @@ on:
       - infrastructure/**
     branches:
       - main
-  pull_request:
-    paths-ignore:
-      - infrastructure/**
-    types: [opened, synchronize, reopened, closed]
-    branches:
-      - main
+  # pull_request:
+  #   paths-ignore:
+  #     - infrastructure/**
+  #   types: [opened, synchronize, reopened, closed]
+  #   branches:
+  #     - main
 
 env:
   IMAGE_NAME: calque-app
