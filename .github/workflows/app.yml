@@ -63,7 +63,6 @@ jobs:
           password: ${{ secrets.ACR_PASSWORD }}
 
       - name: Push container images
-        working-directory: src
         run: |
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/$IMAGE_NAME:${{needs.versionize.outputs.semver}}
           docker push ${{ secrets.ACR_LOGIN_SERVER }}/$IMAGE_NAME:latest
