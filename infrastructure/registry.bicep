@@ -10,7 +10,16 @@ resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   sku: {
     name: 'Basic'
   }
-  properties: {}
+  identity: {
+    type: 'SystemAssigned'
+  }
+  properties: {
+    adminUserEnabled: true
+    dataEndpointEnabled: false
+    encryption: {
+      status: 'disabled'
+    }
+  }
 }
 
 output registry resource'Microsoft.ContainerRegistry/registries@2023-07-01' = registry

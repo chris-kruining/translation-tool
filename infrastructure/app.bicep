@@ -15,6 +15,16 @@ resource environment 'Microsoft.App/managedEnvironments@2024-03-01' = {
     appLogsConfiguration: {
       destination: 'azure-monitor'
     }
+    peerAuthentication: {
+      mtls: {
+        enabled: false
+      }
+    }
+    peerTrafficConfiguration: {
+      encryption: {
+        enabled: false
+      }
+    }
   }
 }
 
@@ -55,7 +65,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
       registries: [
         {
           identity: 'system'
-          server: '${registry.properties.loginServer}@2023-07-01'
+          server: 'acreuwprdcalque.azurecr.io'
         }
       ]
     }
@@ -63,7 +73,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
     template: {
       containers: [
         {
-          image: '${registry.properties.loginServer}/${context.projectName}-${appName}:${version}'
+          image: 'acreuwprdcalque.azurecr.io/${context.projectName}-${appName}:${version}'
           name: '${context.projectName}-${appName}'
           resources: {
             cpu: json('0.25')
