@@ -1,0 +1,66 @@
+.main {
+    display: grid;
+    place-content: center;
+    gap: var(--padding-m);
+
+    & > svg {
+        inline-size: 100%;
+    }
+
+    & > :is(.primary, .secondary) {
+        display: grid;
+        grid: 3em / repeat(5, 3em);
+    }
+
+    & > .primary {
+        & > :nth-child(1) {
+            background-color: var(--primary-100);
+        }
+
+        & > :nth-child(2) {
+            background-color: var(--primary-300);
+        }
+
+        & > :nth-child(3) {
+            background-color: var(--primary-500);
+        }
+
+        & > :nth-child(4) {
+            background-color: var(--primary-700);
+        }
+
+        & > :nth-child(5) {
+            background-color: var(--primary-900);
+        }
+    }
+
+    & > .secondary {
+        & > :nth-child(1) {
+            background-color: var(--secondary-100);
+        }
+
+        & > :nth-child(2) {
+            background-color: var(--secondary-300);
+        }
+
+        & > :nth-child(3) {
+            background-color: var(--secondary-500);
+        }
+
+        & > :nth-child(4) {
+            background-color: var(--secondary-700);
+        }
+
+        & > :nth-child(5) {
+            background-color: var(--secondary-900);
+        }
+    }
+
+    ul {
+        display: flex;
+        flex-flow: column;
+        gap: var(--padding-s);
+        padding-inline-start: var(--padding-l);
+        margin: 0;
+    }
+}

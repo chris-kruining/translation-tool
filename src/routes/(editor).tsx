@@ -1,23 +1,26 @@
-import { Link, Meta, Title } from "@solidjs/meta";
-import { Component, createMemo, createSignal, ErrorBoundary, ParentProps, Show } from "solid-js";
-import { BsTranslate } from "solid-icons/bs";
+import { Link, Meta, Style, Title } from "@solidjs/meta";
+import { Component, createEffect, createMemo, createSignal, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
-import { A, createAsync, useBeforeLeave } from "@solidjs/router";
+import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
-import { ColorScheme, ColorSchemePicker, getColorScheme } from "~/components/colorschemepicker";
+import { ColorScheme, ColorSchemePicker, getState, useTheme } from "~/components/colorschemepicker";
 import css from "./editor.module.css";
 
+export const route: RouteDefinition = {
+    preload: () => getState(),
+};
+
 export default function Editor(props: ParentProps) {
-    const storedColorScheme = createAsync<keyof typeof ColorScheme>(() => getColorScheme(), { initialValue: 'Auto' });
+    const theme = useTheme();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
-    const colorScheme = createMemo(() => ColorScheme[storedColorScheme()]);
+
     const color = createMemo(() => ({
         [ColorScheme.Auto]: undefined,
         [ColorScheme.Light]: '#eee',
         [ColorScheme.Dark]: '#333',
-    }[ColorScheme[storedColorScheme()]]));
+    }[theme.colorScheme]));
 
     const commands = [
         createCommand('open command palette', () => {
@@ -32,7 +35,7 @@ export default function Editor(props: ParentProps) {
     }
 
     useBeforeLeave((e) => {
-        e.preventDefault()
+        e.preventDefault();
 
         transition(() => { e.retry(true) })
     });
@@ -40,13 +43,17 @@ export default function Editor(props: ParentProps) {
     return <MenuProvider commands={commands}>
         <Title>Calque</Title>
 
-        <Meta id="theme-scheme" name="color-scheme" content={colorScheme()} />
-        <Meta id="theme-color" name="theme-color" content={color()} />
-
-        <Show when={color() === undefined}>
+        <Meta id="theme-scheme" name="color-scheme" content={theme.colorScheme} />
+        <Show when={color() === undefined} fallback={<Meta id="theme-color" name="theme-color" content={color()} />}>
             <Meta id="theme-auto-light" name="theme-color" media="(prefers-color-scheme: light)" content="#eee" />
             <Meta id="theme-auto-dark" name="theme-color" media="(prefers-color-scheme: dark)" content="#333" />
         </Show>
+
+        <Style>{`
+            :root {
+                --hue: ${theme.hue}deg !important;
+            }
+        `}</Style>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
@@ -66,6 +73,7 @@ export default function Editor(props: ParentProps) {
 
                 <section class={css.right}>
                     <ColorSchemePicker />
+
                 </section>
             </nav>
 

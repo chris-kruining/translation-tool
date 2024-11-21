@@ -7,9 +7,10 @@ import { Grid, load, useFiles } from "~/features/file";
 import { Command, CommandType, Context, createCommand, Modifier, noop, useCommands } from "~/features/command";
 import { GridApi } from "~/features/file/grid";
 import { Tab, Tabs } from "~/components/tabs";
-import css from "./edit.module.css";
 import { isServer } from "solid-js/web";
 import { Prompt, PromptApi } from "~/components/prompt";
+import EditBlankImage from '~/assets/edit-blank.svg'
+import css from "./edit.module.css";
 
 const isInstalledPWA = !isServer && window.matchMedia('(display-mode: standalone)').matches;
 
@@ -269,6 +270,10 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 <Menu.Item command={commands.open} />
 
                 <Menu.Item command={commands.save} />
+
+                <Menu.Separator />
+
+                <Menu.Item command={commands.close} />
             </Menu.Item>
 
             <Menu.Item label="edit">
@@ -385,6 +390,8 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
 
 const Blank: Component<{ open: CommandType }> = (props) => {
     return <div class={css.blank}>
+        <EditBlankImage />
+
         <button onpointerdown={() => props.open()}>open a folder</button>
     </div>
 };

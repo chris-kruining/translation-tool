@@ -3,6 +3,11 @@
     place-content: center;
     gap: var(--padding-m);
 
+    & > :is(.primary, .secondary) {
+        display: grid;
+        grid: 3em / repeat(5, 3em);
+    }
+
     ul {
         display: flex;
         flex-flow: column;

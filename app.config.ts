@@ -1,4 +1,5 @@
 import { defineConfig } from '@solidjs/start/config';
+import solidSvg from 'vite-plugin-solid-svg'
 // import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
@@ -7,6 +8,7 @@ export default defineConfig({
             cspNonce: 'KAAS_IS_AWESOME',
         },
         plugins: [
+            solidSvg()
             // VitePWA({
             //     strategies: 'injectManifest',
             //     registerType: 'autoUpdate',

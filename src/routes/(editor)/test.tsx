@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
 import LandingImage from '../../assets/landing.svg'
-import css from "./index.module.css";
+import css from "./test.module.css";
 
 
 export default function Index() {
@@ -10,6 +10,22 @@ export default function Index() {
 
       <h1>Hi, welcome!</h1>
       <b>Lets get started</b>
+
+      <div class={css.primary}>
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
+
+      <div class={css.secondary}>
+        <span />
+        <span />
+        <span />
+        <span />
+        <span />
+      </div>
 
       <ul>
         <li><A href="/edit">Start editing</A></li>

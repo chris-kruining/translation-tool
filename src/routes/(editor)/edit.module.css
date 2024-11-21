@@ -27,9 +27,25 @@
 
 .blank {
     display: grid;
-    grid: 100% / 100%;
+    place-content: center;
+    place-items: center;
+    grid-auto-flow: column;
+    gap: var(--padding-l);
     inline-size: 100%;
     block-size: 100%;
 
-    place-items: center;
+    & > svg {
+        padding-inline-end: 3em;
+        margin-inline-end: 3em;
+        border-inline-end: 2px solid var(--surface-5);
+    }
+
+    & > button {
+        background-color: var(--surface-4);
+        color: var(--text-1);
+        padding: var(--padding-l) var(--padding-xl);
+        border: none;
+        border-radius: var(--radii-m);
+        cursor: pointer;
+    }
 }

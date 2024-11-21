@@ -1,16 +1,28 @@
 @import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght,GRAD@8..144,400,45;8..144,400,50;8..144,1000,0&family=Roboto+Serif:opsz,GRAD@8..144,71&display=swap");
 
 :root {
-  --surface-1: light-dark(#ddd, #222);
-  --surface-2: light-dark(#e8e8e8, #282828);
-  --surface-3: light-dark(#eee, #333);
-  --surface-4: light-dark(#f8f8f8, #383838);
-  --surface-5: light-dark(#fff, #444);
-  --text-1: light-dark(#222, #eee);
-  --text-2: light-dark(#282828, #d8d8d8);
+  --hue: 182.77deg;
 
-  --primary: light-dark(oklch(.7503 0.117 181.6deg), oklch(.8549 0.1149 182.77deg));
-  --secondary: oklch(from var(--primary) l c calc(h - 180));
+  --primary-100: oklch(from var(--primary-500) .95 c h);
+  --primary-300: oklch(from var(--primary-500) .9 c h);
+  --primary-500: light-dark(oklch(.7503 0.117 var(--hue)), oklch(.8549 0.1149 var(--hue)));
+  --primary-700: oklch(from var(--primary-500) .7 c h);
+  --primary-900: oklch(from var(--primary-500) .6 c h);
+
+  --secondary-100: oklch(from var(--secondary-500) .95 c h);
+  --secondary-300: oklch(from var(--secondary-500) .9 c h);
+  --secondary-500: oklch(from var(--primary-500) l c calc(h - 180));
+  --secondary-700: oklch(from var(--secondary-500) .7 c h);
+  --secondary-900: oklch(from var(--secondary-500) .6 c h);
+
+  --surface-1: light-dark(oklch(from var(--secondary-500) .9 .02 h), oklch(from var(--secondary-500) .2 .02 h));
+  --surface-2: oklch(from var(--surface-1) calc(l + .025) c h);
+  --surface-3: oklch(from var(--surface-2) calc(l + .025) c h);
+  --surface-4: oklch(from var(--surface-3) calc(l + .025) c h);
+  --surface-5: oklch(from var(--surface-4) calc(l + .025) c h);
+
+  --text-1: light-dark(oklch(from var(--secondary-500) .2 .02 h), oklch(from var(--secondary-500) .9 .02 h));
+  --text-2: oklch(from var(--text-1) calc(l + .1) c h);
 
   --info: light-dark(oklch(.71 .17 249), oklch(.71 .17 249));
   --fail: light-dark(oklch(.64 .21 25.3), oklch(.64 .21 25.3));
@@ -30,6 +42,7 @@
   --padding-s: .25em;
   --padding-m: .5em;
   --padding-l: 1em;
+  --padding-xl: 1.5em;
 }
 
 html {
@@ -49,7 +62,7 @@ body {
 
   background-color: var(--surface-1);
   color: var(--text-2);
-  accent-color: var(--primary);
+  accent-color: var(--primary-500);
 
   margin: 0;
 
@@ -65,7 +78,7 @@ body {
 }
 
 a {
-  color: var(--primary);
+  color: var(--primary-500);
 }
 
 h1 {
@@ -86,4 +99,10 @@ code {
   background-color: var(--surface-3);
   border: 1px solid var(--surface-5);
   border-radius: var(--radii-m);
+}
+
+@property --hue {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
 }

@@ -50,6 +50,7 @@
 
         & .right {
             display: grid;
+            grid-auto-flow: column;
             align-content: center;
         }
     }
