@@ -2,6 +2,7 @@
 
 :root {
   --hue: 182.77deg;
+  --accent-ofset: 180;
 
   --primary-100: oklch(from var(--primary-500) .95 c h);
   --primary-300: oklch(from var(--primary-500) .9 c h);
@@ -9,11 +10,11 @@
   --primary-700: oklch(from var(--primary-500) .7 c h);
   --primary-900: oklch(from var(--primary-500) .6 c h);
 
-  --secondary-100: oklch(from var(--secondary-500) .95 c h);
-  --secondary-300: oklch(from var(--secondary-500) .9 c h);
-  --secondary-500: oklch(from var(--primary-500) l c calc(h - 180));
-  --secondary-700: oklch(from var(--secondary-500) .7 c h);
-  --secondary-900: oklch(from var(--secondary-500) .6 c h);
+  --secondary-100: oklch(from var(--primary-500) .95 c calc(h + var(--accent-ofset)));
+  --secondary-300: oklch(from var(--primary-500) .9 c calc(h + var(--accent-ofset)));
+  --secondary-500: oklch(from var(--primary-500) .85 c calc(h + var(--accent-ofset)));
+  --secondary-700: oklch(from var(--primary-500) .7 c calc(h + var(--accent-ofset)));
+  --secondary-900: oklch(from var(--primary-500) .6 c calc(h + var(--accent-ofset)));
 
   --surface-1: light-dark(oklch(from var(--secondary-500) .9 .02 h), oklch(from var(--secondary-500) .2 .02 h));
   --surface-2: oklch(from var(--surface-1) calc(l + .025) c h);

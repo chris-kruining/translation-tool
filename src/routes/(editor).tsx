@@ -1,5 +1,5 @@
 import { Link, Meta, Style, Title } from "@solidjs/meta";
-import { Component, createEffect, createMemo, createSignal, ErrorBoundary, ParentProps, Show } from "solid-js";
+import { Component, createEffect, createMemo, createSignal, ErrorBoundary, ParentProps, Show, Suspense } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
@@ -15,12 +15,6 @@ export default function Editor(props: ParentProps) {
     const theme = useTheme();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
-
-    const color = createMemo(() => ({
-        [ColorScheme.Auto]: undefined,
-        [ColorScheme.Light]: '#eee',
-        [ColorScheme.Dark]: '#333',
-    }[theme.colorScheme]));
 
     const commands = [
         createCommand('open command palette', () => {
@@ -43,17 +37,18 @@ export default function Editor(props: ParentProps) {
     return <MenuProvider commands={commands}>
         <Title>Calque</Title>
 
-        <Meta id="theme-scheme" name="color-scheme" content={theme.colorScheme} />
-        <Show when={color() === undefined} fallback={<Meta id="theme-color" name="theme-color" content={color()} />}>
-            <Meta id="theme-auto-light" name="theme-color" media="(prefers-color-scheme: light)" content="#eee" />
-            <Meta id="theme-auto-dark" name="theme-color" media="(prefers-color-scheme: dark)" content="#333" />
-        </Show>
+        <Show when={theme}>{
+            theme => <>
+                <meta name="color-scheme" content={theme().colorScheme} />
+                <meta name="theme-color" content="light-dark(#f0f, #0f0)" />
 
-        <Style>{`
-            :root {
-                --hue: ${theme.hue}deg !important;
-            }
-        `}</Style>
+                <style>{`
+                    :root {
+                        --hue: ${theme().hue}deg !important;
+                    }
+                `}</style>
+            </>
+        }</Show>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
