@@ -9,7 +9,8 @@
   --text-1: light-dark(#222, #eee);
   --text-2: light-dark(#282828, #d8d8d8);
 
-  --primary: light-dark(oklch(.7503 0.117 181.6), oklch(.8549 0.1149 182.77));
+  --primary: light-dark(oklch(.7503 0.117 181.6deg), oklch(.8549 0.1149 182.77deg));
+  --secondary: oklch(from var(--primary) l c calc(h - 180));
 
   --info: light-dark(oklch(.71 .17 249), oklch(.71 .17 249));
   --fail: light-dark(oklch(.64 .21 25.3), oklch(.64 .21 25.3));

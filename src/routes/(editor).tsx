@@ -54,7 +54,13 @@ export default function Editor(props: ParentProps) {
 
         <main class={css.layout} inert={commandPalette()?.open()}>
             <nav class={css.menu}>
-                <A class={css.logo} href="/"><BsTranslate /></A>
+                <A class={css.logo} href="/">
+                    <picture>
+                        <source srcset="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
+                        <source srcset="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
+                        <img src="/images/favicon.dark.svg" alt="Calque logo" />
+                    </picture>
+                </A>
 
                 <Menu.Mount />
 

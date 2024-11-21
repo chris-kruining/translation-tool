@@ -1,7 +1,106 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512px" height="512px" viewBox="0 0 512 512" version="1.1">
-<g id="surface1">
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(93.333334%,93.333334%,93.333334%);fill-opacity:1;" d="M 145.441406 214.847656 L 131.519531 256 L 96 256 L 155.585938 96 L 196.671875 96 L 256 256 L 218.65625 256 L 204.734375 214.847656 Z M 197.726562 191.296875 L 176 126.59375 L 174.433594 126.59375 L 152.703125 191.296875 L 197.761719 191.296875 Z M 197.726562 191.296875 "/>
-<path style=" stroke:none;fill-rule:nonzero;fill:rgb(93.333334%,93.333334%,93.333334%);fill-opacity:1;" d="M 0 64 C 0 28.652344 28.652344 0 64 0 L 288 0 C 323.347656 0 352 28.652344 352 64 L 352 160 L 448 160 C 483.347656 160 512 188.652344 512 224 L 512 448 C 512 483.347656 483.347656 512 448 512 L 224 512 C 188.652344 512 160 483.347656 160 448 L 160 352 L 64 352 C 28.652344 352 0 323.347656 0 288 Z M 64 32 C 46.328125 32 32 46.328125 32 64 L 32 288 C 32 305.671875 46.328125 320 64 320 L 288 320 C 305.671875 320 320 305.671875 320 288 L 320 64 C 320 46.328125 305.671875 32 288 32 Z M 292.414062 351.839844 C 298.59375 361.472656 305.28125 370.496094 312.574219 378.910156 C 288.640625 397.3125 259.039062 410.945312 224 420.257812 C 229.695312 427.199219 238.433594 440.574219 241.761719 448 C 277.761719 436.511719 308.320312 420.992188 334.113281 400.191406 C 358.976562 421.472656 389.761719 437.472656 427.871094 447.296875 C 432.128906 439.167969 441.121094 425.761719 448 418.816406 C 412 410.71875 382.175781 396.609375 357.761719 377.726562 C 379.550781 353.824219 396.863281 324.894531 409.632812 289.503906 L 448 289.503906 L 448 256 L 352 256 L 352 289.503906 L 376.480469 289.503906 C 366.304688 316.511719 352.800781 338.976562 335.777344 357.664062 C 331.074219 352.65625 326.640625 347.398438 322.496094 341.921875 C 313.464844 347.710938 303.117188 351.121094 292.414062 351.839844 Z M 292.414062 351.839844 "/>
-</g>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="210mm"
+   height="210mm"
+   viewBox="0 -15 210 210"
+   version="1.1"
+   id="svg38302"
+   sodipodi:docname="translator.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview38304"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     inkscape:zoom="0.32026164"
+     inkscape:cx="515.20375"
+     inkscape:cy="761.87706"
+     inkscape:window-width="1920"
+     inkscape:window-height="1129"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g36811" />
+  <defs
+     id="defs38299" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g36811"
+       transform="matrix(0.83647604,0,0,0.83647604,655.84804,-170.94618)">
+      <g
+         id="g38839"
+         transform="matrix(0.95928531,0,0,0.95928531,-28.074213,0.77893568)">
+        <g
+           id="g36799"
+           transform="matrix(0.7287213,0,0,0.7287213,124.37375,-61.740811)"
+           style="stroke:#eee;stroke-width:18.7045;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+          <circle
+             style="fill:none;fill-opacity:1;stroke:#eee;stroke-width:18.7045;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             id="path35293"
+             cx="-1072.3394"
+             cy="527.08209"
+             r="140.44505" />
+          <ellipse
+             style="fill:none;fill-opacity:1;stroke:#eee;stroke-width:18.7045;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             id="path35625"
+             cx="-1070.6871"
+             cy="526.25592"
+             rx="57.615059"
+             ry="138.57751" />
+          <path
+             style="fill:none;stroke:#eee;stroke-width:18.7045;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m -1205.7621,483.70931 266.01942,-0.41307 v 0"
+             id="path36100" />
+          <path
+             style="fill:none;stroke:#eee;stroke-width:18.7045;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+             d="m -1206.5883,569.62865 h 267.25869"
+             id="path36102" />
+        </g>
+        <ellipse
+           style="fill:#41c6b3;fill-opacity:1;stroke:none;stroke-width:15.5125;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="path36224"
+           cx="-711.73193"
+           cy="334.89584"
+           rx="74.834885"
+           ry="52.31176" />
+        <ellipse
+           style="fill:#ffafc8;fill-opacity:1;stroke:none;stroke-width:15.5125;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           id="path36224-2"
+           cx="-602.02252"
+           cy="300.02133"
+           rx="74.834885"
+           ry="52.31176" />
+        <path
+           d="m -594.33056,305.58843 -8.21104,-22.84855 -8.28838,22.84855 z m -3.57907,-32.03318 19.19017,49.80361 h -8.69883 l -3.99944,-10.88791 h -21.96023 l -4.28893,10.88791 h -8.7722 l 19.26353,-49.80361 h 9.26593"
+           style="fill:#eeeeee;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:0.0198287"
+           id="path48-9" />
+        <g
+           transform="matrix(4.2735301,0,0,4.2735301,-2878.8862,-285.3157)"
+           id="g34427-6"
+           style="fill:#eeeeee;fill-opacity:1">
+          <text
+             font-family="'Segoe UI', 'Segoe UI_MSFontService', sans-serif"
+             font-weight="400"
+             font-size="24px"
+             transform="translate(498.792,151)"
+             id="text34425-0"
+             style="fill:#eeeeee;fill-opacity:1">α</text>
+        </g>
+      </g>
+    </g>
+  </g>
 </svg>

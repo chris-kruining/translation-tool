@@ -32,15 +32,19 @@
         & > .logo {
             inline-size: 3em;
             block-size: 3em;
-            padding: .75em;
+            padding: .5em;
             margin-block-end: -1em;
             background-color: inherit;
             color: inherit;
             border-radius: .25em;
 
-            & > svg {
-                inline-size: 100%;
-                block-size: 100%;
+            & > picture {
+                display: contents;
+
+                & > img {
+                    inline-size: 100%;
+                    block-size: 100%;
+                }
             }
         }
 
