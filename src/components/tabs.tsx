@@ -50,7 +50,7 @@ const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType
     const tabsContext = useTabs();
 
     const resolved = children(() => props.children);
-    const tabs = createMemo(() => resolved.toArray().filter(c => c instanceof HTMLElement).map(({ id, dataset }, i) => ({ id, label: dataset.tabLabel, options: { closable: dataset.tabClosable } })));
+    const tabs = createMemo(() => resolved.toArray().filter(c => c instanceof HTMLElement).map(({ id, dataset }, i) => ({ id, label: dataset.tabLabel ?? '', options: { closable: Boolean(dataset.tabClosable ?? 'false') } })));
 
     createEffect(() => {
         tabsContext.activate(tabs().at(-1)?.id);
@@ -67,9 +67,17 @@ const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType
     return <div class={css.tabs}>
         <header>
             <For each={tabs()}>{
-                ({ id, label, options: { closable = false } }) => <Command.Context for={props.onClose} with={[id]}>
+                ({ id, label, options: { closable } }) => <Command.Context for={props.onClose} with={[id]}>
                     <span class={css.handle} classList={{ [css.active]: props.active === id }}>
-                        <button onpointerdown={() => tabsContext.activate(id)}>{label}</button>
+                        <button onpointerdown={(e) => {
+                            if (closable && e.pointerType === 'mouse' && e.button === 1) {
+                                onClose(e);
+
+                                return;
+                            }
+
+                            tabsContext.activate(id)
+                        }}>{label}</button>
                         <Show when={closable}>
                             <button onPointerDown={onClose}> <AiOutlineClose /></button>
                         </Show>
