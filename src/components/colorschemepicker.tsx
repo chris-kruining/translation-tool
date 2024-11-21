@@ -20,6 +20,8 @@ interface ColorSchemePickerProps {
 const getSession = async () => {
     'use server';
 
+    console.log('what? why? how???', process.env.SESSION_SECRET);
+
     return useSession<{ colorScheme: ColorSchemeKey }>({
         password: process.env.SESSION_SECRET!,
     });
