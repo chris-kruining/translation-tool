@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Roboto+Flex:opsz,wght,GRAD@8..144,400,45;8..144,400,50;8..144,1000,0&family=Roboto+Serif:opsz,GRAD@8..144,71&display=swap");
-
 :root {
   --hue: 182.77deg;
   --accent-ofset: 180;
@@ -67,7 +65,7 @@ body {
 
   margin: 0;
 
-  font-family: Roboto Flex, sans-serif;
+  font-family: sans-serif;
 
   * {
     box-sizing: border-box;

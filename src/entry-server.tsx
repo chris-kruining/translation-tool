@@ -33,10 +33,8 @@ export default createHandler(({ nonce }) => {
   const policies = {
     default: base,
     connect: `${base} ws://localhost:*`,
-    script: `${base}`,
-    style: `'self' data: https://fonts.googleapis.com 'unsafe-inline'`,
-    // style: `${base} data: https://fonts.googleapis.com`,
-    font: `${base} https://*.gstatic.com`,
+    style: `'self' data: 'unsafe-inline'`,
+    // style: `${base} data: `,
   } as const;
 
   event.response.headers.append('Content-Security-Policy', Object.entries(policies).map(([p, v]) => `${p}-src ${v}`).join('; '))
