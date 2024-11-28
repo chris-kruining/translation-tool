@@ -7,5 +7,12 @@
         "resourceTypedParamsAndOutputs": true,
         "sourceMapping": true,
         "symbolicNameCodegen": true
+    },
+    "moduleAliases": {
+        "br": {
+            "Tricep": {
+                "registry": "acreuwprdtricep.azurecr.io"
+            }
+        }
     }
 }

@@ -1,8 +1,8 @@
-import { Context } from 'types.bicep'
+import { create_context } from 'br/Tricep:common/context:latest'
+import { resource_group } from 'br/Tricep:recommended/resources/resource-group:latest'
 
 targetScope = 'subscription'
 
-param locationAbbreviation string
 param location string
 param environment string
 param projectName string
@@ -11,17 +11,22 @@ param version string
 param registryUrl string
 param deployedAt string = utcNow('yyyyMMdd')
 
-var context = {
-  locationAbbreviation: locationAbbreviation
+var context = create_context({
+  name: ''
+  project: projectName
+  nameConventionTemplate: '$type-$env-$loc-$project-$name'
   location: location
   environment: environment
-  projectName: projectName
   deployedAt: deployedAt
-}
+  tenant: tenant()
+  tags: {}
+})
+
+var resourceGroupConfig = resource_group(context, [])
 
 resource calqueResourceGroup 'Microsoft.Resources/resourceGroups@2024-07-01' = {
-  name: 'rg-${locationAbbreviation}-${environment}-${projectName}'
-  location: location
+  name: resourceGroupConfig.name
+  location: resourceGroupConfig.location
 }
 
 module monitoring 'monitoring.bicep' = {
