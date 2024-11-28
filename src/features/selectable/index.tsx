@@ -216,7 +216,11 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
     };
 
     createRenderEffect(() => {
-        element.dataset.selected = isSelected() ? 'true' : undefined;
+        if (isSelected()) {
+            element.dataset.selected = 'true';
+        } else {
+            delete element.dataset.selected;
+        }
     });
 
     const onPointerDown = (e: Event) => {

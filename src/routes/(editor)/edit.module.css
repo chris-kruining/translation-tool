@@ -6,13 +6,21 @@
 
     & .sidebar {
         z-index: 1;
-        padding: var(--padding-l);
-        padding-block-start: calc(2 * var(--padding-l));
-        background-color: var(--surface-2);
+        padding: var(--padding-xl);
+        background-color: var(--surface-300);
 
         & > ul {
             padding: 0;
             margin: 0;
+        }
+    }
+
+    & .content {
+        background-color: var(--surface-500);
+        border-top-left-radius: var(--radii-xl);
+
+        & > header {
+            padding-inline-start: var(--padding-l);
         }
     }
 
@@ -37,11 +45,11 @@
     & > svg {
         padding-inline-end: 3em;
         margin-inline-end: 3em;
-        border-inline-end: 2px solid var(--surface-5);
+        border-inline-end: 2px solid var(--surface-300);
     }
 
     & > button {
-        background-color: var(--surface-4);
+        background-color: var(--surface-400);
         color: var(--text-1);
         padding: var(--padding-l) var(--padding-xl);
         border: none;

@@ -9,7 +9,7 @@
         align-items: center;
         inline-size: max-content;
         padding: 0;
-        background-color: var(--surface-1);
+        background-color: transparent;
         color: var(--text-1);
         border: none;
         font-size: var(--text-l);

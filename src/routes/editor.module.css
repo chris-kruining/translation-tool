@@ -4,12 +4,12 @@
     inline-size: 100%;
     block-size: 100%;
     overflow: clip;
-    background-color: var(--surface-1);
+    background-color: var(--surface-300);
 
     .menu {
         view-transition-name: menu;
         display: grid;
-        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid: 100% / auto minmax(0, 1fr) auto;
         grid-auto-flow: column;
         justify-content: start;
         place-items: center start;
@@ -18,11 +18,11 @@
 
         gap: .5em;
         padding-inline: 1em;
-        block-size: calc(env(titlebar-area-height, 2em) + .5px);
+        block-size: calc(env(titlebar-area-height, 3em) + .5px);
         inline-size: env(titlebar-area-width, 100%);
         -webkit-app-region: drag;
 
-        background-color: var(--surface-3);
+        background-color: var(--surface-300);
         color: var(--text-1);
 
         & > * {
@@ -30,19 +30,14 @@
         }
 
         & > .logo {
-            inline-size: 3em;
-            block-size: 3em;
-            padding: .5em;
-            margin-block-end: -1em;
-            background-color: inherit;
-            color: inherit;
-            border-radius: .25em;
+            aspect-ratio: 1;
+            block-size: 100%;
+            padding: var(--padding-m);
 
             & > picture {
                 display: contents;
 
                 & > img {
-                    inline-size: 100%;
                     block-size: 100%;
                 }
             }

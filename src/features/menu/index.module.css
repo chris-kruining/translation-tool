@@ -15,7 +15,7 @@
     text-align: start;
 
     &:hover {
-        background-color: var(--surface-4);
+        background-color: var(--surface-500);
     }
 }
 
@@ -31,8 +31,8 @@
     padding: var(--padding-m) 0;
     inline-size: max-content;
 
-    background-color: var(--surface-4);
-    border: 1px solid var(--surface-5);
+    background-color: var(--surface-500);
+    border: 1px solid var(--surface-300);
     border-block-start-width: 0;
     margin: unset;
 
@@ -44,7 +44,7 @@
         grid-column: span 2;
         inline-size: calc(100% - (2 * var(--padding-m)));
         margin-block: 0;
-        border: 1px solid var(--surface-5);
+        border: 1px solid var(--surface-300);
     }
 
     & > .item {
@@ -53,10 +53,10 @@
         grid-template-columns: subgrid;
         align-items: center;
 
-        background-color: var(--surface-4);
+        background-color: var(--surface-500);
 
         &:hover {
-            background-color: var(--surface-5);
+            background-color: var(--surface-600);
         }
 
         & > sub {
@@ -67,23 +67,23 @@
 }
 
 :popover-open + .item {
-    background-color: var(--surface-4);
+    background-color: var(--surface-500);
 }
 
 .commandPalette {
     display: none;
-    background-color: var(--surface-1);
+    background-color: var(--surface-700);
     color: var(--text-1);
     gap: var(--padding-m);
     padding: var(--padding-l);
-    border: 1px solid var(--surface-3);
+    border: 1px solid var(--surface-500);
 
     &[open] {
         display: grid;
     }
 
     &::backdrop {
-        background-color: color(from var(--surface-1) xyz x y z / .2);
+        background-color: color(from var(--surface-700) xyz x y z / .2);
         backdrop-filter: blur(.25em);
         pointer-events: all !important;
     }
@@ -94,7 +94,7 @@
     gap: var(--padding-m);
 
     & > input {
-        background-color: var(--surface-2);
+        background-color: var(--surface-600);
         color: var(--text-1);
         border: none;
         padding: var(--padding-m);
