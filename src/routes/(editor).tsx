@@ -42,7 +42,7 @@ export default function Editor(props: ParentProps) {
                 const themeColor = createMemo(() => {
                     theme();
 
-                    return window.getComputedStyle(document.body).backgroundColor;
+                    return globalThis.getComputedStyle(document.body).backgroundColor;
                 });
 
                 return <>
