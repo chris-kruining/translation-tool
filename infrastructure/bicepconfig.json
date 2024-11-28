@@ -8,5 +8,11 @@
                 "registry": "acreuwprdtricep.azurecr.io"
             }
         }
+    },
+    "cloud": {
+        "currentProfile": "AzureCloud",
+        "credentialPrecedence": [
+            "AzureCLI"
+        ]
     }
 }
