@@ -15,10 +15,10 @@
   --secondary-900: oklch(from var(--primary-500) .6 c calc(h + var(--accent-ofset)));
 
   --surface-300: light-dark(oklch(from var(--primary-500) .9 .02 h), oklch(from var(--primary-500) .2 .02 h));
-  --surface-400: oklch(from var(--primary-300) calc(l + .025) c h);
-  --surface-500: oklch(from var(--primary-400) calc(l + .025) c h);
-  --surface-600: oklch(from var(--primary-500) calc(l + .025) c h);
-  --surface-700: oklch(from var(--primary-600) calc(l + .025) c h);
+  --surface-400: oklch(from var(--surface-300) calc(l + .025) c h);
+  --surface-500: oklch(from var(--surface-400) calc(l + .025) c h);
+  --surface-600: oklch(from var(--surface-500) calc(l + .025) c h);
+  --surface-700: oklch(from var(--surface-600) calc(l + .025) c h);
 
   --text-1: light-dark(oklch(from var(--primary-500) .2 .02 h), oklch(from var(--primary-500) .9 .02 h));
   --text-2: oklch(from var(--text-1) calc(l + .1) c h);
