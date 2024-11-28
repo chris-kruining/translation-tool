@@ -6,6 +6,7 @@ import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
 import { ColorScheme, ColorSchemePicker, getState, useTheme } from "~/components/colorschemepicker";
 import css from "./editor.module.css";
+import { isServer } from "solid-js/web";
 
 export const route: RouteDefinition = {
     preload: () => getState(),
@@ -42,7 +43,7 @@ export default function Editor(props: ParentProps) {
                 const themeColor = createMemo(() => {
                     theme();
 
-                    return globalThis.getComputedStyle(document.body).backgroundColor;
+                    return isServer ? 'lch(.5 .75 0deg)' : globalThis.getComputedStyle(document.body).backgroundColor;
                 });
 
                 return <>
