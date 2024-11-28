@@ -40,19 +40,13 @@ export default function Editor(props: ParentProps) {
 
         <Show when={theme}>{
             theme => {
-                const themeColor = createMemo(() => {
-                    theme();
-
-                    return isServer ? 'lch(.5 .75 0deg)' : globalThis.getComputedStyle(document.body).backgroundColor;
-                });
-
                 createEffect(() => {
-                    console.log(theme(), themeColor());
+                    console.log(theme());
                 })
 
                 return <>
                     <Meta name="color-scheme" content={theme().colorScheme} />
-                    <Meta name="theme-color" content={themeColor()} />
+                    <Meta name="theme-color" content={`oklch(.5 .02 ${theme().hue})`} />
 
                     <style>{`
                         :root {
