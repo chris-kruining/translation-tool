@@ -46,15 +46,19 @@ export default function Editor(props: ParentProps) {
                     return isServer ? 'lch(.5 .75 0deg)' : globalThis.getComputedStyle(document.body).backgroundColor;
                 });
 
+                createEffect(() => {
+                    console.log(theme(), themeColor());
+                })
+
                 return <>
                     <Meta name="color-scheme" content={theme().colorScheme} />
                     <Meta name="theme-color" content={themeColor()} />
 
-                    <Style>{`
-                    :root {
-                        --hue: ${theme().hue}deg !important;
-                    }
-                `}</Style>
+                    <style>{`
+                        :root {
+                            --hue: ${theme().hue}deg !important;
+                        }
+                    `}</style>
                 </>;
             }
         }</Show>
