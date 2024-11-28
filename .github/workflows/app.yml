@@ -47,6 +47,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Test bicep
+        run: az bicep build --file ./infrastructure/main.bicep --stdout
+
       - name: Build container images
         run: |
           docker build . --file Dockerfile --tag ${{ secrets.ACR_LOGIN_SERVER }}/$IMAGE_NAME:${{needs.versionize.outputs.semver}}
@@ -76,9 +79,6 @@ jobs:
         with:
           sparse-checkout: |
             infrastructure
-
-      - name: Test bicep
-        run: az bicep build ./infrastructure/main.bicep
 
       - name: Az CLI login
         uses: azure/login@v2
