@@ -12,37 +12,49 @@
         flex-direction: row;
         flex-wrap: nowrap;
 
-        border-block-end: 1px solid var(--surface-5);
+        border-block-end: 1px solid var(--surface-700);
 
         & > .handle {
             display: grid;
             grid-auto-flow: column;
             column-gap: var(--padding-m);
 
-            background-color: var(--surface-1);
+            background-color: transparent;
             color: var(--text-2);
             cursor: pointer;
+            border-radius: var(--radii-l) var(--radii-l) 0 0;
 
             & > button {
                 display: grid;
                 align-content: center;
                 background-color: inherit;
                 color: inherit;
-                padding: var(--padding-m) 0;
+                padding: var(--padding-l) 0;
                 border: none;
                 cursor: pointer;
+                border-radius: inherit;
 
                 &:first-child {
-                    padding-inline-start: var(--padding-l);
+                    padding-inline-start: var(--padding-xl);
                 }
 
                 &:last-child {
-                    padding-inline-end: var(--padding-l);
+                    padding-inline-end: var(--padding-xl);
+                }
+
+                &:not(:first-child) {
+                    border-top-left-radius: 0;
+                    border-bottom-left-radius: 0;
+                }
+
+                &:not(:last-child) {
+                    border-top-right-radius: 0;
+                    border-bottom-right-radius: 0;
                 }
             }
 
             &.active {
-                background-color: var(--surface-3);
+                background-color: var(--surface-600);
                 color: var(--text-1);
             }
         }
@@ -80,7 +92,7 @@
 
         &[open] {
             & > summary {
-                background-color: var(--surface-2);
+                background-color: var(--surface-600);
             }
 
             &::details-content {

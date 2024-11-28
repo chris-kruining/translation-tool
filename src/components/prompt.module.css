@@ -2,9 +2,9 @@
     display: grid;
     gap: var(--padding-m);
     padding: var(--padding-m);
-    background-color: var(--surface-1);
+    background-color: var(--surface-700);
     color: var(--text-2);
-    border: 1px solid var(--surface-5);
+    border: 1px solid var(--surface-300);
     border-radius: var(--radii-m);
 
     &:not(&[open]) {
@@ -12,7 +12,7 @@
     }
 
     &[open]::backdrop {
-        background-color: color(from var(--surface-1) xyz x y z / .3);
+        background-color: color(from var(--surface-700) xyz x y z / .3);
         backdrop-filter: blur(.25em);
     }
 

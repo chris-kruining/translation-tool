@@ -9,7 +9,7 @@
     block-size: 100%;
     overflow: clip auto;
 
-    background-color: var(--surface-1);
+    background-color: var(--surface-600);
 
     & input[type="checkbox"] {
         margin: .1em;
@@ -20,7 +20,7 @@
         min-block-size: max(2em, 100%);
         max-block-size: 50em;
 
-        background-color: var(--surface-1);
+        background-color: var(--surface-600);
         color: var(--text-1);
         border-color: var(--text-2);
         border-radius: var(--radii-s);
@@ -59,8 +59,8 @@
     & .header {
         position: sticky;
         inset-block-start: 0;
-        background-color: var(--surface-1);
-        border-block-end: 1px solid var(--surface-5);
+        background-color: var(--surface-600);
+        border-block-end: 1px solid var(--surface-300);
     }
 
     & .row {

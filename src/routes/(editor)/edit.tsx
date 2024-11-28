@@ -317,7 +317,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             ] as const}</Tree>
         </Sidebar>
 
-        <Tabs active={setActive} onClose={commands.closeTab}>
+        <Tabs class={css.content} active={setActive} onClose={commands.closeTab}>
             <For each={tabs()}>{
                 ({ key, handle, setApi, setEntries }) => <Tab
                     id={key}

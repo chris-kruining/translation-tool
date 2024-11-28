@@ -14,11 +14,11 @@
   --secondary-700: oklch(from var(--primary-500) .7 c calc(h + var(--accent-ofset)));
   --secondary-900: oklch(from var(--primary-500) .6 c calc(h + var(--accent-ofset)));
 
-  --surface-1: light-dark(oklch(from var(--secondary-500) .9 .02 h), oklch(from var(--secondary-500) .2 .02 h));
-  --surface-2: oklch(from var(--surface-1) calc(l + .025) c h);
-  --surface-3: oklch(from var(--surface-2) calc(l + .025) c h);
-  --surface-4: oklch(from var(--surface-3) calc(l + .025) c h);
-  --surface-5: oklch(from var(--surface-4) calc(l + .025) c h);
+  --surface-300: light-dark(oklch(from var(--secondary-500) .9 .02 h), oklch(from var(--secondary-500) .2 .02 h));
+  --surface-400: oklch(from var(--surface-300) calc(l + .025) c h);
+  --surface-500: oklch(from var(--surface-400) calc(l + .025) c h);
+  --surface-600: oklch(from var(--surface-500) calc(l + .025) c h);
+  --surface-700: oklch(from var(--surface-600) calc(l + .025) c h);
 
   --text-1: light-dark(oklch(from var(--secondary-500) .2 .02 h), oklch(from var(--secondary-500) .9 .02 h));
   --text-2: oklch(from var(--text-1) calc(l + .1) c h);
@@ -31,6 +31,7 @@
   --radii-s: .125em;
   --radii-m: .25em;
   --radii-l: .5em;
+  --radii-xl: 1em;
 
   --text-s: .8rem;
   --text-m: 1rem;
@@ -40,8 +41,9 @@
 
   --padding-s: .25em;
   --padding-m: .5em;
-  --padding-l: 1em;
-  --padding-xl: 1.5em;
+  --padding-l: .75em;
+  --padding-xl: 1em;
+  --padding-xxl: 1.5em;
 }
 
 html {
@@ -59,7 +61,7 @@ body {
   display: grid;
   grid: 100% / 100%;
 
-  background-color: var(--surface-1);
+  background-color: var(--surface-300);
   color: var(--text-2);
   accent-color: var(--primary-500);
 
@@ -95,8 +97,8 @@ p {
 
 code {
   padding-inline: var(--padding-s);
-  background-color: var(--surface-3);
-  border: 1px solid var(--surface-5);
+  background-color: var(--surface-500);
+  border: 1px solid var(--surface-700);
   border-radius: var(--radii-m);
 }
 

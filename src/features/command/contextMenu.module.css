@@ -12,9 +12,9 @@
     padding: var(--padding-m) 0;
     font-size: var(--text-s);
 
-    background-color: var(--surface-1);
+    background-color: var(--surface-700);
     color: var(--text-1);
-    border: 1px solid var(--surface-5);
+    border: 1px solid var(--surface-300);
     border-radius: var(--radii-m);
 
     & > li {
@@ -31,7 +31,7 @@
         }
 
         &:hover {
-            background-color: var(--surface-4);
+            background-color: var(--surface-400);
         }
     }
 

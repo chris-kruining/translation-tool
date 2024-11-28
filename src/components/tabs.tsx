@@ -21,7 +21,7 @@ const useTabs = () => {
     return context!;
 }
 
-export const Tabs: ParentComponent<{ active?: Setter<string | undefined>, onClose?: CommandType<[string]> }> = (props) => {
+export const Tabs: ParentComponent<{ class?: string, active?: Setter<string | undefined>, onClose?: CommandType<[string]> }> = (props) => {
     const [active, setActive] = createSignal<string | undefined>(undefined);
 
     createEffect(() => {
@@ -41,11 +41,11 @@ export const Tabs: ParentComponent<{ active?: Setter<string | undefined>, onClos
     };
 
     return <TabsContext.Provider value={ctx}>
-        <_Tabs active={active()} onClose={props.onClose}>{props.children}</_Tabs>
+        <_Tabs class={props.class} active={active()} onClose={props.onClose}>{props.children}</_Tabs>
     </TabsContext.Provider >;
 }
 
-const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType<[string]> }> = (props) => {
+const _Tabs: ParentComponent<{ class?: string, active: string | undefined, onClose?: CommandType<[string]> }> = (props) => {
     const commandsContext = useCommands();
     const tabsContext = useTabs();
 
@@ -64,7 +64,7 @@ const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType
         return commandsContext.execute(props.onClose, e);
     };
 
-    return <div class={css.tabs}>
+    return <div class={`${css.tabs} ${props.class}`}>
         <header>
             <For each={tabs()}>{
                 ({ id, label, options: { closable } }) => <Command.Context for={props.onClose} with={[id]}>
@@ -78,6 +78,7 @@ const _Tabs: ParentComponent<{ active: string | undefined, onClose?: CommandType
 
                             tabsContext.activate(id)
                         }}>{label}</button>
+
                         <Show when={closable}>
                             <button onPointerDown={onClose}> <AiOutlineClose /></button>
                         </Show>
@@ -106,7 +107,7 @@ export const Tab: ParentComponent<{ id: string, label: string, closable?: boolea
         id={props.id}
         data-tab-label={props.label}
         data-tab-closable={props.closable}
-        style="dispay: contents;"
+        style="display: contents;"
     >
         <Show when={isActive()}>
             <Command.Context for={context.onClose() ?? noop} with={[props.id]}>{resolved()}</Command.Context>
