@@ -52,13 +52,13 @@ const ThemeContext = createContext<ThemeContextType>();
 const useStore = () => useContext(ThemeContext)!;
 
 export const useTheme = () => {
-    const { theme } = useContext(ThemeContext) ?? {};
+    const ctx = useContext(ThemeContext);
 
-    if (theme === undefined) {
+    if (ctx === undefined) {
         throw new Error('useColorScheme is called outside a <ColorSchemeProvider />');
     }
 
-    return theme;
+    return ctx.theme;
 };
 
 export const ThemeProvider: ParentComponent = (props) => {
@@ -71,10 +71,6 @@ export const ThemeProvider: ParentComponent = (props) => {
 
             createEffect(() => {
                 setStore(state());
-            });
-
-            createEffect(() => {
-                console.log({ ...store })
             });
 
             return <ThemeContext.Provider value={{

@@ -38,16 +38,24 @@ export default function Editor(props: ParentProps) {
         <Title>Calque</Title>
 
         <Show when={theme}>{
-            theme => <>
-                <meta name="color-scheme" content={theme().colorScheme} />
-                <meta name="theme-color" content="light-dark(#f0f, #0f0)" />
+            theme => {
+                const themeColor = createMemo(() => {
+                    theme();
 
-                <style>{`
+                    return window.getComputedStyle(document.body).backgroundColor;
+                });
+
+                return <>
+                    <Meta name="color-scheme" content={theme().colorScheme} />
+                    <Meta name="theme-color" content={themeColor()} />
+
+                    <Style>{`
                     :root {
                         --hue: ${theme().hue}deg !important;
                     }
-                `}</style>
-            </>
+                `}</Style>
+                </>;
+            }
         }</Show>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
