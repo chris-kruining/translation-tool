@@ -76,6 +76,9 @@ jobs:
           sparse-checkout: |
             infrastructure
 
+      - name: Test bicep
+        run: az bicep build ./infrastructure/main.bicep
+
       - name: Az CLI login
         uses: azure/login@v2
         with:

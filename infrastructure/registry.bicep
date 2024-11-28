@@ -22,6 +22,7 @@ var registryConfig = container_registry(context, [
 resource registry 'Microsoft.ContainerRegistry/registries@2023-07-01' = {
   name: registryConfig.name
   location: registryConfig.location
+  tags: registryConfig.tags
   sku: registryConfig.sku
   identity: registryConfig.identity
   properties: registryConfig.properties

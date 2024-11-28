@@ -13,5 +13,6 @@ var logAnalyticsConfig = log_analytics(context, [
 resource monitoring 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: logAnalyticsConfig.name
   location: logAnalyticsConfig.location
+  tags: logAnalyticsConfig.tags
   properties: logAnalyticsConfig.properties
 }

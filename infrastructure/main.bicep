@@ -12,9 +12,8 @@ param registryUrl string
 param deployedAt string = utcNow('yyyyMMdd')
 
 var context = create_context({
-  name: ''
   project: projectName
-  nameConventionTemplate: '$type-$env-$loc-$project-$name'
+  nameConventionTemplate: '$type-$environment-$location-$project'
   location: location
   environment: environment
   deployedAt: deployedAt
