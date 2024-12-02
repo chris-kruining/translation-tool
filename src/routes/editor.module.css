@@ -47,6 +47,41 @@
             display: grid;
             grid-auto-flow: column;
             align-content: center;
+
+            & .themeMenu {
+                display: contents;
+
+                & > button {
+                    display: flex;
+                    justify-content: center;
+                    padding: var(--padding-m);
+                    border: none;
+                    border-radius: var(--radii-m);
+                    background-color: transparent;
+
+                    &:hover {
+                        background-color: var(--surface-500);
+                    }
+                }
+
+                & > dialog {
+                    inset-inline-end: anchor(right);
+                    inset-block-start: anchor(bottom);
+
+                    padding: var(--padding-m);
+                    border: none;
+                    border-radius: var(--radii-m);
+                    border-top-right-radius: 0;
+                    background-color: var(--surface-600);
+                    box-shadow: var(--shadow-3);
+                }
+
+                &:has(:popover-open) > button {
+                    border-bottom-left-radius: 0;
+                    border-bottom-right-radius: 0;
+                    background-color: var(--surface-600);
+                }
+            }
         }
     }
 
