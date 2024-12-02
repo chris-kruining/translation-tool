@@ -1,5 +1,5 @@
 import { Link, Meta, Title } from "@solidjs/meta";
-import { Component, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
+import { Component, createEffect, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
@@ -44,12 +44,16 @@ export default function Editor(props: ParentProps) {
         transition(() => { e.retry(true) })
     });
 
+    createEffect(() => {
+        console.log(theme.hue);
+    });
+
     return <MenuProvider commands={commands}>
         <HttpHeader name="Accept-CH" value="Sec-CH-Prefers-Color-Scheme" />
 
         <Title>Calque</Title>
 
-        <Show when={theme}>{
+        <Show when={theme.colorScheme || theme.hue ? theme : undefined}>{
             theme => {
                 const lightness = createMemo(() => {
                     const scheme = theme().colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme().colorScheme;
@@ -58,8 +62,8 @@ export default function Editor(props: ParentProps) {
                 });
 
                 return <>
-                    <Meta name="color-scheme" content={theme().colorScheme} />
-                    <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
+                    <meta name="color-scheme" content={theme().colorScheme} />
+                    <meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
 
                     <style>{`
                         :root {
