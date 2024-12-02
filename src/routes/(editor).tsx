@@ -1,4 +1,4 @@
-import { Link, Meta, Title } from "@solidjs/meta";
+import { Link, Meta, Style, Title } from "@solidjs/meta";
 import { Component, createEffect, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
@@ -62,14 +62,14 @@ export default function Editor(props: ParentProps) {
                 });
 
                 return <>
-                    <meta name="color-scheme" content={theme().colorScheme} />
-                    <meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
+                    <Meta name="color-scheme" content={theme().colorScheme} />
+                    <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
 
-                    <style>{`
+                    <Style>{`
                         :root {
                             --hue: ${theme().hue}deg !important;
                         }
-                    `}</style>
+                    `}</Style>
                 </>;
             }
         }</Show>

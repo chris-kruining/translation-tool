@@ -62,6 +62,12 @@
                     &:hover {
                         background-color: var(--surface-500);
                     }
+
+                    @media (display-mode: window-controls-overlay) {
+                        & {
+                            color: light-dark(#0005, #fff5);
+                        }
+                    }
                 }
 
                 & > dialog {
@@ -83,8 +89,6 @@
                 }
             }
         }
-
-        @media (display-mode: window-controls-overlay) {}
     }
 
     & > section {
