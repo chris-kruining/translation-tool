@@ -19,6 +19,7 @@ export interface GridContextType {
     mutate(prop: string, lang: string, value: string): void;
     remove(props: string[]): void;
     insert(prop: string): void;
+    addColumn(name: string): void;
 }
 
 export interface GridApi {
@@ -29,6 +30,7 @@ export interface GridApi {
     clear(): void;
     remove(keys: string[]): void;
     insert(prop: string): void;
+    addColumn(name: string): void;
 }
 
 const GridContext = createContext<GridContextType>();
@@ -38,8 +40,9 @@ const useGrid = () => useContext(GridContext)!;
 
 export const Grid: Component<{ class?: string, columns: string[], rows: Rows, api?: (api: GridApi) => any }> = (props) => {
     const [selection, setSelection] = createSignal<SelectionItem[]>([]);
-    const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, snapshot: Rows, numberOfRows: number }>({
+    const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, columns: string[], snapshot: Rows, numberOfRows: number }>({
         rows: {},
+        columns: [],
         snapshot: new Map,
         numberOfRows: 0,
     });
@@ -51,10 +54,15 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
         return deepDiff(state.snapshot, state.rows).toArray();
     });
     const rows = createMemo(() => Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, unwrap(row)] as const)));
+    const columns = createMemo(() => state.columns);
 
     createEffect(() => {
         setState('rows', Object.fromEntries(deepCopy(props.rows).entries()));
         setState('snapshot', props.rows);
+    });
+
+    createEffect(() => {
+        setState('columns', [...props.columns]);
     });
 
     createEffect(() => {
@@ -82,9 +90,18 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
 
         insert(prop: string) {
             setState('rows', produce(rows => {
-                rows[prop] = Object.fromEntries(props.columns.slice(1).map(lang => [lang, '']));
+                rows[prop] = Object.fromEntries(state.columns.slice(1).map(lang => [lang, '']));
 
                 return rows
+            }))
+        },
+
+        addColumn(name: string): void {
+            setState(produce(state => {
+                state.columns.push(name);
+                state.rows = Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, { ...row, [name]: '' }]));
+
+                return state;
             }))
         },
     };
@@ -93,7 +110,7 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
         <SelectionProvider selection={setSelection} multiSelect>
             <Api api={props.api} />
 
-            <_Grid class={props.class} columns={props.columns} rows={rows()} />
+            <_Grid class={props.class} columns={columns()} rows={rows()} />
         </SelectionProvider>
     </GridContext.Provider>;
 };
@@ -153,6 +170,10 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => 
         },
         insert(prop: string) {
             gridContext.insert(prop);
+        },
+
+        addColumn(name: string): void {
+            gridContext.addColumn(name);
         },
     };
 

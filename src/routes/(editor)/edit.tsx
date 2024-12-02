@@ -1,5 +1,5 @@
 import { Component, createEffect, createMemo, createSignal, For, onMount, ParentProps, Setter, Show } from "solid-js";
-import { filter, MutarionKind, Mutation, splitAt } from "~/utilities";
+import { Created, filter, MutarionKind, Mutation, splitAt } from "~/utilities";
 import { Sidebar } from "~/components/sidebar";
 import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/components/filetree";
 import { Menu } from "~/features/menu";
@@ -91,7 +91,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
     const [active, setActive] = createSignal<string>();
     const [contents, setContents] = createSignal<Map<string, Map<string, string>>>(new Map());
     const [tree, setFiles] = createSignal<FolderEntry>(emptyFolder);
-    const [prompt, setPrompt] = createSignal<PromptApi>();
+    const [newKeyPrompt, setNewKeyPrompt] = createSignal<PromptApi>();
+    const [newLanguagePrompt, setNewLanguagePrompt] = createSignal<PromptApi>();
 
     const tab = createMemo(() => {
         const name = active();
@@ -99,7 +100,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         return tabs().find(t => t.handle.name === name);
     });
     const api = createMemo(() => tab()?.api());
-    const mutations = createMemo<(Mutation & { file?: { value: string, handle: FileSystemFileHandle, id: string } })[]>(() => tabs().flatMap(tab => {
+    const mutations = createMemo<(Mutation & { lang: string, file?: { value: string, handle: FileSystemFileHandle, id: string } })[]>(() => tabs().flatMap(tab => {
         const entries = tab.entries();
         const files = tab.files();
         const mutations = tab.api()?.mutations() ?? [];
@@ -109,11 +110,19 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 case MutarionKind.Update: {
                     const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
 
-                    return { kind: MutarionKind.Update, key, file: entries.get(key)?.[lang] };
+                    return { kind: MutarionKind.Update, key, lang, file: entries.get(key)?.[lang] };
                 }
 
                 case MutarionKind.Create: {
-                    return Object.entries(m.value).map(([lang, value]) => ({ kind: MutarionKind.Create, key: m.key, file: files.get(lang)!, value }));
+                    if (typeof m.value === 'object') {
+                        return Object.entries(m.value).map(([lang, value]) => {
+                            return ({ kind: MutarionKind.Create, key: m.key, lang, file: files.get(lang)!, value });
+                        });
+                    }
+
+                    const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
+
+                    return { kind: MutarionKind.Create, key, lang, file: undefined, value: m.value };
                 }
 
                 case MutarionKind.Delete: {
@@ -137,8 +146,35 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         }
 
         const groupedByFileId = Object.groupBy(muts, m => m.file?.id ?? 'undefined');
+        const newFiles = Object.entries(Object.groupBy((groupedByFileId['undefined'] ?? []) as (Created & { lang: string, file: undefined })[], m => m.lang)).map(([lang, mutations]) => {
+            const data = mutations!.reduce((aggregate, { key, value }) => {
+                let obj = aggregate;
+                const i = key.lastIndexOf('.');
 
-        return entries.map(({ id, handle }) => {
+                if (i !== -1) {
+                    const [k, lastPart] = splitAt(key, i);
+
+                    for (const part of k.split('.')) {
+                        if (!Object.hasOwn(obj, part)) {
+                            obj[part] = {};
+                        }
+
+                        obj = obj[part];
+                    }
+
+                    obj[lastPart] = value;
+                }
+                else {
+                    obj[key] = value;
+                }
+
+                return aggregate;
+            }, {} as Record<string, any>);
+
+            return [{ existing: false, name: lang }, data] as const;
+        })
+
+        const existingFiles = entries.map(({ id, handle }) => {
             const existing = new Map(files.get(id)!);
             const mutations = groupedByFileId[id]!;
 
@@ -158,7 +194,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             }
 
             return [
-                handle,
+                { existing: true, handle },
                 existing.entries().reduce((aggregate, [key, value]) => {
                     let obj = aggregate;
                     const i = key.lastIndexOf('.');
@@ -183,8 +219,14 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                     return aggregate;
                 }, {} as Record<string, any>)
             ] as const;
-        }).toArray();
+        }).toArray() as (readonly [({ existing: true, handle: FileSystemFileHandle } | { existing: false, name: string }), Record<string, any>])[];
+
+        return existingFiles.concat(newFiles);
     });
+
+    // createEffect(() => {
+    //     console.log(mutatedData());
+    // });
 
     createEffect(() => {
         const directory = props.root;
@@ -208,7 +250,10 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             filesContext.remove(id);
         }, { key: 'w', modifier: Modifier.Control | (isInstalledPWA ? Modifier.None : Modifier.Alt) }),
         save: createCommand('save', async () => {
-            await Promise.allSettled(mutatedData().map(async ([handle, data]) => {
+            await Promise.allSettled(mutatedData().map(async ([file, data]) => {
+                // TODO :: add the newly created file to the known files list to that the save file picker is not shown again on subsequent saves
+                const handle = file.existing ? file.handle : await window.showSaveFilePicker({ suggestedName: file.name, excludeAcceptAllOption: true, types: [{ description: 'JSON file', accept: { 'application/json': ['.json'] } }] });
+
                 const stream = await handle.createWritable({ keepExistingData: false });
 
                 stream.write(JSON.stringify(data, null, 4));
@@ -246,7 +291,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             remove(Object.keys(selection()));
         }, { key: 'delete', modifier: Modifier.None }),
         inserNewKey: createCommand('insert new key', async () => {
-            const formData = await prompt()?.showModal();
+            const formData = await newKeyPrompt()?.showModal();
             const key = formData?.get('key')?.toString();
 
             if (!key) {
@@ -255,7 +300,18 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
             api()?.insert(key);
         }),
-        inserNewLanguage: noop.withLabel('insert new language'),
+        inserNewLanguage: createCommand('insert new language', async () => {
+            const formData = await newLanguagePrompt()?.showModal();
+            const language = formData?.get('locale')?.toString();
+
+            if (!language) {
+                return;
+            }
+
+            console.log(language);
+
+            api()?.addColumn(language);
+        }),
     } as const;
 
     return <div class={css.root}>
@@ -295,8 +351,12 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
             <Menu.Item command={noop.withLabel('view')} />
         </Menu.Root>
 
-        <Prompt api={setPrompt} title="Which key do you want to create?" description={<>hint: use <code>.</code> to denote nested keys,<br /> i.e. <code>this.is.some.key</code> would be a key that is four levels deep</>}>
-            <input name="key" value="this.is.an.awesome.key" placeholder="name of new key ()" />
+        <Prompt api={setNewKeyPrompt} title="Which key do you want to create?" description={<>hint: use <code>.</code> to denote nested keys,<br /> i.e. <code>this.is.some.key</code> would be a key that is four levels deep</>}>
+            <input name="key" placeholder="name of new key ()" value="keyF.some.deeper.nested.value" />
+        </Prompt>
+
+        <Prompt api={setNewLanguagePrompt}>
+            <input name="locale" placeholder="locale code, i.e. en-GB" value="fr-FR" />
         </Prompt>
 
         <Sidebar as="aside" label={tree().name} class={css.sidebar}>
