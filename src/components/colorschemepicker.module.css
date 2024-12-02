@@ -2,13 +2,14 @@
     display: flex;
     flex-flow: row;
     align-items: center;
+    background-color: inherit;
     border: 1px solid transparent;
     border-radius: var(--radii-m);
     padding: var(--padding-s);
 
     & select {
         border: none;
-        background-color: transparent;
+        background-color: inherit;
         border-radius: var(--radii-m);
 
         &:focus {

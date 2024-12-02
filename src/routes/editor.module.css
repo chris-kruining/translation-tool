@@ -65,7 +65,7 @@
 
                     @media (display-mode: window-controls-overlay) {
                         & {
-                            color: light-dark(#0005, #fff5);
+                            color: light-dark(#0008, #fff8);
                         }
                     }
                 }

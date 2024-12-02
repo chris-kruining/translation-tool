@@ -26,9 +26,8 @@ export default createHandler(({ nonce }) => {
   );
 }, event => {
   const nonce = crypto.randomUUID();
-  const isDev = process.env.NODE_ENV === 'development';
 
-  const base = `'self' 'nonce-${nonce}' ${isDev ? `'unsafe-eval'` : ''}`;
+  const base = `'self' 'nonce-${nonce}' 'unsafe-eval'`;
 
   const policies = {
     default: base,

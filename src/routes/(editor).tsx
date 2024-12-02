@@ -13,9 +13,7 @@ import css from "./editor.module.css";
 const event = getRequestEvent();
 
 export const route: RouteDefinition = {
-    preload: ({ params, location, intent }) => {
-        console.log();
-
+    preload: () => {
         return getState();
     },
 };
@@ -25,6 +23,11 @@ export default function Editor(props: ParentProps) {
     const themeMenuId = createUniqueId();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
+    const lightness = createMemo(() => {
+        const scheme = theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme.colorScheme;
+
+        return scheme === ColorScheme.Light ? .9 : .2;
+    });
 
     const commands = [
         createCommand('open command palette', () => {
@@ -44,8 +47,9 @@ export default function Editor(props: ParentProps) {
         transition(() => { e.retry(true) })
     });
 
+    console.log('server?', theme.colorScheme, theme.hue);
     createEffect(() => {
-        console.log(theme.hue);
+        console.log(theme.colorScheme, theme.hue);
     });
 
     return <MenuProvider commands={commands}>
@@ -53,26 +57,14 @@ export default function Editor(props: ParentProps) {
 
         <Title>Calque</Title>
 
-        <Show when={theme.colorScheme || theme.hue ? theme : undefined}>{
-            theme => {
-                const lightness = createMemo(() => {
-                    const scheme = theme().colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme().colorScheme;
+        <Meta name="color-scheme" content={theme.colorScheme} />
+        <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue})`} />
 
-                    return scheme === ColorScheme.Light ? .9 : .2;
-                });
-
-                return <>
-                    <Meta name="color-scheme" content={theme().colorScheme} />
-                    <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
-
-                    <Style>{`
-                        :root {
-                            --hue: ${theme().hue}deg !important;
-                        }
-                    `}</Style>
-                </>;
+        <Style>{`
+            :root {
+                --hue: ${theme.hue}deg !important;
             }
-        }</Show>
+        `}</Style>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
