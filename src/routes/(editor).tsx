@@ -1,5 +1,5 @@
-import { Link, Meta, Style, Title } from "@solidjs/meta";
-import { Component, createEffect, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
+import { Link, Meta, Title } from "@solidjs/meta";
+import { Component, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
@@ -45,11 +45,6 @@ export default function Editor(props: ParentProps) {
         e.preventDefault();
 
         transition(() => { e.retry(true) })
-    });
-
-    console.log('server?', theme.colorScheme, theme.hue);
-    createEffect(() => {
-        console.log(theme.colorScheme, theme.hue);
     });
 
     return <MenuProvider commands={commands}>

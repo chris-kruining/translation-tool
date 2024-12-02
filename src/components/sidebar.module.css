@@ -20,6 +20,7 @@
     }
 
     &.open > .content {
+        min-inline-size: 10em;
         inline-size: max-content;
     }
 

@@ -6,6 +6,12 @@
     overflow: clip;
     background-color: var(--surface-300);
 
+    @media (display-mode: window-controls-overlay) {
+        & {
+            row-gap: var(--padding-l);
+        }
+    }
+
     .menu {
         view-transition-name: menu;
         display: grid;
