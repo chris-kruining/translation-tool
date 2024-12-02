@@ -60,11 +60,11 @@ export default function Editor(props: ParentProps) {
         <Meta name="color-scheme" content={theme.colorScheme} />
         <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue})`} />
 
-        <Style>{`
+        <style>{`
             :root {
                 --hue: ${theme.hue}deg !important;
             }
-        `}</Style>
+        `}</style>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
