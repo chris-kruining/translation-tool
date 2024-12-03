@@ -224,10 +224,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         return existingFiles.concat(newFiles);
     });
 
-    // createEffect(() => {
-    //     console.log(mutatedData());
-    // });
-
     createEffect(() => {
         const directory = props.root;
 
