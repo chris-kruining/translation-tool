@@ -1,28 +1,33 @@
-import { Link, Meta, Style, Title } from "@solidjs/meta";
-import { Component, createEffect, createMemo, createSignal, ErrorBoundary, ParentProps, Show, Suspense } from "solid-js";
+import { Link, Meta, Title } from "@solidjs/meta";
+import { Component, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
 import { createCommand, Modifier } from "~/features/command";
 import { ColorScheme, ColorSchemePicker, getState, useTheme } from "~/components/colorschemepicker";
-import { getRequestEvent, isServer } from "solid-js/web";
+import { getRequestEvent } from "solid-js/web";
 import { HttpHeader } from "@solidjs/start";
+import { FaSolidPalette } from "solid-icons/fa";
 import css from "./editor.module.css";
 
 const event = getRequestEvent();
 
 export const route: RouteDefinition = {
-    preload: ({ params, location, intent }) => {
-        console.log();
-
+    preload: () => {
         return getState();
     },
 };
 
 export default function Editor(props: ParentProps) {
     const theme = useTheme();
+    const themeMenuId = createUniqueId();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
+    const lightness = createMemo(() => {
+        const scheme = theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme.colorScheme;
+
+        return scheme === ColorScheme.Light ? .9 : .2;
+    });
 
     const commands = [
         createCommand('open command palette', () => {
@@ -47,26 +52,14 @@ export default function Editor(props: ParentProps) {
 
         <Title>Calque</Title>
 
-        <Show when={theme}>{
-            theme => {
-                const lightness = createMemo(() => {
-                    const scheme = theme().colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme().colorScheme;
+        <Meta name="color-scheme" content={theme.colorScheme} />
+        <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue})`} />
 
-                    return scheme === ColorScheme.Light ? .9 : .2;
-                });
-
-                return <>
-                    <Meta name="color-scheme" content={theme().colorScheme} />
-                    <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme().hue})`} />
-
-                    <style>{`
-                        :root {
-                            --hue: ${theme().hue}deg !important;
-                        }
-                    `}</style>
-                </>;
+        <style>{`
+            :root {
+                --hue: ${theme.hue}deg !important;
             }
-        }</Show>
+        `}</style>
 
         <Link rel="icon" href="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
         <Link rel="icon" href="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
@@ -85,8 +78,15 @@ export default function Editor(props: ParentProps) {
                 <Menu.Mount />
 
                 <section class={css.right}>
-                    <ColorSchemePicker />
+                    <div class={css.themeMenu}>
+                        <button class={css.themeMenuButton} id={`${themeMenuId}-button`} popoverTarget={`${themeMenuId}-dialog`} title="Open theme picker menu">
+                            <FaSolidPalette />
+                        </button>
 
+                        <dialog class={css.themeMenuDialog} id={`${themeMenuId}-dialog`} popover anchor={`${themeMenuId}-button`}>
+                            <ColorSchemePicker />
+                        </dialog>
+                    </div>
                 </section>
             </nav>
 

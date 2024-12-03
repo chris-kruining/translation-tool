@@ -1,9 +1,9 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createResource, For, ParentComponent, Setter, Show, Suspense, useContext } from "solid-js";
+import { Component, createContext, createEffect, createResource, For, ParentComponent, Show, Suspense, useContext } from "solid-js";
 import css from './colorschemepicker.module.css';
 import { CgDarkMode } from "solid-icons/cg";
-import { action, createAsyncStore, query, useAction } from "@solidjs/router";
+import { action, query, useAction } from "@solidjs/router";
 import { useSession } from "vinxi/http";
-import { createStore, reconcile, ReconcileOptions, SetStoreFunction } from "solid-js/store";
+import { createStore } from "solid-js/store";
 
 export enum ColorScheme {
     Auto = 'light dark',
@@ -38,7 +38,7 @@ const setState = action(async (state: State) => {
     'use server';
 
     const session = await getSession();
-    await session.update(state);
+    await session.update(prev => ({ ...prev, ...state }));
 }, 'color-scheme');
 
 interface ThemeContextType {
@@ -62,7 +62,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: ParentComponent = (props) => {
-    const [state, { mutate }] = createResource<State>(() => getState(), { deferStream: true, initialValue: { colorScheme: ColorScheme.Auto, hue: 0 } });
+    const [state, { mutate }] = createResource<State>(() => getState(), { deferStream: true });
     const updateState = useAction(setState);
 
     return <Suspense>
@@ -75,8 +75,8 @@ export const ThemeProvider: ParentComponent = (props) => {
 
             return <ThemeContext.Provider value={{
                 get theme() { return store; },
-                setColorScheme(colorScheme: ColorScheme) { updateState(mutate(prev => ({ ...prev, colorScheme }))) },
-                setHue(hue: number) { updateState(mutate(prev => ({ ...prev, hue }))) },
+                setColorScheme(colorScheme: ColorScheme) { updateState(mutate(prev => ({ colorScheme, hue: prev?.hue ?? 0 }))) },
+                setHue(hue: number) { updateState(mutate(prev => ({ hue, colorScheme: prev?.colorScheme ?? ColorScheme.Auto }))) },
             }}>
                 {props.children}
             </ThemeContext.Provider>;
