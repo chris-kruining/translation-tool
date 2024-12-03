@@ -6,6 +6,7 @@
     "@solidjs/start": "^1.0.10",
     "dexie": "^4.0.10",
     "iterator-helpers-polyfill": "^3.0.1",
+    "sitemap": "^8.0.0",
     "solid-icons": "^1.1.0",
     "solid-js": "^1.9.3",
     "ts-pattern": "^5.5.0",
