@@ -291,8 +291,6 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
                 <Menu.Item command={commands.clearSelection} />
             </Menu.Item>
-
-            <Menu.Item command={noop.withLabel('view')} />
         </Menu.Root>
 
         <Prompt api={setPrompt} title="Which key do you want to create?" description={<>hint: use <code>.</code> to denote nested keys,<br /> i.e. <code>this.is.some.key</code> would be a key that is four levels deep</>}>
