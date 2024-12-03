@@ -72,7 +72,7 @@ export default function Editor(props: ParentProps) {
                     <picture>
                         <source srcset="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
                         <source srcset="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
-                        <img src="/images/favicon.dark.svg" alt="Calque logo" />
+                        <img src="/images/favicon.dark.svg" alt="Calque logo" width="17.5" height="17.5" />
                     </picture>
                 </A>
 
