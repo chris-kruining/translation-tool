@@ -76,8 +76,9 @@ export default defineConfig({
     },
     server: {
         preset: 'bun',
-        // prerender: {
-        //     crawlLinks: true,
-        // },
+        prerender: {
+            crawlLinks: false,
+            routes: ['/sitemap.xml']
+        },
     },
 });

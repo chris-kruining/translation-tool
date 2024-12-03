@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: 
+Disallow: /cgi-bin/
+Sitemap: https://ca-euw-prd-calque-app.purplecoast-f5b7f657.westeurope.azurecontainerapps.io/sitemap.xml
