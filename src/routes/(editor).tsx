@@ -51,6 +51,7 @@ export default function Editor(props: ParentProps) {
         <HttpHeader name="Accept-CH" value="Sec-CH-Prefers-Color-Scheme" />
 
         <Title>Calque</Title>
+        <Meta name="description" content="Simple tool for managing translation files" />
 
         <Meta name="color-scheme" content={theme.colorScheme} />
         <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue})`} />
