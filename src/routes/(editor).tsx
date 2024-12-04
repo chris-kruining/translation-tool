@@ -68,7 +68,7 @@ export default function Editor(props: ParentProps) {
 
         <main class={css.layout} inert={commandPalette()?.open()}>
             <nav class={css.menu}>
-                <A class={css.logo} href="/">
+                <A class={css.logo} href="/welcome">
                     <picture>
                         <source srcset="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
                         <source srcset="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />

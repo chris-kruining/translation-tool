@@ -28,6 +28,7 @@ interface InternalFilesContextType {
 interface FilesContextType {
     readonly files: Accessor<FileEntity[]>,
     readonly root: Accessor<FileSystemDirectoryHandle | undefined>,
+    readonly loading: Accessor<boolean>,
 
     open(directory: FileSystemDirectoryHandle): void;
     get(key: string): Accessor<FileSystemDirectoryHandle | undefined>
@@ -109,7 +110,7 @@ const serverContext = (): InternalFilesContextType => ({
 export const FilesProvider: ParentComponent = (props) => {
     const internal = isServer ? serverContext() : clientContext();
 
-    const [state, setState] = createStore<{ openedFiles: FileEntity[], root: FileSystemDirectoryHandle | undefined }>({ openedFiles: [], root: undefined });
+    const [state, setState] = createStore<{ loading: boolean, openedFiles: FileEntity[], root: FileSystemDirectoryHandle | undefined }>({ loading: true, openedFiles: [], root: undefined });
 
     internal.onChange(async () => {
         setState('openedFiles', await internal.entries());
@@ -117,19 +118,19 @@ export const FilesProvider: ParentComponent = (props) => {
 
     onMount(() => {
         (async () => {
-            const [root, files] = await Promise.all([
+            const [root, openedFiles] = await Promise.all([
                 internal.get(ROOT),
                 internal.entries(),
             ]);
 
-            setState('root', root);
-            setState('openedFiles', files);
+            setState(prev => ({ ...prev, loading: false, root, openedFiles }));
         })();
     });
 
     const context: FilesContextType = {
         files: createMemo(() => state.openedFiles),
         root: createMemo(() => state.root),
+        loading: createMemo(() => state.loading),
 
         async open(directory: FileSystemDirectoryHandle) {
             await internal.remove(...(await internal.keys()));
