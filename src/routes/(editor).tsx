@@ -23,7 +23,7 @@ export default function Editor(props: ParentProps) {
     const themeMenuId = createUniqueId();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
-    const colorScheme = createMemo(() => theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') ?? 'light dark' : theme.colorScheme);
+    const colorScheme = createMemo(() => (theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme.colorScheme) ?? 'light dark');
     const lightness = createMemo(() => colorScheme() === ColorScheme.Light ? .9 : .2);
 
     const commands = [
