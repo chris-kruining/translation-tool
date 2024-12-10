@@ -1,12 +1,16 @@
 .table {
     position: relative;
     display: grid;
-    grid-template-columns: 2em minmax(10em, max-content) repeat(var(--columns), auto);
+    grid-template-columns: repeat(var(--columns), minmax(0, auto));
     align-content: start;
     padding-inline: 1px;
     margin-inline: -1px;
 
     block-size: 100%;
+
+    &.selectable {
+        grid-template-columns: 2em repeat(calc(var(--columns) - 1), minmax(0, auto));
+    }
 
     & input[type="checkbox"] {
         margin: .1em;
@@ -14,7 +18,7 @@
 
     & .cell {
         display: grid;
-        padding: .5em;
+        padding: var(--padding-m);
         border: 1px solid transparent;
         border-radius: var(--radii-m);
 
@@ -89,14 +93,13 @@
         }
 
         & > summary {
-            grid-column: 2 / span calc(1 + var(--columns));
             padding: .5em;
             padding-inline-start: calc(var(--depth) * 1em + .5em);
 
         }
 
-        & > .row > .cell > span {
-            padding-inline-start: calc(var(--depth) * 1em);
+        & > .row > .cell {
+            padding-inline-start: calc(var(--depth) * 1em + var(--padding-m));
         }
     }
 }

@@ -13,6 +13,12 @@
             padding: 0;
             margin: 0;
         }
+
+        & fieldset {
+            display: flex;
+            flex-flow: column;
+            gap: var(--padding-m);
+        }
     }
 
     & .content {
