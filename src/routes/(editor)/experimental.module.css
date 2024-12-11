@@ -28,5 +28,9 @@
         & > header {
             padding-inline-start: var(--padding-l);
         }
+
+        & .table {
+            border-radius: inherit;
+        }
     }
 }

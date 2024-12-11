@@ -5,27 +5,47 @@ import { createStore } from "solid-js/store";
 import { createEffect, For } from "solid-js";
 import { Person, people } from './experimental.data';
 
+export default function Experimental() {
   const columns: Column<Person>[] = [
-  const columns: Column<Entry>[] = [
     {
-      id: 'key',
-      label: 'Key',
-      groupBy(rows: RowNode<Entry>[]) {
-        const group = (nodes: (RowNode<Entry> & { _key: string })[]): Node<Entry>[] => nodes.every(n => n._key.includes('.') === false)
+      id: 'id',
+      label: '#',
+      groupBy(rows: RowNode<Person>[]) {
+        const group = (nodes: (RowNode<Person> & { _key: string })[]): Node<Person>[] => nodes.every(n => n._key.includes('.') === false)
           ? nodes
           : Object.entries(Object.groupBy(nodes, r => String(r._key).split('.').at(0)!))
-            .map<GroupNode<Entry>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: 'key', nodes: group(nodes!.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) }));
+            .map<GroupNode<Person>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: 'id', nodes: group(nodes!.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) }));
 
-        return group(rows.map(row => ({ ...row, _key: row.value.key })));
+        return group(rows.map(row => ({ ...row, _key: row.value.id })));
       },
     },
     {
-      id: 'value',
-      label: 'Value',
+      id: 'name',
+      label: 'Name',
+    },
+    {
+      id: 'email',
+      label: 'Email',
+    },
+    {
+      id: 'address',
+      label: 'Address',
+    },
+    {
+      id: 'currency',
+      label: 'Currency',
+    },
+    {
+      id: 'phone',
+      label: 'Phone',
+    },
+    {
+      id: 'country',
+      label: 'Country',
     },
   ];
 
-  const [store, setStore] = createStore<{ selectionMode: SelectionMode, groupBy?: keyof Entry, sort?: { by: keyof Entry, reversed?: boolean } }>({
+  const [store, setStore] = createStore<{ selectionMode: SelectionMode, groupBy?: keyof Person, sort?: { by: keyof Person, reversed?: boolean } }>({
     selectionMode: SelectionMode.None,
     // groupBy: 'value',
     // sortBy: 'key'
@@ -85,7 +105,7 @@ import { Person, people } from './experimental.data';
     </Sidebar>
 
     <div class={css.content}>
-      <Table rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
+      <Table class={css.table} rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
         address: (cell) => <input type="text" value={cell.value} />,
       }}</Table>
     </div>
