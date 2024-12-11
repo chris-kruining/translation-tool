@@ -177,7 +177,7 @@ const Root: ParentComponent = (props) => {
         });
     };
 
-    return <div ref={setRoot} tabIndex={0} onKeyDown={onKeyboardEvent} onKeyUp={onKeyboardEvent} style={{ 'display': 'contents' }}>{c()}</div>;
+    return <div ref={setRoot} tabIndex={0} onKeyDown={onKeyboardEvent} onKeyUp={onKeyboardEvent} class={css.root}>{c()}</div>;
 };
 
 export const selectable = (element: HTMLElement, options: Accessor<{ value: object, key?: string }>) => {
