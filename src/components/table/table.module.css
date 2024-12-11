@@ -78,6 +78,20 @@
             padding: var(--padding-m);
             z-index: 1;
         }
+
+        & > .cell {
+            grid-auto-flow: column;
+            justify-content: space-between;
+
+            & > svg {
+                transition: opacity .15s ease-in-out;
+            }
+
+            &:not(.sorted):not(:hover) > svg {
+                opacity: 0;
+            }
+        }
+
     }
 
     & .main {

@@ -22,26 +22,32 @@ export default function Experimental() {
     {
       id: 'name',
       label: 'Name',
+      sortable: true,
     },
     {
       id: 'email',
       label: 'Email',
+      sortable: true,
     },
     {
       id: 'address',
       label: 'Address',
+      sortable: true,
     },
     {
       id: 'currency',
       label: 'Currency',
+      sortable: true,
     },
     {
       id: 'phone',
       label: 'Phone',
+      sortable: true,
     },
     {
       id: 'country',
       label: 'Country',
+      sortable: true,
     },
   ];
 
@@ -106,7 +112,7 @@ export default function Experimental() {
 
     <div class={css.content}>
       <Table class={css.table} rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
-        address: (cell) => <input type="text" value={cell.value} />,
+        // email: (cell) => <input type="email" value={cell.value} />,
       }}</Table>
     </div>
   </div >;

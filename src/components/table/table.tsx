@@ -2,12 +2,15 @@ import { Accessor, createContext, createEffect, createMemo, createSignal, For, J
 import { selectable, SelectionProvider, useSelection } from "~/features/selectable";
 import { type RowNode, type GroupNode, type Node, createDataSet, toSorted, toGrouped } from './dataset';
 import css from './table.module.css';
+import { createStore } from "solid-js/store";
+import { FaSolidSort, FaSolidSortDown, FaSolidSortUp } from "solid-icons/fa";
 
 selectable
 
 export type Column<T> = {
     id: keyof T,
     label: string,
+    sortable?: boolean,
     readonly groupBy?: (rows: RowNode<T>[]) => Node<T>[],
 };
 
@@ -17,6 +20,8 @@ const TableContext = createContext<{
     readonly groupBy: Accessor<string | undefined>,
     readonly sort: Accessor<{ by: string, reversed?: boolean } | undefined>,
     readonly cellRenderers: Accessor<Record<string, (cell: { value: any }) => JSX.Element>>,
+
+    setSort(setter: (current: { by: string, reversed?: boolean } | undefined) => { by: string, reversed: boolean } | undefined): void;
 }>();
 
 const useTable = () => useContext(TableContext)!
@@ -46,13 +51,33 @@ type TableProps<T extends Record<string, any>> = {
 
 export function Table<T extends Record<string, any>>(props: TableProps<T>) {
     const [selection, setSelection] = createSignal<object[]>([]);
+
+    const [state, setState] = createStore({
+        sort: props.sort ? { by: props.sort.by as string, reversed: props.sort.reversed } : undefined,
+    });
+
+    createEffect(() => {
+        setState('sort', props.sort ? { by: props.sort.by as string, reversed: props.sort.reversed } : undefined);
+    });
+
     const columns = createMemo<Column<T>[]>(() => props.columns ?? []);
     const selectionMode = createMemo(() => props.selectionMode ?? SelectionMode.None);
     const groupBy = createMemo(() => props.groupBy as string | undefined);
-    const sort = createMemo(() => props.sort as any);
     const cellRenderers = createMemo(() => props.children ?? {});
 
-    return <TableContext.Provider value={{ columns, selectionMode, groupBy, sort, cellRenderers }}>
+    const context = {
+        columns,
+        selectionMode,
+        groupBy,
+        sort: createMemo(() => state.sort),
+        cellRenderers,
+
+        setSort(setter: (current: { by: string, reversed?: boolean } | undefined) => { by: string, reversed: boolean } | undefined) {
+            setState('sort', setter);
+        },
+    };
+
+    return <TableContext.Provider value={context}>
         <SelectionProvider selection={setSelection} multiSelect>
             <InnerTable class={props.class} rows={props.rows} />
         </SelectionProvider>
@@ -113,7 +138,38 @@ function Head<T extends Record<string, any>>(props: {}) {
         </Show>
 
         <For each={table.columns()}>{
-            column => <span class={css.cell}>{column.label}</span>
+            ({ id, label, sortable }) => {
+                const sort = createMemo(() => table.sort());
+                const by = String(id);
+
+                const onPointerDown = (e: PointerEvent) => {
+                    if (sortable !== true) {
+                        return;
+                    }
+
+                    table.setSort(current => {
+                        if (current?.by !== by) {
+                            return { by, reversed: false };
+                        }
+
+                        if (current.reversed === true) {
+                            return undefined;
+                        }
+
+                        return { by, reversed: true };
+                    });
+                };
+
+                return <span class={`${css.cell} ${sort()?.by === by ? css.sorted : ''}`} onpointerdown={onPointerDown}>
+                    {label}
+
+                    <Switch>
+                        <Match when={sortable && sort()?.by !== by}><FaSolidSort /></Match>
+                        <Match when={sortable && sort()?.by === by && sort()?.reversed !== true}><FaSolidSortUp /></Match>
+                        <Match when={sortable && sort()?.by === by && sort()?.reversed === true}><FaSolidSortDown /></Match>
+                    </Switch>
+                </span>;
+            }
         }</For>
     </header>;
 };
