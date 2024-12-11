@@ -1,5 +1,6 @@
 .table {
-    --shadow: hsla(0 0% 0% / .1) 0 .5em 2em;
+    --shadow-color: oklch(0 0 0 / .05);
+    --shadow: var(--shadow-color) 0 .5em 2em;
 
     position: relative;
     display: block grid;
@@ -25,18 +26,10 @@
         background: inherit;
         white-space: nowrap;
 
-        &:has(textarea:focus) {
-            border-color: var(--info);
-        }
-
-        & > span {
-            align-self: center;
-        }
-
         &:first-of-type {
             position: sticky;
-            inset-inline-start: calc(var(--padding-m) * var(--depth));
-            padding-inline-start: calc(var(--padding-m) * (1 + var(--depth)));
+            inset-inline-start: 1px;
+            padding-inline-start: calc(var(--depth) * 1em + var(--padding-m));
             z-index: 1;
 
             &::after {
@@ -47,29 +40,30 @@
                 display: block;
                 inline-size: 2em;
                 block-size: calc(3px + 100%);
-                background: linear-gradient(90deg, hsla(0 0% 0% / .05), transparent);
                 animation: column-scroll-shadow linear both;
                 animation-timeline: scroll(inline);
                 animation-range: 0 2em;
+                pointer-events: none;
             }
         }
     }
 
     & :is(.header, .main, .footer) {
-        grid-column: span calc(2 + var(--columns));
+        grid-column: 1 / -1;
         display: block grid;
         grid-template-columns: subgrid;
+        background-color: inherit;
     }
 
     & .header {
         position: sticky;
         inset-block-start: 0;
         border-block-end: 1px solid var(--surface-300);
-        background-color: inherit;
         z-index: 2;
         animation: header-scroll-shadow linear both;
         animation-timeline: scroll();
         animation-range: 0 2em;
+        font-weight: var(--weight-bold);
 
         & > aside {
             position: sticky;
@@ -91,7 +85,6 @@
                 opacity: 0;
             }
         }
-
     }
 
     & .main {
@@ -100,12 +93,16 @@
 
     & .row {
         --alpha: 0;
-        grid-column: span calc(2 + var(--columns));
+        grid-column: 1 / -1;
         display: block grid;
         grid-template-columns: subgrid;
         border: 1px solid transparent;
         background-color: inherit;
         background-image: linear-gradient(0deg, oklch(from var(--info) l c h / var(--alpha)), oklch(from var(--info) l c h / var(--alpha)));
+
+        /* & > :is(.cell, aside) {
+            background-image: linear-gradient(0deg, oklch(from var(--info) l c h / var(--alpha)), oklch(from var(--info) l c h / var(--alpha)));
+        } */
 
         &:has(> aside > :checked) {
             --alpha: .1;
@@ -132,7 +129,7 @@
 
         & > aside {
             position: sticky;
-            inset-inline-start: 0;
+            inset-inline-start: 1px;
             background: inherit;
             padding: var(--padding-m);
             z-index: 1;
@@ -144,7 +141,7 @@
         background-color: inherit;
 
         &::details-content {
-            grid-column: span calc(2 + var(--columns));
+            grid-column: 1 / -1;
             display: block grid;
             grid-template-columns: subgrid;
             background-color: inherit;
@@ -156,22 +153,33 @@
 
         & > summary {
             position: sticky;
-            inset-inline-start: 0;
+            inset-inline-start: 1px;
             grid-column: 1;
-            padding: .5em;
-            padding-inline-start: calc(var(--depth) * 1em + .5em);
-        }
-
-        & > .row > .cell {
+            padding: var(--padding-m);
             padding-inline-start: calc(var(--depth) * 1em + var(--padding-m));
+
+            &::after {
+                content: '';
+                position: absolute;
+                inset-inline-start: calc(100% - 1px);
+                inset-block-start: -.5px;
+                display: block;
+                inline-size: 2em;
+                block-size: 100%;
+                animation: column-scroll-shadow linear both;
+                animation-timeline: scroll(inline);
+                animation-range: 0 2em;
+                pointer-events: none;
+            }
         }
     }
 
     &.selectable {
-        grid-template-columns: 2em repeat(calc(var(--columns) - 1), minmax(max-content, auto));
+        grid-template-columns: 2em repeat(var(--columns), minmax(max-content, auto));
 
         & .cell:first-of-type {
-            inset-inline-start: calc(2em + var(--padding-m) * var(--depth));
+            inset-inline-start: 2em;
+            /* inset-inline-start: calc(2em + var(--padding-m) * var(--depth)); */
         }
 
         & details > summary {
@@ -183,7 +191,7 @@
 
 @property --depth {
     syntax: "<number>";
-    inherits: false;
+    inherits: true;
     initial-value: 0;
 }
 
@@ -203,6 +211,6 @@
     }
 
     to {
-        background: linear-gradient(90deg, hsla(0 0% 0% / .05), transparent);
+        background: linear-gradient(90deg, var(--shadow-color), transparent);
     }
 }

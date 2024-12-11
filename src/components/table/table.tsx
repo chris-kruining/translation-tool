@@ -90,7 +90,7 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
     const table = useTable();
 
     const selectable = createMemo(() => table.selectionMode() !== SelectionMode.None);
-    const columnCount = createMemo(() => table.columns().length + (selectable() ? 0 : -1));
+    const columnCount = createMemo(() => table.columns().length);
     const nodes = createMemo<Node<T>[]>(() => {
         const columns = table.columns();
         const groupBy = table.groupBy();
