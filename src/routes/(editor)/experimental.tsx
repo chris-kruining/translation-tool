@@ -3,33 +3,9 @@ import css from "./experimental.module.css";
 import { Sidebar } from "~/components/sidebar";
 import { createStore } from "solid-js/store";
 import { createEffect, For } from "solid-js";
+import { Person, people } from './experimental.data';
 
-export default function Experimental() {
-  const rows = [
-    { key: 'key1.a.a', value: 10 },
-    { key: 'key1.a.b', value: 20 },
-    { key: 'key1.a.c', value: 30 },
-    { key: 'key1.b.a', value: 40 },
-    { key: 'key1.b.b', value: 50 },
-    { key: 'key1.b.c', value: 60 },
-    { key: 'key1.c.a', value: 70 },
-    { key: 'key1.c.b', value: 80 },
-    { key: 'key1.c.c', value: 90 },
-
-    { key: 'key2.a.a', value: 10 },
-    { key: 'key2.a.b', value: 20 },
-    { key: 'key2.a.c', value: 30 },
-    { key: 'key2.b.a', value: 40 },
-    { key: 'key2.b.b', value: 50 },
-    { key: 'key2.b.c', value: 60 },
-    { key: 'key2.c.a', value: 70 },
-    { key: 'key2.c.b', value: 80 },
-    { key: 'key2.c.c', value: 90 },
-
-    { key: 'aaaa', value: 200 },
-  ];
-
-  type Entry = typeof rows[0];
+  const columns: Column<Person>[] = [
   const columns: Column<Entry>[] = [
     {
       id: 'key',
@@ -109,8 +85,8 @@ export default function Experimental() {
     </Sidebar>
 
     <div class={css.content}>
-      <Table rows={rows} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
-        value: (cell) => <input type="number" value={cell.value} />,
+      <Table rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
+        address: (cell) => <input type="text" value={cell.value} />,
       }}</Table>
     </div>
   </div >;
