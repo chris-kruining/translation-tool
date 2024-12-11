@@ -71,40 +71,18 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
         const groupBy = table.groupBy();
         const sort = table.sort();
 
-        let kaas = createDataSet(props.rows);
+        let dataset = createDataSet(props.rows);
 
         if (sort) {
-            kaas = toSorted(kaas, { by: sort.by, reversed: sort.reversed ?? false, with: (a, b) => a < b ? -1 : a > b ? 1 : 0 })
+            dataset = toSorted(dataset, { by: sort.by, reversed: sort.reversed ?? false, with: (a, b) => a < b ? -1 : a > b ? 1 : 0 })
         }
 
         if (groupBy) {
-            kaas = toGrouped(kaas, { by: groupBy, with: columns.find(({ id }) => id === groupBy)?.groupBy ?? defaultGroupingFunction(groupBy) });
+            dataset = toGrouped(dataset, { by: groupBy, with: columns.find(({ id }) => id === groupBy)?.groupBy ?? defaultGroupingFunction(groupBy) });
         }
 
-        console.log(kaas);
-
-        const rows = props.rows;
-
-        if (sort) {
-            rows.sort((a, b) => a[sort.by] < b[sort.by] ? -1 : a[sort.by] > b[sort.by] ? 1 : 0);
-
-            if (sort.reversed === true) {
-                rows.reverse();
-            }
-        }
-
-        const nodes = Object.entries(rows).map<RowNode<T>>(([i, row]) => ({ kind: 'row', key: i, value: row }));
-
-        if (groupBy === undefined) {
-            return nodes;
-        }
-
-        const groupingFunction = columns.find(({ id }) => id === groupBy)?.groupBy ?? defaultGroupingFunction(groupBy);
-
-        return groupingFunction(nodes);
+        return dataset;
     });
-
-
 
     return <section class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
         <Head />
