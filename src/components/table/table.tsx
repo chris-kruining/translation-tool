@@ -102,14 +102,14 @@ function Head<T extends Record<string, any>>(props: {}) {
 
     return <header class={css.header}>
         <Show when={table.selectionMode() !== SelectionMode.None}>
-            <div class={css.cell}>
+            <aside>
                 <input
                     type="checkbox"
                     checked={context.selection().length > 0 && context.selection().length === context.length()}
                     indeterminate={context.selection().length !== 0 && context.selection().length !== context.length()}
                     on:input={(e: InputEvent) => e.target.checked ? context.selectAll() : context.clear()}
                 />
-            </div>
+            </aside>
         </Show>
 
         <For each={table.columns()}>{
@@ -137,15 +137,15 @@ function Row<T extends Record<string, any>>(props: { key: string, value: T, dept
     const values = createMemo(() => Object.entries(props.value));
     const isSelected = context.isSelected(props.key);
 
-    return <div class={css.row} use:selectable={{ value: props.value, key: props.key }}>
+    return <div class={css.row} style={{ '--depth': props.depth }} use:selectable={{ value: props.value, key: props.key }}>
         <Show when={table.selectionMode() !== SelectionMode.None}>
-            <div class={css.cell}>
+            <aside>
                 <input type="checkbox" checked={isSelected()} on:input={() => context.select([props.key])} on:pointerdown={e => e.stopPropagation()} />
-            </div>
+            </aside>
         </Show>
 
         <For each={values()}>{
-            ([k, v]) => <div style={k === props.groupedBy ? { '--depth': props.depth } : {}} class={css.cell}>{table.cellRenderers()[k]?.({ value: v }) ?? v}</div>
+            ([k, v]) => <div class={css.cell}>{table.cellRenderers()[k]?.({ value: v }) ?? v}</div>
         }</For>
     </div>;
 };
@@ -153,16 +153,8 @@ function Row<T extends Record<string, any>>(props: { key: string, value: T, dept
 function Group<T extends Record<string, any>>(props: { key: string, groupedBy: keyof T, nodes: Node<T>[], depth: number }) {
     const table = useTable();
 
-    const gridColumn = createMemo(() => {
-        const groupedBy = props.groupedBy;
-        const columns = table.columns();
-        const selectable = table.selectionMode() !== SelectionMode.None;
-
-        return columns.findIndex(({ id }) => id === groupedBy) + (selectable ? 2 : 1);
-    });
-
     return <details open>
-        <summary style={{ '--depth': props.depth, 'grid-column-start': gridColumn() }}>{props.key}</summary>
+        <summary style={{ '--depth': props.depth }}>{props.key}</summary>
 
         <For each={props.nodes}>{
             node => <Node node={node} depth={props.depth + 1} groupedBy={props.groupedBy} />
