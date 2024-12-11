@@ -53,7 +53,7 @@ interface State {
     data: { key: string, value: Accessor<any>, element: WeakRef<HTMLElement> }[];
 }
 
-export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, multiSelect?: true }> = (props) => {
+export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, multiSelect?: boolean }> = (props) => {
     const [state, setState] = createStore<State>({ selection: [], data: [] });
     const selection = createMemo(() => state.data.filter(({ key }) => state.selection.includes(key)));
     const length = createMemo(() => state.data.length);

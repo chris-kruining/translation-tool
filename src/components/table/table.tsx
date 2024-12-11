@@ -1,6 +1,6 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, For, JSX, Match, Show, Switch, useContext } from "solid-js";
 import { selectable, SelectionProvider, useSelection } from "~/features/selectable";
-import { type RowNode, type GroupNode, type Node, createDataSet, toSorted, toGrouped } from './dataset';
+import { DataSetRowNode, DataSetGroupNode, DataSetNode, createDataSet, toSorted, toGrouped } from './dataset';
 import css from './table.module.css';
 import { createStore } from "solid-js/store";
 import { FaSolidSort, FaSolidSortDown, FaSolidSortUp } from "solid-icons/fa";
@@ -11,15 +11,27 @@ export type Column<T> = {
     id: keyof T,
     label: string,
     sortable?: boolean,
-    readonly groupBy?: (rows: RowNode<T>[]) => Node<T>[],
+    readonly groupBy?: (rows: DataSetRowNode<T>[]) => DataSetNode<T>[],
 };
 
+type SelectionItem<T> = { key: string, value: Accessor<T>, element: WeakRef<HTMLElement> };
+
+export interface TableApi<T extends Record<string, any>> {
+    readonly selection: Accessor<SelectionItem<T>[]>;
+    readonly rows: Accessor<T[]>;
+    readonly columns: Accessor<Column<T>[]>;
+    selectAll(): void;
+    clear(): void;
+}
+
 const TableContext = createContext<{
+    readonly rows: Accessor<any[]>,
     readonly columns: Accessor<Column<any>[]>,
+    readonly selection: Accessor<any[]>,
     readonly selectionMode: Accessor<SelectionMode>,
     readonly groupBy: Accessor<string | undefined>,
     readonly sort: Accessor<{ by: string, reversed?: boolean } | undefined>,
-    readonly cellRenderers: Accessor<Record<string, (cell: { value: any }) => JSX.Element>>,
+    readonly cellRenderers: Accessor<Record<string, (cell: { key: string, value: any }) => JSX.Element>>,
 
     setSort(setter: (current: { by: string, reversed?: boolean } | undefined) => { by: string, reversed: boolean } | undefined): void;
 }>();
@@ -27,8 +39,8 @@ const TableContext = createContext<{
 const useTable = () => useContext(TableContext)!
 
 function defaultGroupingFunction<T>(groupBy: keyof T) {
-    return (nodes: RowNode<T>[]): Node<T>[] => Object.entries(Object.groupBy<any, RowNode<T>>(nodes, r => r.value[groupBy]))
-        .map<GroupNode<T>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: groupBy, nodes: nodes! }));
+    return (nodes: DataSetRowNode<T>[]): DataSetNode<T>[] => Object.entries(Object.groupBy<any, DataSetRowNode<T>>(nodes, r => r.value[groupBy]))
+        .map<DataSetGroupNode<T>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: groupBy, nodes: nodes! }));
 }
 
 export enum SelectionMode {
@@ -47,11 +59,11 @@ type TableProps<T extends Record<string, any>> = {
     },
     selectionMode?: SelectionMode,
     children?: { [K in keyof T]?: (cell: { value: T[K] }) => JSX.Element },
+    api?: (api: TableApi<T>) => any,
 };
 
 export function Table<T extends Record<string, any>>(props: TableProps<T>) {
-    const [selection, setSelection] = createSignal<object[]>([]);
-
+    const [selection, setSelection] = createSignal<T[]>([]);
     const [state, setState] = createStore({
         sort: props.sort ? { by: props.sort.by as string, reversed: props.sort.reversed } : undefined,
     });
@@ -60,13 +72,16 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>) {
         setState('sort', props.sort ? { by: props.sort.by as string, reversed: props.sort.reversed } : undefined);
     });
 
+    const rows = createMemo<T[]>(() => props.rows ?? []);
     const columns = createMemo<Column<T>[]>(() => props.columns ?? []);
     const selectionMode = createMemo(() => props.selectionMode ?? SelectionMode.None);
     const groupBy = createMemo(() => props.groupBy as string | undefined);
     const cellRenderers = createMemo(() => props.children ?? {});
 
     const context = {
+        rows,
         columns,
+        selection,
         selectionMode,
         groupBy,
         sort: createMemo(() => state.sort),
@@ -78,8 +93,10 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>) {
     };
 
     return <TableContext.Provider value={context}>
-        <SelectionProvider selection={setSelection} multiSelect>
-            <InnerTable class={props.class} rows={props.rows} />
+        <SelectionProvider selection={setSelection} multiSelect={props.selectionMode === SelectionMode.Multiple}>
+            <Api api={props.api} />
+
+            <InnerTable class={props.class} rows={rows()} />
         </SelectionProvider>
     </TableContext.Provider>;
 };
@@ -91,7 +108,7 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
 
     const selectable = createMemo(() => table.selectionMode() !== SelectionMode.None);
     const columnCount = createMemo(() => table.columns().length);
-    const nodes = createMemo<Node<T>[]>(() => {
+    const nodes = createMemo<DataSetNode<T>[]>(() => {
         const columns = table.columns();
         const groupBy = table.groupBy();
         const sort = table.sort();
@@ -119,6 +136,31 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
 
         </main>
     </section>
+};
+
+function Api<T extends Record<string, any>>(props: { api: undefined | ((api: TableApi<T>) => any) }) {
+    const table = useTable();
+    const selectionContext = useSelection<SelectionItem<T>>();
+
+    const api: TableApi<T> = {
+        selection: createMemo(() => {
+            return selectionContext.selection();
+        }),
+        rows: table.rows,
+        columns: table.columns,
+        selectAll() {
+            selectionContext.selectAll();
+        },
+        clear() {
+            selectionContext.clear();
+        },
+    };
+
+    createEffect(() => {
+        props.api?.(api);
+    });
+
+    return null;
 };
 
 function Head<T extends Record<string, any>>(props: {}) {
@@ -174,7 +216,7 @@ function Head<T extends Record<string, any>>(props: {}) {
     </header>;
 };
 
-function Node<T extends Record<string, any>>(props: { node: Node<T>, depth: number, groupedBy?: keyof T }) {
+function Node<T extends Record<string, any>>(props: { node: DataSetNode<T>, depth: number, groupedBy?: keyof T }) {
     return <Switch>
         <Match when={props.node.kind === 'row' ? props.node : undefined}>{
             row => <Row key={row().key} value={row().value} depth={props.depth} groupedBy={props.groupedBy} />
@@ -201,12 +243,12 @@ function Row<T extends Record<string, any>>(props: { key: string, value: T, dept
         </Show>
 
         <For each={values()}>{
-            ([k, v]) => <div class={css.cell}>{table.cellRenderers()[k]?.({ value: v }) ?? v}</div>
+            ([k, value]) => <div class={css.cell}>{table.cellRenderers()[k]?.({ key: `${props.key}.${k}`, value }) ?? value}</div>
         }</For>
     </div>;
 };
 
-function Group<T extends Record<string, any>>(props: { key: string, groupedBy: keyof T, nodes: Node<T>[], depth: number }) {
+function Group<T extends Record<string, any>>(props: { key: string, groupedBy: keyof T, nodes: DataSetNode<T>[], depth: number }) {
     const table = useTable();
 
     return <details open>

@@ -105,6 +105,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         const files = tab.files();
         const mutations = tab.api()?.mutations() ?? [];
 
+        // console.log(mutations);
+
         return mutations.flatMap(m => {
             switch (m.kind) {
                 case MutarionKind.Update: {
@@ -433,7 +435,7 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
                 return aggregate;
             }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
 
-            setColumns(['key', ...languages]);
+            setColumns(languages.values().toArray());
             setEntries(merged);
             setRows(new Map(merged.entries().map(([key, langs]) => [key, Object.fromEntries(Object.entries(langs).map(([lang, { value }]) => [lang, value]))] as const)));
         })();
