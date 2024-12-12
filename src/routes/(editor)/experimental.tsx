@@ -1,119 +1,22 @@
-import { Column, GroupNode, RowNode, Node, SelectionMode, Table } from "~/components/table";
-import css from "./experimental.module.css";
-import { Sidebar } from "~/components/sidebar";
-import { createStore } from "solid-js/store";
-import { createEffect, For } from "solid-js";
-import { Person, people } from './experimental.data';
 
-export default function Experimental() {
-  const columns: Column<Person>[] = [
-    {
-      id: 'id',
-      label: '#',
-      groupBy(rows: RowNode<Person>[]) {
-        const group = (nodes: (RowNode<Person> & { _key: string })[]): Node<Person>[] => nodes.every(n => n._key.includes('.') === false)
-          ? nodes
-          : Object.entries(Object.groupBy(nodes, r => String(r._key).split('.').at(0)!))
-            .map<GroupNode<Person>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: 'id', nodes: group(nodes!.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) }));
+import { ParentProps } from "solid-js";
+import { Menu } from "~/features/menu";
+import { createCommand } from "~/features/command";
+import { useNavigate } from "@solidjs/router";
 
-        return group(rows.map(row => ({ ...row, _key: row.value.id })));
-      },
-    },
-    {
-      id: 'name',
-      label: 'Name',
-      sortable: true,
-    },
-    {
-      id: 'email',
-      label: 'Email',
-      sortable: true,
-    },
-    {
-      id: 'address',
-      label: 'Address',
-      sortable: true,
-    },
-    {
-      id: 'currency',
-      label: 'Currency',
-      sortable: true,
-    },
-    {
-      id: 'phone',
-      label: 'Phone',
-      sortable: true,
-    },
-    {
-      id: 'country',
-      label: 'Country',
-      sortable: true,
-    },
-  ];
+export default function Experimental(props: ParentProps) {
+  const navigate = useNavigate();
 
-  const [store, setStore] = createStore<{ selectionMode: SelectionMode, groupBy?: keyof Person, sort?: { by: keyof Person, reversed?: boolean } }>({
-    selectionMode: SelectionMode.None,
-    // groupBy: 'value',
-    // sortBy: 'key'
+  const goTo = createCommand('go to', (to: string) => {
+    navigate(`/experimental/${to}`);
   });
 
-  createEffect(() => {
-    console.log({ ...store });
-  });
+  return <>
+    <Menu.Root>
+      <Menu.Item command={goTo.withLabel('table').with('table')} />
+      <Menu.Item command={goTo.withLabel('grid').with('grid')} />
+    </Menu.Root>
 
-  return <div class={css.root}>
-    <Sidebar as="aside" label={'Filters'} class={css.sidebar}>
-      <fieldset>
-        <legend>table properties</legend>
-
-        <label>
-          Selection mode
-
-          <select value={store.selectionMode} oninput={e => setStore('selectionMode', Number.parseInt(e.target.value))}>
-            <option value={SelectionMode.None}>None</option>
-            <option value={SelectionMode.Single}>Single</option>
-            <option value={SelectionMode.Multiple}>Multiple</option>
-          </select>
-        </label>
-
-        <label>
-          Group by
-
-          <select value={store.groupBy ?? ''} oninput={e => setStore('groupBy', (e.target.value || undefined) as any)}>
-            <option value=''>None</option>
-            <For each={columns}>{
-              column => <option value={column.id}>{column.label}</option>
-            }</For>
-          </select>
-        </label>
-      </fieldset>
-
-      <fieldset>
-        <legend>table sorting</legend>
-
-        <label>
-          by
-
-          <select value={store.sort?.by ?? ''} oninput={e => setStore('sort', prev => e.target.value ? { by: e.target.value as keyof Entry, reversed: prev?.reversed } : undefined)}>
-            <option value=''>None</option>
-            <For each={columns}>{
-              column => <option value={column.id}>{column.label}</option>
-            }</For>
-          </select>
-        </label>
-
-        <label>
-          reversed
-
-          <input type="checkbox" checked={store.sort?.reversed ?? false} oninput={e => setStore('sort', prev => prev !== undefined ? { by: prev.by, reversed: e.target.checked || undefined } : undefined)} />
-        </label>
-      </fieldset>
-    </Sidebar>
-
-    <div class={css.content}>
-      <Table class={css.table} rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
-        // email: (cell) => <input type="email" value={cell.value} />,
-      }}</Table>
-    </div>
-  </div >;
+    {props.children}
+  </>;
 }

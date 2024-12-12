@@ -8,6 +8,7 @@
     padding: var(--padding-s);
 
     & select {
+        flex: 1 1 auto;
         border: none;
         background-color: inherit;
         border-radius: var(--radii-m);

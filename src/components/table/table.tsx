@@ -1,9 +1,9 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, For, JSX, Match, Show, Switch, useContext } from "solid-js";
 import { selectable, SelectionProvider, useSelection } from "~/features/selectable";
 import { DataSetRowNode, DataSetGroupNode, DataSetNode, createDataSet, toSorted, toGrouped } from './dataset';
-import css from './table.module.css';
 import { createStore } from "solid-js/store";
 import { FaSolidSort, FaSolidSortDown, FaSolidSortUp } from "solid-icons/fa";
+import css from './table.module.css';
 
 selectable
 
@@ -11,10 +11,12 @@ export type Column<T> = {
     id: keyof T,
     label: string,
     sortable?: boolean,
+    group?: string,
     readonly groupBy?: (rows: DataSetRowNode<T>[]) => DataSetNode<T>[],
 };
 
 type SelectionItem<T> = { key: string, value: Accessor<T>, element: WeakRef<HTMLElement> };
+export type CellEditors<T extends Record<string, any>> = { [K in keyof T]?: (cell: { value: T[K] }) => JSX.Element };
 
 export interface TableApi<T extends Record<string, any>> {
     readonly selection: Accessor<SelectionItem<T>[]>;
@@ -31,7 +33,7 @@ const TableContext = createContext<{
     readonly selectionMode: Accessor<SelectionMode>,
     readonly groupBy: Accessor<string | undefined>,
     readonly sort: Accessor<{ by: string, reversed?: boolean } | undefined>,
-    readonly cellRenderers: Accessor<Record<string, (cell: { key: string, value: any }) => JSX.Element>>,
+    readonly cellRenderers: Accessor<CellEditors<any>>,
 
     setSort(setter: (current: { by: string, reversed?: boolean } | undefined) => { by: string, reversed: boolean } | undefined): void;
 }>();
@@ -50,6 +52,7 @@ export enum SelectionMode {
 }
 type TableProps<T extends Record<string, any>> = {
     class?: string,
+    summary?: string,
     rows: T[],
     columns: Column<T>[],
     groupBy?: keyof T,
@@ -58,7 +61,7 @@ type TableProps<T extends Record<string, any>> = {
         reversed?: boolean,
     },
     selectionMode?: SelectionMode,
-    children?: { [K in keyof T]?: (cell: { value: T[K] }) => JSX.Element },
+    children?: CellEditors<T>,
     api?: (api: TableApi<T>) => any,
 };
 
@@ -76,7 +79,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>) {
     const columns = createMemo<Column<T>[]>(() => props.columns ?? []);
     const selectionMode = createMemo(() => props.selectionMode ?? SelectionMode.None);
     const groupBy = createMemo(() => props.groupBy as string | undefined);
-    const cellRenderers = createMemo(() => props.children ?? {});
+    const cellRenderers = createMemo<CellEditors<T>>(() => props.children ?? {});
 
     const context = {
         rows,
@@ -96,12 +99,12 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>) {
         <SelectionProvider selection={setSelection} multiSelect={props.selectionMode === SelectionMode.Multiple}>
             <Api api={props.api} />
 
-            <InnerTable class={props.class} rows={rows()} />
+            <InnerTable class={props.class} summary={props.summary} rows={rows()} />
         </SelectionProvider>
     </TableContext.Provider>;
 };
 
-type InnerTableProps<T extends Record<string, any>> = { class?: string, rows: T[] };
+type InnerTableProps<T extends Record<string, any>> = { class?: string, summary?: string, rows: T[] };
 
 function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
     const table = useTable();
@@ -126,16 +129,28 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
         return dataset;
     });
 
-    return <section class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
+    return <table class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
+        <Show when={props.summary}>{
+            summary => <caption>{summary()}</caption>
+        }</Show>
+
+        <Groups />
         <Head />
 
-        <main class={css.main}>
+        <tbody class={css.main}>
             <For each={nodes()}>{
                 node => <Node node={node} depth={0} />
             }</For>
+        </tbody>
 
-        </main>
-    </section>
+        {/* <Show when={true}>
+            <tfoot class={css.footer}>
+                <tr>
+                    <td colSpan={columnCount()}>FOOTER</td>
+                </tr>
+            </tfoot>
+        </Show> */}
+    </table>
 };
 
 function Api<T extends Record<string, any>>(props: { api: undefined | ((api: TableApi<T>) => any) }) {
@@ -163,57 +178,71 @@ function Api<T extends Record<string, any>>(props: { api: undefined | ((api: Tab
     return null;
 };
 
-function Head<T extends Record<string, any>>(props: {}) {
+function Groups(props: {}) {
+    const table = useTable();
+
+    const groups = createMemo(() => {
+        return new Set(table.columns().map(c => c.group).filter(g => g !== undefined)).values().toArray();
+    });
+
+    return <For each={groups()}>{
+        group => <colgroup span="1" data-group-name={group} />
+    }</For>
+}
+
+function Head(props: {}) {
     const table = useTable();
     const context = useSelection();
 
-    return <header class={css.header}>
-        <Show when={table.selectionMode() !== SelectionMode.None}>
-            <aside>
-                <input
-                    type="checkbox"
-                    checked={context.selection().length > 0 && context.selection().length === context.length()}
-                    indeterminate={context.selection().length !== 0 && context.selection().length !== context.length()}
-                    on:input={(e: InputEvent) => e.target.checked ? context.selectAll() : context.clear()}
-                />
-            </aside>
-        </Show>
+    return <thead class={css.header}>
+        <tr>
+            <Show when={table.selectionMode() !== SelectionMode.None}>
+                <th class={css.checkbox}>
+                    <input
+                        type="checkbox"
+                        checked={context.selection().length > 0 && context.selection().length === context.length()}
+                        indeterminate={context.selection().length !== 0 && context.selection().length !== context.length()}
+                        on:input={(e: InputEvent) => e.target.checked ? context.selectAll() : context.clear()}
+                    />
+                </th>
+            </Show>
 
-        <For each={table.columns()}>{
-            ({ id, label, sortable }) => {
-                const sort = createMemo(() => table.sort());
-                const by = String(id);
+            <For each={table.columns()}>{
+                ({ id, label, sortable }) => {
+                    const sort = createMemo(() => table.sort());
+                    const by = String(id);
 
-                const onPointerDown = (e: PointerEvent) => {
-                    if (sortable !== true) {
-                        return;
-                    }
-
-                    table.setSort(current => {
-                        if (current?.by !== by) {
-                            return { by, reversed: false };
+                    const onPointerDown = (e: PointerEvent) => {
+                        if (sortable !== true) {
+                            return;
                         }
 
-                        if (current.reversed === true) {
-                            return undefined;
-                        }
+                        table.setSort(current => {
+                            if (current?.by !== by) {
+                                return { by, reversed: false };
+                            }
 
-                        return { by, reversed: true };
-                    });
-                };
+                            if (current.reversed === true) {
+                                return undefined;
+                            }
 
-                return <span class={`${css.cell} ${sort()?.by === by ? css.sorted : ''}`} onpointerdown={onPointerDown}>
-                    {label}
+                            return { by, reversed: true };
+                        });
+                    };
 
-                    <Switch>
-                        <Match when={sortable && sort()?.by !== by}><FaSolidSort /></Match>
-                        <Match when={sortable && sort()?.by === by && sort()?.reversed !== true}><FaSolidSortUp /></Match>
-                        <Match when={sortable && sort()?.by === by && sort()?.reversed === true}><FaSolidSortDown /></Match>
-                    </Switch>
-                </span>;
-            }
-        }</For>
-    </header>;
+                    return <th scope="col" class={`${css.cell} ${sort()?.by === by ? css.sorted : ''}`} onpointerdown={onPointerDown}>
+                        {label}
+
+                        <Switch>
+                            <Match when={sortable && sort()?.by !== by}><FaSolidSort /></Match>
+                            <Match when={sortable && sort()?.by === by && sort()?.reversed !== true}><FaSolidSortUp /></Match>
+                            <Match when={sortable && sort()?.by === by && sort()?.reversed === true}><FaSolidSortDown /></Match>
+                        </Switch>
+                    </th>;
+                }
+            }</For>
+        </tr>
+    </thead>;
 };
 
 function Node<T extends Record<string, any>>(props: { node: DataSetNode<T>, depth: number, groupedBy?: keyof T }) {
@@ -235,17 +264,17 @@ function Row<T extends Record<string, any>>(props: { key: string, value: T, dept
     const values = createMemo(() => Object.entries(props.value));
     const isSelected = context.isSelected(props.key);
 
-    return <div class={css.row} style={{ '--depth': props.depth }} use:selectable={{ value: props.value, key: props.key }}>
+    return <tr class={css.row} style={{ '--depth': props.depth }} use:selectable={{ value: props.value, key: props.key }}>
         <Show when={table.selectionMode() !== SelectionMode.None}>
-            <aside>
+            <th class={css.checkbox}>
                 <input type="checkbox" checked={isSelected()} on:input={() => context.select([props.key])} on:pointerdown={e => e.stopPropagation()} />
-            </aside>
+            </th>
         </Show>
 
         <For each={values()}>{
-            ([k, value]) => <div class={css.cell}>{table.cellRenderers()[k]?.({ key: `${props.key}.${k}`, value }) ?? value}</div>
+            ([k, value]) => <td class={css.cell}>{table.cellRenderers()[k]?.({ value }) ?? value}</td>
         }</For>
-    </div>;
+    </tr>;
 };
 
 function Group<T extends Record<string, any>>(props: { key: string, groupedBy: keyof T, nodes: DataSetNode<T>[], depth: number }) {

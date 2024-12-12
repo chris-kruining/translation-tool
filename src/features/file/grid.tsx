@@ -105,6 +105,10 @@ export const Grid: Component<{ class?: string, columns: string[], rows: Rows, ap
         },
 
         addColumn(name: string): void {
+            if (state.columns.includes(name)) {
+                return;
+            }
+
             setState(produce(state => {
                 state.columns.push(name);
                 state.rows = Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, { ...row, [name]: '' }]));
@@ -155,7 +159,6 @@ const Api: Component<{ api: undefined | ((api: GridApi) => any), table?: any }> 
             insert(prop: string) {
                 gridContext.insert(prop);
             },
-
             addColumn(name: string): void {
                 gridContext.addColumn(name);
             },

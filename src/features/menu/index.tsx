@@ -75,9 +75,9 @@ const useMenu = () => {
     return context;
 }
 
-type ItemProps = { label: string, children: JSX.Element } | { command: CommandType };
+type ItemProps<T extends (...args: any[]) => any> = { label: string, children: JSX.Element } | { command: CommandType<T> };
 
-const Item: Component<ItemProps> = (props) => {
+function Item<T extends (...args: any[]) => any>(props: ItemProps<T>) {
     const id = createUniqueId();
 
     if (props.command) {
@@ -303,7 +303,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
     createEffect(() => {
         const length = results().length - 1;
 
-        setSelected(current => current !== undefined ? Math.min(current, length) : undefined);
+        setSelected(current => Math.min(current, length));
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -334,7 +334,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
     };
 
     return <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
-        <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" />
+        <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" enterkeyhint="go" />
 
         <output for={`search-${id}`}>
             <For each={results()}>{

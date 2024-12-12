@@ -1,0 +1,36 @@
+.root {
+    display: grid;
+    grid: 100% / auto minmax(0, 1fr);
+    inline-size: 100%;
+    block-size: 100%;
+
+    & .sidebar {
+        z-index: 1;
+        padding: var(--padding-xl);
+        background-color: var(--surface-300);
+
+        & > ul {
+            padding: 0;
+            margin: 0;
+        }
+
+        & fieldset {
+            display: flex;
+            flex-flow: column;
+            gap: var(--padding-m);
+        }
+    }
+
+    & .content {
+        background-color: var(--surface-500);
+        border-top-left-radius: var(--radii-xl);
+
+        & > header {
+            padding-inline-start: var(--padding-l);
+        }
+
+        & .table {
+            border-radius: inherit;
+        }
+    }
+}
