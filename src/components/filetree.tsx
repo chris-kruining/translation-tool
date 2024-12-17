@@ -71,7 +71,7 @@ export const Tree: Component<{ entries: Entry[], children: readonly [(folder: Ac
 const _Tree: Component<{ entries: Entry[], children: readonly [(folder: Accessor<FolderEntry>) => JSX.Element, (file: Accessor<FileEntry>) => JSX.Element] }> = (props) => {
     const context = useContext(TreeContext);
 
-    return <For each={props.entries.sort(sort_by('kind'))}>{
+    return <For each={props.entries.toSorted(sort_by('kind'))}>{
         entry => <>
             <Show when={entry.kind === 'folder' ? entry : undefined}>{
                 folder => <Folder folder={folder()} children={props.children} />

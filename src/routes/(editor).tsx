@@ -92,11 +92,15 @@ export default function Editor(props: ParentProps) {
             </nav>
 
             <section>
-                <ErrorBoundary fallback={err => <ErrorComp error={err} />}>
+                <FilesProvider>
+                    {props.children}
+                </FilesProvider>
+
+                {/* <ErrorBoundary fallback={err => <ErrorComp error={err} />}>
                     <FilesProvider>
                         {props.children}
                     </FilesProvider>
-                </ErrorBoundary>
+                </ErrorBoundary> */}
             </section>
         </main>
 
@@ -111,6 +115,8 @@ const ErrorComp: Component<{ error: Error }> = (props) => {
         <Show when={props.error.cause}>{
             cause => <>{cause().description}</>
         }</Show>
+
+        {props.error.stack}
 
         <a href="/">Return to start</a>
     </div>;

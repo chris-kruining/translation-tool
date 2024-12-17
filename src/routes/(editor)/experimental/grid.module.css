@@ -8,6 +8,8 @@
         z-index: 1;
         padding: var(--padding-xl);
         background-color: var(--surface-300);
+        max-inline-size: 25vw;
+        overflow: auto;
 
         & > ul {
             padding: 0;

@@ -1,6 +1,6 @@
 import { Sidebar } from '~/components/sidebar';
 import css from './table.module.css';
-import { Column, DataSetGroupNode, DataSetNode, DataSetRowNode, SelectionMode, Table } from '~/components/table';
+import { Column, createDataSet, DataSetGroupNode, DataSetNode, DataSetRowNode, SelectionMode, Table } from '~/components/table';
 import { createStore } from 'solid-js/store';
 import { Person, people } from './experimental.data';
 
@@ -106,7 +106,7 @@ export default function TableExperiment() {
         </Sidebar>
 
         <div class={css.content}>
-            <Table class={css.table} rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
+            <Table class={css.table} rows={createDataSet(people)} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
                 // email: (cell) => <input type="email" value={cell.value} />,
             }}</Table>
         </div>
