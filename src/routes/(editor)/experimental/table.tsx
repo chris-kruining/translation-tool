@@ -1,19 +1,20 @@
 import { Sidebar } from '~/components/sidebar';
-import css from './table.module.css';
-import { Column, DataSetGroupNode, DataSetNode, DataSetRowNode, SelectionMode, Table } from '~/components/table';
+import { Column, createDataSet, DataSetGroupNode, DataSetNode, DataSetRowNode, GroupOptions, SelectionMode, SortOptions, Table } from '~/components/table';
 import { createStore } from 'solid-js/store';
 import { Person, people } from './experimental.data';
+import css from './table.module.css';
+import { createEffect, createMemo, For } from 'solid-js';
 
 export default function TableExperiment() {
     const columns: Column<Person>[] = [
         {
             id: 'id',
             label: '#',
-            groupBy(rows: DataSetRowNode<Person>[]) {
-                const group = (nodes: (DataSetRowNode<Person> & { _key: string })[]): DataSetNode<Person>[] => nodes.every(n => n._key.includes('.') === false)
+            groupBy(rows: DataSetRowNode<keyof Person, Person>[]) {
+                const group = (nodes: (DataSetRowNode<keyof Person, Person> & { _key: string })[]): DataSetNode<keyof Person, Person>[] => nodes.every(n => n._key.includes('.') === false)
                     ? nodes
                     : Object.entries(Object.groupBy(nodes, r => String(r._key).split('.').at(0)!))
-                        .map<DataSetGroupNode<Person>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: 'id', nodes: group(nodes!.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) }));
+                        .map<DataSetGroupNode<keyof Person, Person>>(([key, nodes]) => ({ kind: 'group', key, groupedBy: 'id', nodes: group(nodes!.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) }));
 
                 return group(rows.map(row => ({ ...row, _key: row.value.id })));
             },
@@ -50,10 +51,20 @@ export default function TableExperiment() {
         },
     ];
 
-    const [store, setStore] = createStore<{ selectionMode: SelectionMode, groupBy?: keyof Person, sort?: { by: keyof Person, reversed?: boolean } }>({
+    const [store, setStore] = createStore<{ selectionMode: SelectionMode, group?: GroupOptions<Person>, sort?: SortOptions<Person> }>({
         selectionMode: SelectionMode.None,
-        // groupBy: 'value',
-        // sortBy: 'key'
+        group: undefined,
+        sort: undefined,
+    });
+
+    const rows = createMemo(() => createDataSet(people));
+
+    createEffect(() => {
+        rows().setGrouping(store.group);
+    });
+
+    createEffect(() => {
+        rows().setSorting(store.sort);
     });
 
     return <div class={css.root}>
@@ -74,7 +85,7 @@ export default function TableExperiment() {
                 <label>
                     Group by
 
-                    <select value={store.groupBy ?? ''} oninput={e => setStore('groupBy', (e.target.value || undefined) as any)}>
+                    <select value={store.group?.by ?? ''} oninput={e => setStore('group', 'by', (e.target.value || undefined) as any)}>
                         <option value=''>None</option>
                         <For each={columns}>{
                             column => <option value={column.id}>{column.label}</option>
@@ -89,7 +100,7 @@ export default function TableExperiment() {
                 <label>
                     by
 
-                    <select value={store.sort?.by ?? ''} oninput={e => setStore('sort', prev => e.target.value ? { by: e.target.value as keyof Entry, reversed: prev?.reversed } : undefined)}>
+                    <select value={store.sort?.by ?? ''} oninput={e => setStore('sort', prev => e.target.value ? { by: e.target.value as keyof Person, reversed: prev?.reversed } : undefined)}>
                         <option value=''>None</option>
                         <For each={columns}>{
                             column => <option value={column.id}>{column.label}</option>
@@ -106,9 +117,7 @@ export default function TableExperiment() {
         </Sidebar>
 
         <div class={css.content}>
-            <Table class={css.table} rows={people} columns={columns} groupBy={store.groupBy} sort={store.sort} selectionMode={store.selectionMode}>{{
-                // email: (cell) => <input type="email" value={cell.value} />,
-            }}</Table>
+            <Table class={css.table} rows={rows()} columns={columns} selectionMode={store.selectionMode} />
         </div>
     </div >;
 }

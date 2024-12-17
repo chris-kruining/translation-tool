@@ -150,6 +150,16 @@ code {
   border-radius: var(--radii-m);
 }
 
+ins {
+  background-color: oklch(from var(--succ) l c h / .1);
+  color: oklch(from var(--succ) .1 .2 h);
+}
+
+del {
+  background-color: oklch(from var(--fail) l c h / .1);
+  color: oklch(from var(--fail) .1 .2 h);
+}
+
 @property --hue {
   syntax: '<angle>';
   inherits: false;

@@ -1,4 +1,4 @@
-import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, onCleanup, onMount, ParentComponent, Setter, Signal, useContext } from "solid-js";
+import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, onCleanup, onMount, ParentComponent, ParentProps, Setter, Signal, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import css from "./index.module.css";
@@ -16,26 +16,33 @@ enum SelectionMode {
     Toggle,
 }
 
-export interface SelectionContextType<T extends object = object> {
-    readonly selection: Accessor<T[]>;
+export interface SelectionItem<K, T> {
+    key: K;
+    value: Accessor<T>;
+    element: WeakRef<HTMLElement>;
+};
+
+export interface SelectionContextType<T extends object> {
+    readonly selection: Accessor<SelectionItem<keyof T, T>[]>;
     readonly length: Accessor<number>;
-    select(selection: string[], options?: Partial<{ mode: SelectionMode }>): void;
+    select(selection: (keyof T)[], options?: Partial<{ mode: SelectionMode }>): void;
     selectAll(): void;
     clear(): void;
-    isSelected(key: string): Accessor<boolean>;
+    isSelected(key: keyof T): Accessor<boolean>;
 }
-interface InternalSelectionContextType {
+interface InternalSelectionContextType<T extends object> {
     readonly latest: Signal<HTMLElement | undefined>,
     readonly modifier: Signal<Modifier>,
     readonly selectables: Signal<HTMLElement[]>,
-    add(key: string, value: object, element: HTMLElement): void;
+    readonly keyMap: Map<string, keyof T>,
+    add(key: keyof T, value: Accessor<T>, element: HTMLElement): string;
 }
-export interface SelectionHandler<T extends object = object> {
+export interface SelectionHandler<T extends object> {
     (selection: T[]): any;
 }
 
-const SelectionContext = createContext<SelectionContextType>();
-const InternalSelectionContext = createContext<InternalSelectionContextType>();
+const SelectionContext = createContext<SelectionContextType<any>>();
+const InternalSelectionContext = createContext<InternalSelectionContextType<any>>();
 
 export function useSelection<T extends object = object>(): SelectionContextType<T> {
     const context = useContext(SelectionContext);
@@ -46,15 +53,17 @@ export function useSelection<T extends object = object>(): SelectionContextType<
 
     return context as SelectionContextType<T>;
 };
-const useInternalSelection = () => useContext(InternalSelectionContext)!;
-
-interface State {
-    selection: string[];
-    data: { key: string, value: Accessor<any>, element: WeakRef<HTMLElement> }[];
+function useInternalSelection<T extends object>() {
+    return useContext(InternalSelectionContext)! as InternalSelectionContextType<T>;
 }
 
-export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, multiSelect?: boolean }> = (props) => {
-    const [state, setState] = createStore<State>({ selection: [], data: [] });
+interface State<T extends object> {
+    selection: (keyof T)[];
+    data: SelectionItem<keyof T, T>[];
+}
+
+export function SelectionProvider<T extends object>(props: ParentProps<{ selection?: SelectionHandler<T>, multiSelect?: boolean }>) {
+    const [state, setState] = createStore<State<T>>({ selection: [], data: [] });
     const selection = createMemo(() => state.data.filter(({ key }) => state.selection.includes(key)));
     const length = createMemo(() => state.data.length);
 
@@ -62,7 +71,7 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, 
         props.selection?.(selection().map(({ value }) => value()));
     });
 
-    const context: SelectionContextType = {
+    const context: SelectionContextType<T> = {
         selection,
         length,
         select(selection, { mode = SelectionMode.Normal } = {}) {
@@ -92,17 +101,29 @@ export const SelectionProvider: ParentComponent<{ selection?: SelectionHandler, 
         clear() {
             setState('selection', []);
         },
-        isSelected(key: string) {
+        isSelected(key) {
             return createMemo(() => state.selection.includes(key));
         },
     };
 
-    const internal: InternalSelectionContextType = {
+    const keyIdMap = new Map<keyof T, string>();
+    const idKeyMap = new Map<string, keyof T>();
+    const internal: InternalSelectionContextType<T> = {
         modifier: createSignal<Modifier>(Modifier.None),
         latest: createSignal<HTMLElement>(),
         selectables: createSignal<HTMLElement[]>([]),
-        add(key: string, value: Accessor<any>, element: HTMLElement) {
-            setState('data', data => [...data, { key, value, element: new WeakRef(element) }]);
+        keyMap: idKeyMap,
+        add(key, value, element) {
+            if (keyIdMap.has(key) === false) {
+                const id = createUniqueId();
+
+                keyIdMap.set(key, id);
+                idKeyMap.set(id, key);
+            }
+
+            setState('data', state.data.length, { key, value, element: new WeakRef(element) });
+
+            return keyIdMap.get(key)!;
         },
     };
 
@@ -180,31 +201,31 @@ const Root: ParentComponent = (props) => {
     return <div ref={setRoot} tabIndex={0} onKeyDown={onKeyboardEvent} onKeyUp={onKeyboardEvent} class={css.root}>{c()}</div>;
 };
 
-export const selectable = (element: HTMLElement, options: Accessor<{ value: object, key?: string }>) => {
-    const context = useSelection();
-    const internal = useInternalSelection();
+export function selectable<T extends object>(element: HTMLElement, options: Accessor<{ value: T, key: keyof T }>) {
+    const context = useSelection<T>();
+    const internal = useInternalSelection<T>();
 
-    const key = options().key ?? createUniqueId();
+    const key = options().key;
     const value = createMemo(() => options().value);
     const isSelected = context.isSelected(key);
 
-    internal.add(key, value, element);
+    const selectionKey = internal.add(key, value, element);
 
-    const createRange = (a?: HTMLElement, b?: HTMLElement): string[] => {
+    const createRange = (a?: HTMLElement, b?: HTMLElement): (keyof T)[] => {
         if (!a && !b) {
             return [];
         }
 
         if (!a) {
-            return [b!.dataset.selecatableKey!];
+            return [b!.dataset.selecatableKey! as keyof T];
         }
 
         if (!b) {
-            return [a!.dataset.selecatableKey!];
+            return [a!.dataset.selecatableKey! as keyof T];
         }
 
         if (a === b) {
-            return [a!.dataset.selecatableKey!];
+            return [a!.dataset.selecatableKey! as keyof T];
         }
 
         const nodes = internal.selectables[0]();
@@ -212,7 +233,7 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
         const bIndex = nodes.indexOf(b);
         const selection = nodes.slice(Math.min(aIndex, bIndex), Math.max(aIndex, bIndex) + 1);
 
-        return selection.map(n => n.dataset.selectionKey!);
+        return selection.map(n => internal.keyMap.get(n.dataset.selecatableKey!)!);
     };
 
     createRenderEffect(() => {
@@ -256,13 +277,13 @@ export const selectable = (element: HTMLElement, options: Accessor<{ value: obje
     });
 
     element.classList.add(css.selectable);
-    element.dataset.selectionKey = key;
+    element.dataset.selectionKey = selectionKey;
 };
 
 declare module "solid-js" {
     namespace JSX {
         interface Directives {
-            selectable: { value: object, key?: string };
+            selectable: { value: object, key: any };
         }
     }
 }
