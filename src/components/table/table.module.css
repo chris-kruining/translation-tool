@@ -1,3 +1,9 @@
+@property --depth {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+}
+
 .table {
     --shadow-color: oklch(0 0 0 / .05);
     --shadow: var(--shadow-color) 0 0 2em;
@@ -26,7 +32,7 @@
     & :is(.cell:first-child, .checkbox + .cell) {
         position: sticky;
         inset-inline-start: 1px;
-        padding-inline-start: calc(var(--depth) * 1em + var(--padding-m));
+        padding-inline-start: calc(var(--depth, 0) * 1em + var(--padding-m));
         z-index: 1;
 
         &::after {
@@ -186,12 +192,6 @@
             grid-column: 2;
         }
     }
-}
-
-@property --depth {
-    syntax: "<number>";
-    inherits: true;
-    initial-value: 0;
 }
 
 @keyframes header-scroll-shadow {

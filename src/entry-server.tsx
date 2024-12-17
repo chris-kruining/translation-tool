@@ -36,7 +36,7 @@ export default createHandler(({ nonce }) => {
     // style: `${base} data: `,
   } as const;
 
-  // event.response.headers.append('Content-Security-Policy', Object.entries(policies).map(([p, v]) => `${p}-src ${v}`).join('; '))
+  event.response.headers.append('Content-Security-Policy', Object.entries(policies).map(([p, v]) => `${p}-src ${v}`).join('; '))
 
   return { nonce };
 });

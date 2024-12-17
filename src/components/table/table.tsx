@@ -86,9 +86,11 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
     const columnCount = createMemo(() => table.columns().length);
 
     return <table class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
-        <Show when={props.summary}>{
-            summary => <caption>{summary()}</caption>
-        }</Show>
+        {/* <Show when={(props.summary?.length ?? 0) > 0 ? props.summary : undefined}>{
+            summary => {
+                return <caption>Kaas {summary()}</caption>;
+            }
+        }</Show> */}
 
         <Groups />
         <Head />
@@ -171,27 +173,27 @@ function Head(props: {}) {
                             return;
                         }
 
-                        table.setSort(current => {
-                            if (current?.by !== by) {
-                                return { by, reversed: false };
-                            }
+                        // table.setSort(current => {
+                        //     if (current?.by !== by) {
+                        //         return { by, reversed: false };
+                        //     }
 
-                            if (current.reversed === true) {
-                                return undefined;
-                            }
+                        //     if (current.reversed === true) {
+                        //         return undefined;
+                        //     }
 
-                            return { by, reversed: true };
-                        });
+                        //     return { by, reversed: true };
+                        // });
                     };
 
                     return <th scope="col" class={`${css.cell} ${sort()?.by === by ? css.sorted : ''}`} onpointerdown={onPointerDown}>
                         {label}
 
-                        <Switch>
+                        {/* <Switch>
                             <Match when={sortable && sort()?.by !== by}><FaSolidSort /></Match>
                             <Match when={sortable && sort()?.by === by && sort()?.reversed !== true}><FaSolidSortUp /></Match>
                             <Match when={sortable && sort()?.by === by && sort()?.reversed === true}><FaSolidSortDown /></Match>
-                        </Switch>
+                        </Switch> */}
                     </th>;
                 }
             }</For>
@@ -226,16 +228,18 @@ function Row<T extends Record<string, any>>(props: { key: keyof T, value: T, dep
         </Show>
 
         <For each={columns()}>{
-            ({ id }) => <td class={'css.cell'}>{table.cellRenderers()[id]?.({ row: props.key as number, column: id, value: props.value[id] }) ?? props.value[id]}</td>
+            ({ id }) => {
+                const content = table.cellRenderers()[id]?.({ row: props.key as number, column: id, value: props.value[id] }) ?? props.value[id];
+
+                // return <>{content}</>;
+                return <td class={css.cell}>{content}</td>;
+            }
         }</For>
     </tr>;
 };
 
 function Group<T extends Record<string, any>>(props: { key: keyof T, groupedBy: keyof T, nodes: DataSetNode<keyof T, T>[], depth: number }) {
-    const table = useTable();
-
     return <details open>
-        <summary style={{ '--depth': props.depth }}>{String(props.key)}</summary>
         <summary style={{ '--depth': props.depth }}>{String(props.key)}</summary>
 
         <For each={props.nodes}>{

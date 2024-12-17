@@ -57,7 +57,7 @@ export default function TableExperiment() {
         sort: undefined,
     });
 
-    const rows = createMemo(() => createDataSet(people));
+    const rows = createMemo(() => createDataSet(people.slice(0, 1)));
 
     createEffect(() => {
         rows().setGrouping(store.group);
@@ -117,7 +117,7 @@ export default function TableExperiment() {
         </Sidebar>
 
         <div class={css.content}>
-            <Table class={css.table} rows={rows()} columns={columns} selectionMode={store.selectionMode} />
+            <Table class={css.table} summary="List of people" rows={rows()} columns={columns} selectionMode={store.selectionMode} />
         </div>
     </div >;
 }
