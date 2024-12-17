@@ -2,8 +2,8 @@ import { Sidebar } from '~/components/sidebar';
 import { Column, createDataSet, DataSetGroupNode, DataSetNode, DataSetRowNode, GroupOptions, SelectionMode, SortOptions, Table } from '~/components/table';
 import { createStore } from 'solid-js/store';
 import { Person, people } from './experimental.data';
-import css from './table.module.css';
 import { createEffect, createMemo, For } from 'solid-js';
+import css from './table.module.css';
 
 export default function TableExperiment() {
     const columns: Column<Person>[] = [
