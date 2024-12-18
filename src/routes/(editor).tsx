@@ -23,11 +23,8 @@ export default function Editor(props: ParentProps) {
     const themeMenuId = createUniqueId();
 
     const [commandPalette, setCommandPalette] = createSignal<CommandPaletteApi>();
-    const lightness = createMemo(() => {
-        const scheme = theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme.colorScheme;
-
-        return scheme === ColorScheme.Light ? .9 : .2;
-    });
+    const colorScheme = createMemo(() => (theme.colorScheme === ColorScheme.Auto ? event?.request.headers.get('Sec-CH-Prefers-Color-Scheme') : theme.colorScheme) ?? 'light dark');
+    const lightness = createMemo(() => colorScheme() === ColorScheme.Light ? .9 : .2);
 
     const commands = [
         createCommand('open command palette', () => {
@@ -53,12 +50,12 @@ export default function Editor(props: ParentProps) {
         <Title>Calque</Title>
         <Meta name="description" content="Simple tool for managing translation files" />
 
-        <Meta name="color-scheme" content={theme.colorScheme} />
-        <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue})`} />
+        <Meta name="color-scheme" content={colorScheme()} />
+        <Meta name="theme-color" content={`oklch(${lightness()} .02 ${theme.hue ?? 0})`} />
 
         <style>{`
             :root {
-                --hue: ${theme.hue}deg !important;
+                --hue: ${theme.hue ?? 0}deg !important;
             }
         `}</style>
 
@@ -68,7 +65,7 @@ export default function Editor(props: ParentProps) {
 
         <main class={css.layout} inert={commandPalette()?.open()}>
             <nav class={css.menu}>
-                <A class={css.logo} href="/">
+                <A class={css.logo} href="/welcome">
                     <picture>
                         <source srcset="/images/favicon.dark.svg" media="screen and (prefers-color-scheme: dark)" />
                         <source srcset="/images/favicon.light.svg" media="screen and (prefers-color-scheme: light)" />
