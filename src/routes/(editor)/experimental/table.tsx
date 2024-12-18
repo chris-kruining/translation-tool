@@ -4,6 +4,8 @@ import { createStore } from 'solid-js/store';
 import { Person, people } from './experimental.data';
 import { createEffect, createMemo, For } from 'solid-js';
 import css from './table.module.css';
+import { Menu } from '~/features/menu';
+import { Command, createCommand, Modifier } from '~/features/command';
 
 export default function TableExperiment() {
     const columns: Column<Person>[] = [
@@ -57,7 +59,7 @@ export default function TableExperiment() {
         sort: undefined,
     });
 
-    const rows = createMemo(() => createDataSet(people.slice(0, 1)));
+    const rows = createMemo(() => createDataSet(people));
 
     createEffect(() => {
         rows().setGrouping(store.group);
@@ -69,6 +71,12 @@ export default function TableExperiment() {
 
     return <div class={css.root}>
         <Sidebar as="aside" label={'Filters'} class={css.sidebar}>
+            <fieldset>
+                <legend>Commands</legend>
+
+                <Command.Handle command={createCommand('kaas', () => { }, { key: 'k', modifier: Modifier.Control })} />
+            </fieldset>
+
             <fieldset>
                 <legend>table properties</legend>
 
@@ -117,7 +125,7 @@ export default function TableExperiment() {
         </Sidebar>
 
         <div class={css.content}>
-            <Table class={css.table} summary="List of people" rows={rows()} columns={columns} selectionMode={store.selectionMode} />
+            <Table class={css.table} rows={rows()} columns={columns} selectionMode={store.selectionMode} />
         </div>
     </div >;
 }

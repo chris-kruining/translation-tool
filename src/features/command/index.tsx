@@ -1,4 +1,4 @@
-import { Accessor, children, Component, createContext, createEffect, createMemo, JSX, ParentComponent, ParentProps, Show, useContext } from 'solid-js';
+import { Accessor, children, Component, createContext, createEffect, createMemo, For, JSX, ParentComponent, ParentProps, Show, useContext } from 'solid-js';
 
 interface CommandContextType {
     set(commands: CommandType<any>[]): void;
@@ -115,19 +115,27 @@ const Context = <T extends (...args: any[]) => any = any>(props: ParentProps<{ f
 };
 
 const Handle: Component<{ command: CommandType }> = (props) => {
-    return <>
+    return <samp>
         {props.command.label}
         <Show when={props.command.shortcut}>{
             shortcut => {
-                const shift = shortcut().modifier & Modifier.Shift ? 'Shft+' : '';
-                const ctrl = shortcut().modifier & Modifier.Control ? 'Ctrl+' : '';
-                const meta = shortcut().modifier & Modifier.Meta ? 'Meta+' : '';
-                const alt = shortcut().modifier & Modifier.Alt ? 'Alt+' : '';
+                const modifier = shortcut().modifier;
+                const modifierMap: Record<number, string> = {
+                    [Modifier.Shift]: 'Shft',
+                    [Modifier.Control]: 'Ctrl',
+                    [Modifier.Meta]: 'Meta',
+                    [Modifier.Alt]: 'Alt',
+                };
 
-                return <sub>{ctrl}{shift}{meta}{alt}{shortcut().key}</sub>;
+                return <>&nbsp;
+                    <For each={Object.values(Modifier).filter((m): m is number => typeof m === 'number').filter(m => modifier & m)}>{
+                        (m) => <><kbd>{modifierMap[m]}</kbd>+</>
+                    }</For>
+                    <kbd>{shortcut().key}</kbd>
+                </>;
             }
         }</Show>
-    </>;
+    </samp>;
 };
 
 export const Command = { Root, Handle, Add, Context };

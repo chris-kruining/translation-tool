@@ -182,7 +182,7 @@ const Root: ParentComponent<{}> = (props) => {
 const Mount: Component = (props) => {
     const menu = useMenu();
 
-    return <div class={css.root} ref={menu.setRef} />;
+    return <menu class={css.root} ref={menu.setRef} />;
 };
 
 export const Menu = { Mount, Root, Item, Separator } as const;
@@ -233,7 +233,7 @@ export const CommandPalette: Component<{ api?: (api: CommandPaletteApi) => any, 
     };
 
     return <dialog ref={setRoot} class={css.commandPalette} onClose={() => setOpen(false)}>
-        <SearchableList<CommandType> items={context.commands()} keySelector={item => item.label} context={setSearch} onSubmit={onSubmit}>{
+        <SearchableList title="command palette" items={context.commands()} keySelector={item => item.label} context={setSearch} onSubmit={onSubmit}>{
             (item, ctx) => <For each={item.label.split(ctx.filter())}>{
                 (part, index) => <>
                     <Show when={index() !== 0}><b>{ctx.filter()}</b></Show>
@@ -258,6 +258,7 @@ interface SearchContext<T> {
 
 interface SearchableListProps<T> {
     items: T[];
+    title?: string;
     keySelector(item: T): string;
     filter?: (item: T, search: string) => boolean;
     children(item: T, context: SearchContext<T>): JSX.Element;
@@ -333,15 +334,17 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         props.onSubmit?.(v);
     };
 
-    return <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
-        <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" enterkeyhint="go" />
+    return <search title={props.title}>
+        <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
+            <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" enterkeyhint="go" />
 
-        <output for={`search-${id}`}>
-            <For each={results()}>{
-                (result, index) => <div classList={{ [css.selected]: index() === selected() }}>{props.children(result, ctx)}</div>
-            }</For>
-        </output>
-    </form>;
+            <output for={`search-${id}`}>
+                <For each={results()}>{
+                    (result, index) => <div classList={{ [css.selected]: index() === selected() }}>{props.children(result, ctx)}</div>
+                }</For>
+            </output>
+        </form>
+    </search>;
 };
 
 declare module "solid-js" {

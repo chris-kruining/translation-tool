@@ -86,11 +86,11 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
     const columnCount = createMemo(() => table.columns().length);
 
     return <table class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
-        {/* <Show when={(props.summary?.length ?? 0) > 0 ? props.summary : undefined}>{
+        <Show when={(props.summary?.length ?? 0) > 0 ? props.summary : undefined}>{
             summary => {
-                return <caption>Kaas {summary()}</caption>;
+                return <caption class={css.caption}>{summary()}</caption>;
             }
-        }</Show> */}
+        }</Show>
 
         <Groups />
         <Head />
@@ -247,3 +247,11 @@ function Group<T extends Record<string, any>>(props: { key: keyof T, groupedBy: 
         }</For>
     </details>;
 };
+
+declare module "solid-js" {
+    namespace JSX {
+        interface HTMLAttributes<T> {
+            indeterminate?: boolean | undefined;
+        }
+    }
+}

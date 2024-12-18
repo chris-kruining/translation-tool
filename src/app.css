@@ -30,16 +30,11 @@
   --text-1: light-dark(oklch(from var(--primary-500) .2 .02 h), oklch(from var(--primary-500) .9 .02 h));
   --text-2: oklch(from var(--text-1) calc(l + .1) c h);
 
-  --weight-lighter: 100;
-  --weight-light: 300;
-  --weight-normal: 500;
-  --weight-bold: 700;
-  --weight-bolder: 900;
-
-  --radii-s: .125em;
-  --radii-m: .25em;
-  --radii-l: .5em;
-  --radii-xl: 1em;
+  --text-lighter: 100;
+  --text-light: 300;
+  --text-normal: 500;
+  --text-bold: 700;
+  --text-bolder: 900;
 
   --text-s: .8rem;
   --text-m: 1rem;
@@ -47,6 +42,12 @@
   --text-xl: 1.6rem;
   --text-xxl: 2rem;
 
+  --radii-s: .125em;
+  --radii-m: .25em;
+  --radii-l: .5em;
+  --radii-xl: 1em;
+
+  --padding-xs: .125em;
   --padding-s: .25em;
   --padding-m: .5em;
   --padding-l: .75em;
@@ -158,6 +159,26 @@ ins {
 del {
   background-color: oklch(from var(--fail) l c h / .1);
   color: oklch(from var(--fail) .1 .2 h);
+}
+
+kbd {
+  background-color: var(--surface-600);
+  border-radius: var(--radii-m);
+  border: 1px solid var(--surface-500);
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.2),
+    0 2px 0 0 rgba(255, 255, 255, 0.7) inset;
+  color: var(--text-2);
+  display: inline-block;
+  font-size: var(--text-s);
+  font-weight: var(--text-bold);
+  line-height: 1;
+  padding: var(--padding-xs) var(--padding-s);
+  white-space: nowrap;
+}
+
+samp {
+  display: inline-block;
 }
 
 @property --hue {

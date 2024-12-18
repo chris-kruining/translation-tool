@@ -60,6 +60,12 @@
         z-index: 1;
     }
 
+    & .caption {
+        /* grid-column: 1 / -1; */
+        position: sticky;
+        inset-inline-start: 0;
+    }
+
     & :is(.header, .main, .footer) {
         grid-column: 1 / -1;
         display: block grid;
@@ -106,7 +112,7 @@
         animation: header-scroll-shadow linear both;
         animation-timeline: scroll();
         animation-range: 0 2em;
-        font-weight: var(--weight-bold);
+        font-weight: var(--text-bold);
 
         & > tr {
             all: inherit;
@@ -139,7 +145,7 @@
         animation: header-scroll-shadow linear both reverse;
         animation-timeline: scroll();
         animation-range: calc(100% - 2em) 100%;
-        font-weight: var(--weight-bold);
+        font-weight: var(--text-bold);
     }
 
     & details {

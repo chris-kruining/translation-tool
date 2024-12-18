@@ -1,4 +1,4 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createSignal, createUniqueId, For, JSX, ParentComponent, splitProps, useContext } from "solid-js";
+import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, JSX, ParentComponent, splitProps, useContext } from "solid-js";
 import { CommandType } from "./index";
 import css from "./contextMenu.module.css";
 
@@ -62,11 +62,11 @@ const Menu: Component<{ children: (command: CommandType) => JSX.Element }> = (pr
         command();
     };
 
-    return <ul ref={setRoot} class={css.menu} style={`position-anchor: ${context.target()?.style.getPropertyValue('anchor-name')};`} popover ontoggle={onToggle}>
+    return <menu ref={setRoot} class={css.menu} style={`position-anchor: ${context.target()?.style.getPropertyValue('anchor-name')};`} popover ontoggle={onToggle}>
         <For each={context.commands()}>{
             command => <li onpointerdown={onCommand(command)}>{props.children(command)}</li>
         }</For>
-    </ul>;
+    </menu>;
 };
 
 const Handle: ParentComponent<Record<string, any>> = (props) => {
@@ -75,7 +75,7 @@ const Handle: ParentComponent<Record<string, any>> = (props) => {
     const context = useContext(ContextMenu)!;
     const [handle, setHandle] = createSignal<HTMLElement>();
 
-    return <span {...rest} ref={setHandle} style={`anchor-name: --context-menu-handle-${createUniqueId()};`} oncontextmenu={(e) => {
+    return <span {...rest} ref={setHandle} style={`anchor-name: --context-menu-${createUniqueId()};`} oncontextmenu={(e) => {
         e.preventDefault();
 
         context.show(handle()!);
@@ -83,5 +83,8 @@ const Handle: ParentComponent<Record<string, any>> = (props) => {
         return false;
     }}>{local.children}</span>;
 };
+
+let handleCounter = 0;
+const createUniqueId = () => `handle-${handleCounter++}`
 
 export const Context = { Root, Menu, Handle };

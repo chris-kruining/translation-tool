@@ -1,4 +1,4 @@
-import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, createUniqueId, onCleanup, onMount, ParentComponent, ParentProps, Setter, Signal, useContext } from "solid-js";
+import { Accessor, children, createContext, createEffect, createMemo, createRenderEffect, createSignal, onCleanup, onMount, ParentComponent, ParentProps, Setter, Signal, useContext } from "solid-js";
 import { createStore } from "solid-js/store";
 import { isServer } from "solid-js/web";
 import css from "./index.module.css";
@@ -279,6 +279,9 @@ export function selectable<T extends object>(element: HTMLElement, options: Acce
     element.classList.add(css.selectable);
     element.dataset.selectionKey = selectionKey;
 };
+
+let keyCounter = 0;
+const createUniqueId = () => `key-${keyCounter++}`;
 
 declare module "solid-js" {
     namespace JSX {
