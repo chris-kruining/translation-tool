@@ -181,7 +181,7 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         done = res.done ?? false;
 
         if (!done) {
-            buffer.push(res.value)
+            buffer.push(res.value);
         }
     };
 

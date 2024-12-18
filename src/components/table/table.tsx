@@ -1,7 +1,7 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, For, JSX, Match, Show, Switch, useContext } from "solid-js";
 import { selectable, SelectionItem, SelectionProvider, useSelection } from "~/features/selectable";
 import { DataSetRowNode, DataSetNode, DataSet } from './dataset';
-import { FaSolidSort, FaSolidSortDown, FaSolidSortUp } from "solid-icons/fa";
+import { FaSolidAngleDown, FaSolidSort, FaSolidSortDown, FaSolidSortUp } from "solid-icons/fa";
 import css from './table.module.css';
 
 selectable;
@@ -14,8 +14,8 @@ export type Column<T> = {
     readonly groupBy?: (rows: DataSetRowNode<keyof T, T>[]) => DataSetNode<keyof T, T>[],
 };
 
-export type CellEditor<T extends Record<string, any>, K extends keyof T> = (cell: { row: number, column: K, value: T[K] }) => JSX.Element;
-export type CellEditors<T extends Record<string, any>> = { [K in keyof T]?: CellEditor<T, K> };
+export type CellRenderer<T extends Record<string, any>, K extends keyof T> = (cell: { row: number, column: K, value: T[K] }) => JSX.Element;
+export type CellRenderers<T extends Record<string, any>> = { [K in keyof T]?: CellRenderer<T, K> };
 
 export interface TableApi<T extends Record<string, any>> {
     readonly selection: Accessor<SelectionItem<keyof T, T>[]>;
@@ -30,7 +30,7 @@ interface TableContextType<T extends Record<string, any>> {
     readonly columns: Accessor<Column<T>[]>,
     readonly selection: Accessor<SelectionItem<keyof T, T>[]>,
     readonly selectionMode: Accessor<SelectionMode>,
-    readonly cellRenderers: Accessor<CellEditors<T>>,
+    readonly cellRenderers: Accessor<CellRenderers<T>>,
 }
 
 const TableContext = createContext<TableContextType<any>>();
@@ -48,7 +48,7 @@ type TableProps<T extends Record<string, any>> = {
     rows: DataSet<T>,
     columns: Column<T>[],
     selectionMode?: SelectionMode,
-    children?: CellEditors<T>,
+    children?: CellRenderers<T>,
     api?: (api: TableApi<T>) => any,
 };
 
@@ -58,7 +58,7 @@ export function Table<T extends Record<string, any>>(props: TableProps<T>) {
     const rows = createMemo(() => props.rows);
     const columns = createMemo<Column<T>[]>(() => props.columns ?? []);
     const selectionMode = createMemo(() => props.selectionMode ?? SelectionMode.None);
-    const cellRenderers = createMemo<CellEditors<T>>(() => props.children ?? {});
+    const cellRenderers = createMemo<CellRenderers<T>>(() => props.children ?? {});
 
     const context: TableContextType<T> = {
         rows,
@@ -86,11 +86,11 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
     const columnCount = createMemo(() => table.columns().length);
 
     return <table class={`${css.table} ${selectable() ? css.selectable : ''} ${props.class}`} style={{ '--columns': columnCount() }}>
-        <Show when={(props.summary?.length ?? 0) > 0 ? props.summary : undefined}>{
+        {/* <Show when={(props.summary?.length ?? 0) > 0 ? props.summary : undefined}>{
             summary => {
                 return <caption class={css.caption}>{summary()}</caption>;
             }
-        }</Show>
+        }</Show> */}
 
         <Groups />
         <Head />
@@ -165,7 +165,7 @@ function Head(props: {}) {
 
             <For each={table.columns()}>{
                 ({ id, label, sortable }) => {
-                    const sort = createMemo(() => table.rows().sort());
+                    const sort = createMemo(() => table.rows().sorting());
                     const by = String(id);
 
                     const onPointerDown = (e: PointerEvent) => {
@@ -173,27 +173,27 @@ function Head(props: {}) {
                             return;
                         }
 
-                        // table.setSort(current => {
-                        //     if (current?.by !== by) {
-                        //         return { by, reversed: false };
-                        //     }
+                        table.rows().sort(current => {
+                            if (current?.by !== by) {
+                                return { by, reversed: false };
+                            }
 
-                        //     if (current.reversed === true) {
-                        //         return undefined;
-                        //     }
+                            if (current.reversed === true) {
+                                return undefined;
+                            }
 
-                        //     return { by, reversed: true };
-                        // });
+                            return { by, reversed: true };
+                        });
                     };
 
                     return <th scope="col" class={`${css.cell} ${sort()?.by === by ? css.sorted : ''}`} onpointerdown={onPointerDown}>
                         {label}
 
-                        {/* <Switch>
+                        <Switch>
                             <Match when={sortable && sort()?.by !== by}><FaSolidSort /></Match>
                             <Match when={sortable && sort()?.by === by && sort()?.reversed !== true}><FaSolidSortUp /></Match>
                             <Match when={sortable && sort()?.by === by && sort()?.reversed === true}><FaSolidSortDown /></Match>
-                        </Switch> */}
+                        </Switch>
                     </th>;
                 }
             }</For>
@@ -239,13 +239,29 @@ function Row<T extends Record<string, any>>(props: { key: keyof T, value: T, dep
 };
 
 function Group<T extends Record<string, any>>(props: { key: keyof T, groupedBy: keyof T, nodes: DataSetNode<keyof T, T>[], depth: number }) {
-    return <details open>
-        <summary style={{ '--depth': props.depth }}>{String(props.key)}</summary>
+    const table = useTable();
 
-        <For each={props.nodes}>{
-            node => <Node node={node} depth={props.depth + 1} groupedBy={props.groupedBy} />
-        }</For>
-    </details>;
+    return <tr class={css.group}>
+        <td colSpan={table.columns().length}>
+            <table class={css.table}>
+                <thead class={css.header}>
+                    <tr><th class={css.cell} colSpan={table.columns().length} style={{ '--depth': props.depth }}>
+                        <label>
+                            <input type="checkbox" checked name="collapse" />
+                            <FaSolidAngleDown />
+
+                            {String(props.key)}</label>
+                    </th></tr>
+                </thead>
+
+                <tbody class={css.main}>
+                    <For each={props.nodes}>{
+                        node => <Node node={node} depth={props.depth + 1} groupedBy={props.groupedBy} />
+                    }</For>
+                </tbody>
+            </table>
+        </td>
+    </tr>;
 };
 
 declare module "solid-js" {

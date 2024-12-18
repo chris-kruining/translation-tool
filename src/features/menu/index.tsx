@@ -1,4 +1,4 @@
-import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
+import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, mergeProps, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { CommandType, Command, useCommands } from "../command";
@@ -346,6 +346,9 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         </form>
     </search>;
 };
+
+let keyCounter = 0;
+const createUniqueId = () => `key-${keyCounter++}`;
 
 declare module "solid-js" {
     namespace JSX {

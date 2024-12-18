@@ -21,18 +21,27 @@
             flex-flow: column;
             gap: var(--padding-m);
         }
+
+        ol {
+            margin-block: 0;
+        }
     }
 
     & .content {
+        display: block grid;
+        grid: 1fr 1fr / 100%;
         background-color: var(--surface-500);
         border-top-left-radius: var(--radii-xl);
-
-        & > header {
-            padding-inline-start: var(--padding-l);
-        }
+        padding: var(--padding-m);
 
         & .table {
             border-radius: inherit;
+        }
+
+        & > fieldset {
+            border-radius: var(--radii-l);
+            overflow: auto;
+            background-color: inherit;
         }
     }
 }

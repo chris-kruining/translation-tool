@@ -1,5 +1,5 @@
 import { Link, Meta, Title } from "@solidjs/meta";
-import { Component, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
+import { Component, createMemo, createSignal, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
@@ -121,3 +121,6 @@ const ErrorComp: Component<{ error: Error }> = (props) => {
         <a href="/">Return to start</a>
     </div>;
 };
+
+let keyCounter = 0;
+const createUniqueId = () => `key-${keyCounter++}`;

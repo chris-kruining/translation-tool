@@ -1,11 +1,14 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, JSX, useContext } from "solid-js";
-import { createStore } from "solid-js/store";
-import { deepCopy, deepDiff, Mutation } from "~/utilities";
-import { SelectionMode, Table, Column as TableColumn, TableApi, CellEditors, CellEditor, createDataSet, DataSet, DataSetNode } from "~/components/table";
+import { Mutation } from "~/utilities";
+import { SelectionMode, Table, Column as TableColumn, TableApi, DataSet, CellRenderer } from "~/components/table";
 import css from './grid.module.css';
 
+export interface CellEditor<T extends Record<string, any>, K extends keyof T> {
+    (cell: Parameters<CellRenderer<T, K>>[0] & { mutate: (next: T[K]) => any }): JSX.Element;
+}
+
 export interface Column<T extends Record<string, any>> extends TableColumn<T> {
-    editor?: (cell: { row: number, column: keyof T, value: T[keyof T], mutate: (next: T[keyof T]) => any }) => JSX.Element;
+    editor?: CellEditor<T, keyof T>;
 }
 
 export interface GridApi<T extends Record<string, any>> extends TableApi<T> {
@@ -16,7 +19,6 @@ export interface GridApi<T extends Record<string, any>> extends TableApi<T> {
 }
 
 interface GridContextType<T extends Record<string, any>> {
-    readonly rows: Accessor<DataSetNode<keyof T, T>[]>;
     readonly mutations: Accessor<Mutation[]>;
     readonly selection: TableApi<T>['selection'];
     mutate<K extends keyof T>(row: number, column: K, value: T[K]): void;
@@ -29,36 +31,31 @@ const GridContext = createContext<GridContextType<any>>();
 
 const useGrid = () => useContext(GridContext)!;
 
-type GridProps<T extends Record<string, any>> = { class?: string, groupBy?: keyof T, columns: Column<T>[], rows: T[], api?: (api: GridApi<T>) => any };
+type GridProps<T extends Record<string, any>> = { class?: string, groupBy?: keyof T, columns: Column<T>[], rows: DataSet<T>, api?: (api: GridApi<T>) => any };
 // type GridState<T extends Record<string, any>> = { data: DataSet<T>, columns: Column<T>[], numberOfRows: number };
 
 export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
     const [table, setTable] = createSignal<TableApi<T>>();
-    const data = createMemo(() => createDataSet(props.rows));
 
-    const rows = createMemo(() => data().value());
-    const mutations = createMemo(() => data().mutations());
+    const rows = createMemo(() => props.rows);
     const columns = createMemo(() => props.columns);
+    const mutations = createMemo(() => rows().mutations());
 
     const ctx: GridContextType<T> = {
-        rows,
         mutations,
         selection: createMemo(() => table()?.selection() ?? []),
 
         mutate<K extends keyof T>(row: number, column: K, value: T[K]) {
-            data().mutate(row, column, value);
+            rows().mutate(row, column, value);
         },
 
-        remove(rows: number[]) {
-            // setState('rows', (r) => r.filter((_, i) => rows.includes(i) === false));
+        remove(indices: number[]) {
+            rows().remove(indices);
+            table()?.clear();
         },
 
         insert(row: T, at?: number) {
-            if (at === undefined) {
-                // setState('rows', state.rows.length, row);
-            } else {
-
-            }
+            rows().insert(row, at);
         },
 
         addColumn(column: keyof T, value: T[keyof T]): void {
@@ -70,10 +67,8 @@ export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
         props.columns
             .filter(c => c.editor !== undefined)
             .map(c => {
-                const Editor: CellEditor<T, keyof T> = ({ row, column, value }) => {
+                const Editor: CellRenderer<T, keyof T> = ({ row, column, value }) => {
                     const mutate = (next: T[keyof T]) => {
-                        console.log('KAAS', { next })
-
                         ctx.mutate(row, column, next);
                     };
 
@@ -87,11 +82,9 @@ export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
     return <GridContext.Provider value={ctx}>
         <Api api={props.api} table={table()} />
 
-        <form style="all: inherit; display: contents;">
-            <Table api={setTable} class={`${css.grid} ${props.class}`} rows={data()} columns={columns()} selectionMode={SelectionMode.Multiple}>{
-                cellEditors()
-            }</Table>
-        </form>
+        <Table api={setTable} class={`${css.grid} ${props.class}`} rows={rows()} columns={columns()} selectionMode={SelectionMode.Multiple}>{
+            cellEditors()
+        }</Table>
     </GridContext.Provider>;
 };
 
@@ -114,8 +107,8 @@ function Api<T extends Record<string, any>>(props: { api: undefined | ((api: Gri
             insert(row: T, at?: number) {
                 gridContext.insert(row, at);
             },
-            addColumn(column: keyof T, value: T[keyof T]): void {
-                gridContext.addColumn(column, value);
+            addColumn(column: keyof T): void {
+                // gridContext.addColumn(column, value);
             },
         };
     });

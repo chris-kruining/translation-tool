@@ -32,7 +32,7 @@
     & :is(.cell:first-child, .checkbox + .cell) {
         position: sticky;
         inset-inline-start: 1px;
-        padding-inline-start: calc(var(--depth, 0) * 1em + var(--padding-m));
+        padding-inline-start: calc(var(--depth, 0) * (1em + var(--padding-s)) + var(--padding-m));
         z-index: 1;
 
         &::after {
@@ -61,7 +61,6 @@
     }
 
     & .caption {
-        /* grid-column: 1 / -1; */
         position: sticky;
         inset-inline-start: 0;
     }
@@ -148,40 +147,58 @@
         font-weight: var(--text-bold);
     }
 
-    & details {
+    & .group {
         display: contents;
         background-color: inherit;
 
-        &::details-content {
-            grid-column: 1 / -1;
-            display: block grid;
-            grid-template-columns: subgrid;
+        & > td {
+            display: contents;
             background-color: inherit;
-        }
 
-        &:not([open])::details-content {
-            display: none;
-        }
+            & > table {
+                grid-column: 1 / -1;
+                grid-template-columns: subgrid;
+                background-color: inherit;
+                overflow: visible;
 
-        & > summary {
-            position: sticky;
-            inset-inline-start: 1px;
-            grid-column: 1;
-            padding: var(--padding-m);
-            padding-inline-start: calc(var(--depth) * 1em + var(--padding-m));
+                & > .header {
+                    border-block-end-color: transparent;
 
-            &::after {
-                content: '';
-                position: absolute;
-                inset-inline-start: calc(100% - 1px);
-                inset-block-start: -.5px;
-                display: block;
-                inline-size: 2em;
-                block-size: 100%;
-                animation: column-scroll-shadow linear both;
-                animation-timeline: scroll(inline);
-                animation-range: 0 2em;
-                pointer-events: none;
+                    & .cell {
+                        justify-content: start;
+                        column-gap: var(--padding-s);
+
+                        & > label {
+                            --state: 0;
+                            display: contents;
+
+                            & input[type="checkbox"] {
+                                display: none;
+                            }
+
+                            & > svg {
+                                rotate: calc(var(--state) * -.25turn);
+                                transition: rotate .3s ease-in-out;
+                                inline-size: 1em;
+                                aspect-ratio: 1;
+                            }
+
+                            &:has(input:not(:checked)) {
+                                --state: 1;
+                            }
+                        }
+                    }
+                }
+
+                & > .main {
+                    block-size: calc-size(auto, size);
+                    transition: block-size .3s ease-in-out;
+                    overflow: clip;
+                }
+
+                &:has(> .header input:not(:checked)) > .main {
+                    block-size: 0;
+                }
             }
         }
     }

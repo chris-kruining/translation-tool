@@ -119,9 +119,9 @@ export function SelectionProvider<T extends object>(props: ParentProps<{ selecti
 
                 keyIdMap.set(key, id);
                 idKeyMap.set(id, key);
-            }
 
-            setState('data', state.data.length, { key, value, element: new WeakRef(element) });
+                setState('data', state.data.length, { key, value, element: new WeakRef(element) });
+            }
 
             return keyIdMap.get(key)!;
         },

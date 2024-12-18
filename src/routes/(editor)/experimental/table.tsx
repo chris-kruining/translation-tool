@@ -3,9 +3,8 @@ import { Column, createDataSet, DataSetGroupNode, DataSetNode, DataSetRowNode, G
 import { createStore } from 'solid-js/store';
 import { Person, people } from './experimental.data';
 import { createEffect, createMemo, For } from 'solid-js';
-import css from './table.module.css';
-import { Menu } from '~/features/menu';
 import { Command, createCommand, Modifier } from '~/features/command';
+import css from './table.module.css';
 
 export default function TableExperiment() {
     const columns: Column<Person>[] = [
@@ -53,20 +52,31 @@ export default function TableExperiment() {
         },
     ];
 
-    const [store, setStore] = createStore<{ selectionMode: SelectionMode, group?: GroupOptions<Person>, sort?: SortOptions<Person> }>({
+    const [store, setStore] = createStore<{ selectionMode: SelectionMode, grouping?: GroupOptions<Person>, sorting?: SortOptions<Person> }>({
         selectionMode: SelectionMode.None,
-        group: undefined,
-        sort: undefined,
+        grouping: { by: 'country' },
+        sorting: { by: 'country', reversed: false },
     });
 
-    const rows = createMemo(() => createDataSet(people));
+    const rows = createMemo(() => createDataSet(people, {
+        group: { by: 'country' },
+        sort: { by: 'country', reversed: false },
+    }));
 
     createEffect(() => {
-        rows().setGrouping(store.group);
+        rows().group(store.grouping);
     });
 
     createEffect(() => {
-        rows().setSorting(store.sort);
+        rows().sort(store.sorting);
+    });
+
+    createEffect(() => {
+        setStore('sorting', rows().sorting());
+    });
+
+    createEffect(() => {
+        setStore('grouping', rows().grouping());
     });
 
     return <div class={css.root}>
@@ -93,7 +103,7 @@ export default function TableExperiment() {
                 <label>
                     Group by
 
-                    <select value={store.group?.by ?? ''} oninput={e => setStore('group', 'by', (e.target.value || undefined) as any)}>
+                    <select value={store.grouping?.by ?? ''} oninput={e => setStore('grouping', e.target.value ? { by: e.target.value as keyof Person } : undefined)}>
                         <option value=''>None</option>
                         <For each={columns}>{
                             column => <option value={column.id}>{column.label}</option>
@@ -108,7 +118,7 @@ export default function TableExperiment() {
                 <label>
                     by
 
-                    <select value={store.sort?.by ?? ''} oninput={e => setStore('sort', prev => e.target.value ? { by: e.target.value as keyof Person, reversed: prev?.reversed } : undefined)}>
+                    <select value={store.sorting?.by ?? ''} oninput={e => setStore('sorting', prev => e.target.value ? { by: e.target.value as keyof Person, reversed: prev?.reversed } : undefined)}>
                         <option value=''>None</option>
                         <For each={columns}>{
                             column => <option value={column.id}>{column.label}</option>
@@ -119,7 +129,7 @@ export default function TableExperiment() {
                 <label>
                     reversed
 
-                    <input type="checkbox" checked={store.sort?.reversed ?? false} oninput={e => setStore('sort', prev => prev !== undefined ? { by: prev.by, reversed: e.target.checked || undefined } : undefined)} />
+                    <input type="checkbox" checked={store.sorting?.reversed ?? false} oninput={e => setStore('sorting', prev => prev !== undefined ? { by: prev.by, reversed: e.target.checked || undefined } : undefined)} />
                 </label>
             </fieldset>
         </Sidebar>
