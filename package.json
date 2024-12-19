@@ -24,7 +24,7 @@
   "type": "module",
   "devDependencies": {
     "@happy-dom/global-registrator": "^15.11.7",
-    "@sinonjs/fake-timers": "^13.0.5",
+    "@sinonjs/fake-timers": "^14.0.0",
     "@solidjs/testing-library": "^0.8.10",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/user-event": "^14.5.2",
