@@ -22,48 +22,48 @@ export interface SelectionItem<K, T> {
     element: WeakRef<HTMLElement>;
 };
 
-export interface SelectionContextType<T extends object> {
-    readonly selection: Accessor<SelectionItem<keyof T, T>[]>;
+export interface SelectionContextType<K, T extends object> {
+    readonly selection: Accessor<SelectionItem<K, T>[]>;
     readonly length: Accessor<number>;
-    select(selection: (keyof T)[], options?: Partial<{ mode: SelectionMode }>): void;
+    select(selection: K[], options?: Partial<{ mode: SelectionMode }>): void;
     selectAll(): void;
     clear(): void;
-    isSelected(key: keyof T): Accessor<boolean>;
+    isSelected(key: K): Accessor<boolean>;
 }
-interface InternalSelectionContextType<T extends object> {
+interface InternalSelectionContextType<K, T extends object> {
     readonly latest: Signal<HTMLElement | undefined>,
     readonly modifier: Signal<Modifier>,
     readonly selectables: Signal<HTMLElement[]>,
-    readonly keyMap: Map<string, keyof T>,
-    add(key: keyof T, value: Accessor<T>, element: HTMLElement): string;
+    readonly keyMap: Map<string, K>,
+    add(key: K, value: Accessor<T>, element: HTMLElement): string;
 }
 export interface SelectionHandler<T extends object> {
     (selection: T[]): any;
 }
 
-const SelectionContext = createContext<SelectionContextType<any>>();
-const InternalSelectionContext = createContext<InternalSelectionContextType<any>>();
+const SelectionContext = createContext<SelectionContextType<any, any>>();
+const InternalSelectionContext = createContext<InternalSelectionContextType<any, any>>();
 
-export function useSelection<T extends object = object>(): SelectionContextType<T> {
+export function useSelection<K, T extends object = object>() {
     const context = useContext(SelectionContext);
 
     if (context === undefined) {
         throw new Error('selection context is used outside of a provider');
     }
 
-    return context as SelectionContextType<T>;
+    return context as SelectionContextType<K, T>;
 };
-function useInternalSelection<T extends object>() {
-    return useContext(InternalSelectionContext)! as InternalSelectionContextType<T>;
+function useInternalSelection<K, T extends object>() {
+    return useContext(InternalSelectionContext)! as InternalSelectionContextType<K, T>;
 }
 
-interface State<T extends object> {
-    selection: (keyof T)[];
-    data: SelectionItem<keyof T, T>[];
+interface State<K, T extends object> {
+    selection: K[];
+    data: SelectionItem<K, T>[];
 }
 
-export function SelectionProvider<T extends object>(props: ParentProps<{ selection?: SelectionHandler<T>, multiSelect?: boolean }>) {
-    const [state, setState] = createStore<State<T>>({ selection: [], data: [] });
+export function SelectionProvider<K, T extends object>(props: ParentProps<{ selection?: SelectionHandler<T>, multiSelect?: boolean }>) {
+    const [state, setState] = createStore<State<K, T>>({ selection: [], data: [] });
     const selection = createMemo(() => state.data.filter(({ key }) => state.selection.includes(key)));
     const length = createMemo(() => state.data.length);
 
@@ -71,7 +71,7 @@ export function SelectionProvider<T extends object>(props: ParentProps<{ selecti
         props.selection?.(selection().map(({ value }) => value()));
     });
 
-    const context: SelectionContextType<T> = {
+    const context: SelectionContextType<K, T> = {
         selection,
         length,
         select(selection, { mode = SelectionMode.Normal } = {}) {
@@ -106,9 +106,9 @@ export function SelectionProvider<T extends object>(props: ParentProps<{ selecti
         },
     };
 
-    const keyIdMap = new Map<keyof T, string>();
-    const idKeyMap = new Map<string, keyof T>();
-    const internal: InternalSelectionContextType<T> = {
+    const keyIdMap = new Map<K, string>();
+    const idKeyMap = new Map<string, K>();
+    const internal: InternalSelectionContextType<K, T> = {
         modifier: createSignal<Modifier>(Modifier.None),
         latest: createSignal<HTMLElement>(),
         selectables: createSignal<HTMLElement[]>([]),
@@ -201,9 +201,9 @@ const Root: ParentComponent = (props) => {
     return <div ref={setRoot} tabIndex={0} onKeyDown={onKeyboardEvent} onKeyUp={onKeyboardEvent} class={css.root}>{c()}</div>;
 };
 
-export function selectable<T extends object>(element: HTMLElement, options: Accessor<{ value: T, key: keyof T }>) {
-    const context = useSelection<T>();
-    const internal = useInternalSelection<T>();
+export function selectable<K, T extends object>(element: HTMLElement, options: Accessor<{ value: T, key: K }>) {
+    const context = useSelection<K, T>();
+    const internal = useInternalSelection<K, T>();
 
     const key = options().key;
     const value = createMemo(() => options().value);
@@ -211,17 +211,17 @@ export function selectable<T extends object>(element: HTMLElement, options: Acce
 
     const selectionKey = internal.add(key, value, element);
 
-    const createRange = (a?: HTMLElement, b?: HTMLElement): (keyof T)[] => {
+    const createRange = (a?: HTMLElement, b?: HTMLElement): K[] => {
         if (!a && !b) {
             return [];
         }
 
         if (!a) {
-            return [b!.dataset.selecatableKey! as keyof T];
+            return [b!.dataset.selecatableKey! as K];
         }
 
         if (!b) {
-            return [a!.dataset.selecatableKey! as keyof T];
+            return [a!.dataset.selecatableKey! as K];
         }
 
         if (a === b) {

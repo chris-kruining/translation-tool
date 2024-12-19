@@ -2,11 +2,13 @@ import { Accessor, Component, createEffect, createMemo, createSignal } from "sol
 import { debounce, Mutation } from "~/utilities";
 import { Column, GridApi as GridCompApi, Grid as GridComp } from "~/components/grid";
 import { createDataSet, DataSetNode, DataSetRowNode } from "~/components/table";
+import { SelectionItem } from "../selectable";
 import css from "./grid.module.css"
 
 export type Entry = { key: string } & { [lang: string]: string };
 export interface GridApi {
     readonly mutations: Accessor<Mutation[]>;
+    readonly selection: Accessor<SelectionItem<number, Entry>[]>;
     remove(indices: number[]): void;
     addKey(key: string): void;
     addLocale(locale: string): void;
@@ -25,9 +27,9 @@ const groupBy = (rows: DataSetRowNode<number, Entry>[]) => {
     return group(rows.map<R>(r => ({ ...r, _key: r.value.key }))) as any;
 }
 
-export function Grid(props: { class?: string, rows: Entry[], api?: (api: GridApi) => any }) {
+export function Grid(props: { class?: string, rows: Entry[], locales: string[], api?: (api: GridApi) => any }) {
     const rows = createMemo(() => createDataSet<Entry>(props.rows, { group: { by: 'key', with: groupBy } }));
-    const locales = createMemo(() => Object.keys(rows().value().at(0) ?? {}).filter(k => k !== 'key'));
+    const locales = createMemo(() => props.locales);
     const columns = createMemo<Column<Entry>[]>(() => [
         {
             id: 'key',
@@ -45,11 +47,14 @@ export function Grid(props: { class?: string, rows: Entry[], api?: (api: GridApi
         }))
     ]);
 
+    const [api, setApi] = createSignal<GridCompApi<Entry>>();
+
     createEffect(() => {
         const r = rows();
 
         props.api?.({
             mutations: r.mutations,
+            selection: createMemo(() => api()?.selection() ?? []),
             remove: r.remove,
             addKey(key) {
                 r.insert({ key, ...Object.fromEntries(locales().map(l => [l, ''])) });
@@ -60,7 +65,7 @@ export function Grid(props: { class?: string, rows: Entry[], api?: (api: GridApi
         });
     });
 
-    return <GridComp rows={rows()} columns={columns()} />;
+    return <GridComp rows={rows()} columns={columns()} api={setApi} />;
 };
 
 const TextArea: Component<{ row: number, key: string, lang: string, value: string, oninput?: (event: InputEvent) => any }> = (props) => {

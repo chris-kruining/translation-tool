@@ -125,7 +125,8 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 }
 
                 case MutarionKind.Delete: {
-                    return files.values().map(file => ({ kind: MutarionKind.Delete, key: m.key, file })).toArray();
+                    const entry = entries.get(index as any)!;
+                    return files.values().map(file => ({ kind: MutarionKind.Delete, key: entry.key, file })).toArray();
                 }
 
                 default: throw new Error('unreachable code');
@@ -283,7 +284,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 return;
             }
 
-            remove(Object.keys(selection()));
+            remove(selection().map(s => s.key));
         }, { key: 'delete', modifier: Modifier.None }),
         inserNewKey: createCommand('insert new key', async () => {
             const formData = await newKeyPrompt()?.showModal();
@@ -380,6 +381,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
 const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<GridApi | undefined>, entries?: Setter<Entries> }> = (props) => {
     const [entries, setEntries] = createSignal<Entries>(new Map());
+    const [locales, setLocales] = createSignal<string[]>([]);
     const [rows, setRows] = createSignal<Entry[]>([]);
     const [api, setApi] = createSignal<GridApi>();
 
@@ -412,6 +414,8 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
             );
             const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
 
+            setLocales(contents.map(({ lang }) => lang));
+
             const merged = contents.reduce((aggregate, { id, handle, lang, entries }) => {
                 for (const [key, value] of entries.entries()) {
                     if (!aggregate.has(key)) {
@@ -429,7 +433,7 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
         })();
     });
 
-    return <Grid rows={rows()} api={setApi} />;
+    return <Grid rows={rows()} locales={locales()} api={setApi} />;
 };
 
 const Blank: Component<{ open: CommandType }> = (props) => {

@@ -32,13 +32,12 @@ const GridContext = createContext<GridContextType<any>>();
 const useGrid = () => useContext(GridContext)!;
 
 type GridProps<T extends Record<string, any>> = { class?: string, groupBy?: keyof T, columns: Column<T>[], rows: DataSet<T>, api?: (api: GridApi<T>) => any };
-// type GridState<T extends Record<string, any>> = { data: DataSet<T>, columns: Column<T>[], numberOfRows: number };
 
 export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
     const [table, setTable] = createSignal<TableApi<T>>();
 
     const rows = createMemo(() => props.rows);
-    const columns = createMemo(() => props.columns);
+    const columns = createMemo(() => props.columns as TableColumn<T>[]);
     const mutations = createMemo(() => rows().mutations());
 
     const ctx: GridContextType<T> = {
