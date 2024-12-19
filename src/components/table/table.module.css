@@ -163,6 +163,7 @@
 
                 & > .header {
                     border-block-end-color: transparent;
+                    animation: none;
 
                     & .cell {
                         justify-content: start;
@@ -171,6 +172,7 @@
                         & > label {
                             --state: 0;
                             display: contents;
+                            cursor: pointer;
 
                             & input[type="checkbox"] {
                                 display: none;
@@ -181,6 +183,7 @@
                                 transition: rotate .3s ease-in-out;
                                 inline-size: 1em;
                                 aspect-ratio: 1;
+                                opacity: 1 !important;
                             }
 
                             &:has(input:not(:checked)) {

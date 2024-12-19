@@ -1,14 +1,14 @@
 import { Accessor, createContext, createEffect, createMemo, createSignal, JSX, useContext } from "solid-js";
 import { Mutation } from "~/utilities";
-import { SelectionMode, Table, Column as TableColumn, TableApi, DataSet, CellRenderer } from "~/components/table";
+import { SelectionMode, Table, Column as TableColumn, TableApi, DataSet, CellRenderer as TableCellRenderer } from "~/components/table";
 import css from './grid.module.css';
 
-export interface CellEditor<T extends Record<string, any>, K extends keyof T> {
-    (cell: Parameters<CellRenderer<T, K>>[0] & { mutate: (next: T[K]) => any }): JSX.Element;
+export interface CellRenderer<T extends Record<string, any>, K extends keyof T> {
+    (cell: Parameters<TableCellRenderer<T, K>>[0] & { mutate: (next: T[K]) => any }): JSX.Element;
 }
 
-export interface Column<T extends Record<string, any>> extends TableColumn<T> {
-    editor?: CellEditor<T, keyof T>;
+export interface Column<T extends Record<string, any>> extends Omit<TableColumn<T>, 'renderer'> {
+    renderer?: CellRenderer<T, keyof T>;
 }
 
 export interface GridApi<T extends Record<string, any>> extends TableApi<T> {
@@ -63,16 +63,16 @@ export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
         },
     };
 
-    const cellEditors = createMemo(() => Object.fromEntries(
+    const cellRenderers = createMemo(() => Object.fromEntries(
         props.columns
-            .filter(c => c.editor !== undefined)
+            .filter(c => c.renderer !== undefined)
             .map(c => {
                 const Editor: CellRenderer<T, keyof T> = ({ row, column, value }) => {
                     const mutate = (next: T[keyof T]) => {
                         ctx.mutate(row, column, next);
                     };
 
-                    return c.editor!({ row, column, value, mutate });
+                    return c.renderer!({ row, column, value, mutate });
                 };
 
                 return [c.id, Editor] as const;
@@ -83,7 +83,7 @@ export function Grid<T extends Record<string, any>>(props: GridProps<T>) {
         <Api api={props.api} table={table()} />
 
         <Table api={setTable} class={`${css.grid} ${props.class}`} rows={rows()} columns={columns()} selectionMode={SelectionMode.Multiple}>{
-            cellEditors()
+            cellRenderers()
         }</Table>
     </GridContext.Provider>;
 };

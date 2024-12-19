@@ -6,16 +6,17 @@ import css from './table.module.css';
 
 selectable;
 
-export type Column<T> = {
+export type CellRenderer<T extends Record<string, any>, K extends keyof T> = (cell: { row: number, column: K, value: T[K] }) => JSX.Element;
+export type CellRenderers<T extends Record<string, any>> = { [K in keyof T]?: CellRenderer<T, K> };
+
+export interface Column<T extends Record<string, any>> {
     id: keyof T,
     label: string,
     sortable?: boolean,
     group?: string,
+    renderer?: CellRenderer<T, keyof T>,
     readonly groupBy?: (rows: DataSetRowNode<keyof T, T>[]) => DataSetNode<keyof T, T>[],
 };
-
-export type CellRenderer<T extends Record<string, any>, K extends keyof T> = (cell: { row: number, column: K, value: T[K] }) => JSX.Element;
-export type CellRenderers<T extends Record<string, any>> = { [K in keyof T]?: CellRenderer<T, K> };
 
 export interface TableApi<T extends Record<string, any>> {
     readonly selection: Accessor<SelectionItem<keyof T, T>[]>;
@@ -96,7 +97,7 @@ function InnerTable<T extends Record<string, any>>(props: InnerTableProps<T>) {
         <Head />
 
         <tbody class={css.main}>
-            <For each={props.rows.value()}>{
+            <For each={props.rows.nodes()}>{
                 node => <Node node={node} depth={0} />
             }</For>
         </tbody>

@@ -5,7 +5,7 @@ import { emptyFolder, FolderEntry, walk as fileTreeWalk, Tree } from "~/componen
 import { Menu } from "~/features/menu";
 import { Grid, load, useFiles } from "~/features/file";
 import { Command, CommandType, Context, createCommand, Modifier, noop, useCommands } from "~/features/command";
-import { GridApi } from "~/features/file/grid";
+import { Entry, GridApi } from "~/features/file/grid";
 import { Tab, Tabs } from "~/components/tabs";
 import { isServer } from "solid-js/web";
 import { Prompt, PromptApi } from "~/components/prompt";
@@ -38,7 +38,8 @@ async function* walk(directory: FileSystemDirectoryHandle, path: string[] = []):
 };
 
 
-interface Entries extends Map<string, Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { }
+// interface Entries extends Map<string, Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { };
+interface Entries extends Map<string, { key: string, } & Record<string, { value: string, handle: FileSystemFileHandle, id: string }>> { };
 
 export default function Edit(props: ParentProps) {
     const filesContext = useFiles();
@@ -105,26 +106,22 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         const files = tab.files();
         const mutations = tab.api()?.mutations() ?? [];
 
-        // console.log(mutations);
+        return mutations.flatMap((m): any => {
+            const [index, lang] = splitAt(m.key, m.key.indexOf('.'));
 
-        return mutations.flatMap(m => {
             switch (m.kind) {
                 case MutarionKind.Update: {
-                    const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
-
-                    return { kind: MutarionKind.Update, key, lang, file: entries.get(key)?.[lang] };
+                    const entry = entries.get(index as any)!;
+                    return { kind: MutarionKind.Update, key: entry.key, lang, file: files.get(lang)! };
                 }
 
                 case MutarionKind.Create: {
                     if (typeof m.value === 'object') {
-                        return Object.entries(m.value).map(([lang, value]) => {
-                            return ({ kind: MutarionKind.Create, key: m.key, lang, file: files.get(lang)!, value });
-                        });
+                        return Object.entries(m.value).map(([lang, value]) => ({ kind: MutarionKind.Create, key: m.key, lang, file: files.get(lang)!, value }));
                     }
 
-                    const [key, lang] = splitAt(m.key, m.key.lastIndexOf('.'));
-
-                    return { kind: MutarionKind.Create, key, lang, file: undefined, value: m.value };
+                    const entry = entries.get(index as any)!;
+                    return { kind: MutarionKind.Create, key: entry.key, lang, file: undefined, value: m.value };
                 }
 
                 case MutarionKind.Delete: {
@@ -226,6 +223,11 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
         return existingFiles.concat(newFiles);
     });
 
+    // createEffect(() => {
+    //     console.table(mutations());
+    //     console.log(mutatedFiles(), mutatedData());
+    // });
+
     createEffect(() => {
         const directory = props.root;
 
@@ -296,19 +298,17 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
                 return;
             }
 
-            api()?.insert(key);
+            api()?.addKey(key);
         }),
         inserNewLanguage: createCommand('insert new language', async () => {
             const formData = await newLanguagePrompt()?.showModal();
-            const language = formData?.get('locale')?.toString();
+            const locale = formData?.get('locale')?.toString();
 
-            if (!language) {
+            if (!locale) {
                 return;
             }
 
-            console.log(language);
-
-            api()?.addColumn(language);
+            api()?.addLocale(locale);
         }),
     } as const;
 
@@ -375,11 +375,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
         <Tabs class={css.content} active={setActive} onClose={commands.closeTab}>
             <For each={tabs()}>{
-                ({ key, handle, setApi, setEntries }) => <Tab
-                    id={key}
-                    label={handle.name}
-                    closable
-                >
+                ({ key, handle, setApi, setEntries }) => <Tab id={key} label={handle.name} closable>
                     <Content directory={handle} api={setApi} entries={setEntries} />
                 </Tab>
             }</For>
@@ -389,8 +385,7 @@ const Editor: Component<{ root: FileSystemDirectoryHandle }> = (props) => {
 
 const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<GridApi | undefined>, entries?: Setter<Entries> }> = (props) => {
     const [entries, setEntries] = createSignal<Entries>(new Map());
-    const [columns, setColumns] = createSignal<string[]>([]);
-    const [rows, setRows] = createSignal<Map<string, Record<string, string>>>(new Map);
+    const [rows, setRows] = createSignal<Entry[]>([]);
     const [api, setApi] = createSignal<GridApi>();
 
     createEffect(() => {
@@ -420,7 +415,6 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
                     return { id, handle, lang, entries };
                 }
             );
-            const languages = new Set(contents.map(c => c.lang));
             const template = contents.map(({ lang, handle }) => [lang, { handle, value: '' }]);
 
             const merged = contents.reduce((aggregate, { id, handle, lang, entries }) => {
@@ -435,13 +429,12 @@ const Content: Component<{ directory: FileSystemDirectoryHandle, api?: Setter<Gr
                 return aggregate;
             }, new Map<string, Record<string, { id: string, value: string, handle: FileSystemFileHandle }>>());
 
-            setColumns(languages.values().toArray());
-            setEntries(merged);
-            setRows(new Map(merged.entries().map(([key, langs]) => [key, Object.fromEntries(Object.entries(langs).map(([lang, { value }]) => [lang, value]))] as const)));
+            setEntries(new Map(merged.entries().map(([key, langs], i) => [i.toString(), { key, ...langs }])) as Entries);
+            setRows(merged.entries().map(([key, langs]) => ({ key, ...Object.fromEntries(Object.entries(langs).map(([lang, { value }]) => [lang, value])) } as Entry)).toArray());
         })();
     });
 
-    return <Grid columns={columns()} rows={rows()} api={setApi} />;
+    return <Grid rows={rows()} api={setApi} />;
 };
 
 const Blank: Component<{ open: CommandType }> = (props) => {

@@ -26,37 +26,37 @@ export default function GridExperiment() {
             id: 'name',
             label: 'Name',
             sortable: true,
-            editor,
+            renderer: editor,
         },
         {
             id: 'email',
             label: 'Email',
             sortable: true,
-            editor,
+            renderer: editor,
         },
         {
             id: 'address',
             label: 'Address',
             sortable: true,
-            editor,
+            renderer: editor,
         },
         {
             id: 'currency',
             label: 'Currency',
             sortable: true,
-            editor,
+            renderer: editor,
         },
         {
             id: 'phone',
             label: 'Phone',
             sortable: true,
-            editor,
+            renderer: editor,
         },
         {
             id: 'country',
             label: 'Country',
             sortable: true,
-            editor,
+            renderer: editor,
         },
     ];
 

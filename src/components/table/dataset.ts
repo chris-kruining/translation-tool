@@ -1,5 +1,5 @@
 import { Accessor, createEffect, createMemo } from "solid-js";
-import { createStore, NotWrappable, StoreSetter, unwrap } from "solid-js/store";
+import { createStore, NotWrappable, produce, StoreSetter, unwrap } from "solid-js/store";
 import { CustomPartial } from "solid-js/store/types/store.js";
 import { deepCopy, deepDiff, Mutation } from "~/utilities";
 
@@ -38,13 +38,14 @@ export type Setter<T> =
 
 export interface DataSet<T extends Record<string, any>> {
     data: T[];
-    value: Accessor<DataSetNode<keyof T, T>[]>;
+    nodes: Accessor<DataSetNode<keyof T, T>[]>;
+    value: Accessor<(T | undefined)[]>;
     mutations: Accessor<Mutation[]>;
     sorting: Accessor<SortOptions<T> | undefined>;
     grouping: Accessor<GroupOptions<T> | undefined>;
 
-    // mutate<K extends keyof T>(index: number, value: T): void;
     mutate<K extends keyof T>(index: number, prop: K, value: T[K]): void;
+    mutateEach(setter: (value: T) => T): void;
     remove(indices: number[]): void;
     insert(item: T, at?: number): void;
 
@@ -59,15 +60,14 @@ function defaultGroupingFunction<T>(groupBy: keyof T): GroupingFunction<number, 
 }
 
 export const createDataSet = <T extends Record<string, any>>(data: T[], initialOptions?: { sort?: SortOptions<T>, group?: GroupOptions<T> }): DataSet<T> => {
-    const nodes = data;
     const [state, setState] = createStore<DataSetState<T>>({
-        value: deepCopy(nodes),
-        snapshot: nodes,
+        value: deepCopy(data),
+        snapshot: data,
         sorting: initialOptions?.sort,
         grouping: initialOptions?.group,
     });
 
-    const value = createMemo(() => {
+    const nodes = createMemo(() => {
         const sorting = state.sorting;
         const grouping = state.grouping;
 
@@ -106,13 +106,18 @@ export const createDataSet = <T extends Record<string, any>>(data: T[], initialO
 
     const set: DataSet<T> = {
         data,
-        value,
+        nodes,
+        value: createMemo(() => state.value),
         mutations,
         sorting,
         grouping,
 
         mutate(index, prop, value) {
             setState('value', index, prop as any, value);
+        },
+
+        mutateEach(setter) {
+            setState('value', value => value.map(i => i === undefined ? undefined : setter(i)));
         },
 
         remove(indices) {
