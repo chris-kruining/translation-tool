@@ -39,10 +39,10 @@ export type Setter<T> =
 export interface DataSet<T extends Record<string, any>> {
     data: T[];
     nodes: Accessor<DataSetNode<keyof T, T>[]>;
-    value: Accessor<(T | undefined)[]>;
     mutations: Accessor<Mutation[]>;
-    sorting: Accessor<SortOptions<T> | undefined>;
-    grouping: Accessor<GroupOptions<T> | undefined>;
+    readonly value: (T | undefined)[];
+    readonly sorting: SortOptions<T> | undefined;
+    readonly grouping: GroupOptions<T> | undefined;
 
     mutate<K extends keyof T>(index: number, prop: K, value: T[K]): void;
     mutateEach(setter: (value: T) => T): void;
@@ -107,10 +107,16 @@ export const createDataSet = <T extends Record<string, any>>(data: T[], initialO
     const set: DataSet<T> = {
         data,
         nodes,
-        value: createMemo(() => state.value),
+        get value() {
+            return state.value;
+        },
         mutations,
-        sorting,
-        grouping,
+        get sorting() {
+            return state.sorting;
+        },
+        get grouping() {
+            return state.grouping;
+        },
 
         mutate(index, prop, value) {
             setState('value', index, prop as any, value);

@@ -40,7 +40,7 @@ export function Grid(props: { class?: string, rows: Entry[], locales: string[], 
             id: lang,
             label: lang,
             renderer: ({ row, column, value, mutate }) => {
-                const entry = rows().value()[row]!;
+                const entry = rows().value[row]!;
 
                 return <TextArea row={row} key={entry.key} lang={String(column)} value={value} oninput={e => mutate(e.data ?? '')} />;
             },

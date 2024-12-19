@@ -265,7 +265,7 @@ describe('utilities', () => {
             const actual = first(deepDiff(a, b));
 
             // Arrange 
-            expect(actual).toEqual({ kind: MutarionKind.Delete, key: 'key' });
+            expect(actual).toEqual({ kind: MutarionKind.Delete, key: 'key', original: 'value' });
         });
 
         it('should yield a mutation of type update when the value of a key in `a` is not equal to the value of the same key in `b`', async () => {
@@ -302,8 +302,8 @@ describe('utilities', () => {
 
             // Arrange 
             expect(actual).toEqual([
-                { kind: MutarionKind.Delete, key: 'key2' },
-                { kind: MutarionKind.Delete, key: 'key3' },
+                { kind: MutarionKind.Delete, key: 'key2', original: 'value2' },
+                { kind: MutarionKind.Delete, key: 'key3', original: 'value3' },
             ]);
         });
 
@@ -332,7 +332,7 @@ describe('utilities', () => {
 
             // Arrange 
             expect(actual).toEqual([
-                { kind: MutarionKind.Delete, key: 'key2_old' },
+                { kind: MutarionKind.Delete, key: 'key2_old', original: 'value2' },
                 { kind: MutarionKind.Create, key: 'key2_new', value: 'value2' },
             ]);
         });
@@ -361,7 +361,7 @@ describe('utilities', () => {
 
             // Arrange
             expect(actual).toEqual([
-                { kind: MutarionKind.Delete, key: 'key.2' },
+                { kind: MutarionKind.Delete, key: 'key.2', original: 2 },
                 { kind: MutarionKind.Create, key: 'key.5', value: 5 },
             ]);
         });

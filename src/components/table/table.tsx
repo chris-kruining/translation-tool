@@ -166,7 +166,7 @@ function Head(props: {}) {
 
             <For each={table.columns()}>{
                 ({ id, label, sortable }) => {
-                    const sort = createMemo(() => table.rows().sorting());
+                    const sort = createMemo(() => table.rows().sorting);
                     const by = String(id);
 
                     const onPointerDown = (e: PointerEvent) => {
