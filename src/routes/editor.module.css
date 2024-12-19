@@ -144,11 +144,6 @@
     }
 }
 
-/* ::view-transition-old(menu),
-::view-transition-new(menu) {
-    z-index: 1;
-} */
-
 ::view-transition-old(content) {
     animation-name: slide-left;
 }

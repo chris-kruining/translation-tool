@@ -1,0 +1,241 @@
+@property --depth {
+    syntax: "<number>";
+    inherits: true;
+    initial-value: 0;
+}
+
+.table {
+    --shadow-color: oklch(0 0 0 / .05);
+    --shadow: var(--shadow-color) 0 0 2em;
+
+    position: relative;
+    display: block grid;
+    grid-template-columns: repeat(var(--columns), minmax(max-content, auto));
+    align-content: start;
+    block-size: 100%;
+    padding-inline: 1px;
+    margin-inline: -1px;
+    overflow: auto;
+    background-color: inherit;
+    isolation: isolate;
+
+    & .cell {
+        display: block grid;
+        align-items: center;
+        padding: var(--padding-m);
+        border: 1px solid transparent;
+        border-radius: var(--radii-m);
+        background: inherit;
+        white-space: nowrap;
+    }
+
+    & :is(.cell:first-child, .checkbox + .cell) {
+        position: sticky;
+        inset-inline-start: 1px;
+        padding-inline-start: calc(var(--depth, 0) * (1em + var(--padding-s)) + var(--padding-m));
+        z-index: 1;
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset-inline-start: 100%;
+            inset-block-start: -2px;
+            display: block;
+            inline-size: 2em;
+            block-size: calc(3px + 100%);
+            animation: column-scroll-shadow linear both;
+            animation-timeline: scroll(inline);
+            animation-range: 0 2em;
+            pointer-events: none;
+        }
+    }
+
+    & .checkbox {
+        display: grid;
+        place-items: center;
+        position: sticky;
+        inset-inline-start: 1px;
+        background: inherit;
+        padding: var(--padding-m);
+        z-index: 1;
+    }
+
+    & .caption {
+        position: sticky;
+        inset-inline-start: 0;
+    }
+
+    & :is(.header, .main, .footer) {
+        grid-column: 1 / -1;
+        display: block grid;
+        grid-template-columns: subgrid;
+        background-color: inherit;
+    }
+
+    & .row {
+        --alpha: 0;
+        grid-column: 1 / -1;
+        display: block grid;
+        grid-template-columns: subgrid;
+        border: 1px solid transparent;
+        background-color: inherit;
+        background-image: linear-gradient(0deg, oklch(from var(--info) l c h / var(--alpha)), oklch(from var(--info) l c h / var(--alpha)));
+
+        &:has(> .checkbox > :checked) {
+            --alpha: .1;
+            border-color: var(--info);
+
+            & span {
+                font-variation-settings: 'GRAD' 1000;
+            }
+
+            & + :has(> .checkbox > :checked) {
+                border-block-start-color: transparent;
+            }
+
+            &:has(+ .row > .checkbox > :checked) {
+                border-block-end-color: transparent;
+            }
+        }
+
+        &:hover {
+            --alpha: .2 !important;
+        }
+    }
+
+    & .header {
+        position: sticky;
+        inset-block-start: 0;
+        border-block-end: 1px solid var(--surface-300);
+        z-index: 2;
+        animation: header-scroll-shadow linear both;
+        animation-timeline: scroll();
+        animation-range: 0 2em;
+        font-weight: var(--text-bold);
+
+        & > tr {
+            all: inherit;
+            display: contents;
+
+            & > .cell {
+                grid-auto-flow: column;
+                justify-content: space-between;
+
+                & > svg {
+                    transition: opacity .15s ease-in-out;
+                }
+
+                &:not(.sorted):not(:hover) > svg {
+                    opacity: 0;
+                }
+            }
+        }
+    }
+
+    & .main {
+        background-color: inherit;
+    }
+
+    & .footer {
+        position: sticky;
+        inset-block-end: 0;
+        border-block-start: 1px solid var(--surface-300);
+        z-index: 2;
+        animation: header-scroll-shadow linear both reverse;
+        animation-timeline: scroll();
+        animation-range: calc(100% - 2em) 100%;
+        font-weight: var(--text-bold);
+    }
+
+    & .group {
+        display: contents;
+        background-color: inherit;
+
+        & > td {
+            display: contents;
+            background-color: inherit;
+
+            & > table {
+                grid-column: 1 / -1;
+                grid-template-columns: subgrid;
+                background-color: inherit;
+                overflow: visible;
+
+                & > .header {
+                    border-block-end-color: transparent;
+                    animation: none;
+
+                    & .cell {
+                        justify-content: start;
+                        column-gap: var(--padding-s);
+
+                        & > label {
+                            --state: 0;
+                            display: contents;
+                            cursor: pointer;
+
+                            & input[type="checkbox"] {
+                                display: none;
+                            }
+
+                            & > svg {
+                                rotate: calc(var(--state) * -.25turn);
+                                transition: rotate .3s ease-in-out;
+                                inline-size: 1em;
+                                aspect-ratio: 1;
+                                opacity: 1 !important;
+                            }
+
+                            &:has(input:not(:checked)) {
+                                --state: 1;
+                            }
+                        }
+                    }
+                }
+
+                & > .main {
+                    block-size: calc-size(auto, size);
+                    transition: block-size .3s ease-in-out;
+                    overflow: clip;
+                }
+
+                &:has(> .header input:not(:checked)) > .main {
+                    block-size: 0;
+                }
+            }
+        }
+    }
+
+    &.selectable {
+        grid-template-columns: 2em repeat(var(--columns), minmax(max-content, auto));
+
+        & :is(.cell:first-child, .checkbox + .cell) {
+            inset-inline-start: 2em;
+        }
+
+        & details > summary {
+            inset-inline-start: 2em;
+            grid-column: 2;
+        }
+    }
+}
+
+@keyframes header-scroll-shadow {
+    from {
+        box-shadow: none;
+    }
+
+    to {
+        box-shadow: var(--shadow);
+    }
+}
+
+@keyframes column-scroll-shadow {
+    from {
+        background: linear-gradient(90deg, transparent, transparent);
+    }
+
+    to {
+        background: linear-gradient(90deg, var(--shadow-color), transparent);
+    }
+}

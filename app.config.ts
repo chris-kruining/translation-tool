@@ -7,6 +7,10 @@ export default defineConfig({
         html: {
             cspNonce: 'KAAS_IS_AWESOME',
         },
+        // css: {
+        //     postcss: {
+        //     },
+        // },
         plugins: [
             solidSvg()
             // VitePWA({

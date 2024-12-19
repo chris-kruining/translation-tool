@@ -1,229 +1,74 @@
-import { Accessor, Component, createContext, createEffect, createMemo, createSignal, For, ParentComponent, Show, useContext } from "solid-js";
-import { createStore, produce, unwrap } from "solid-js/store";
-import { SelectionProvider, useSelection, selectable } from "../selectable";
-import { debounce, deepCopy, deepDiff, Mutation } from "~/utilities";
-import css from './grid.module.css';
+import { Accessor, Component, createEffect, createMemo, createSignal } from "solid-js";
+import { debounce, Mutation } from "~/utilities";
+import { Column, GridApi as GridCompApi, Grid as GridComp } from "~/components/grid";
+import { createDataSet, DataSetNode, DataSetRowNode } from "~/components/table";
+import { SelectionItem } from "../selectable";
+import css from "./grid.module.css"
 
-selectable // prevents removal of import
-
-interface Leaf extends Record<string, string> { }
-export interface Entry extends Record<string, Entry | Leaf> { }
-
-type Rows = Map<string, Record<string, string>>;
-type SelectionItem = { key: string, value: Accessor<Record<string, string>>, element: WeakRef<HTMLElement> };
-
-export interface GridContextType {
-    readonly rows: Accessor<Record<string, Record<string, string>>>;
-    readonly mutations: Accessor<Mutation[]>;
-    readonly selection: Accessor<SelectionItem[]>;
-    mutate(prop: string, lang: string, value: string): void;
-    remove(props: string[]): void;
-    insert(prop: string): void;
-}
-
+export type Entry = { key: string } & { [lang: string]: string };
 export interface GridApi {
-    readonly selection: Accessor<Record<string, Record<string, string>>>;
-    readonly rows: Accessor<Record<string, Record<string, string>>>;
     readonly mutations: Accessor<Mutation[]>;
-    selectAll(): void;
-    clear(): void;
-    remove(keys: string[]): void;
-    insert(prop: string): void;
+    readonly selection: Accessor<SelectionItem<number, Entry>[]>;
+    remove(indices: number[]): void;
+    addKey(key: string): void;
+    addLocale(locale: string): void;
+};
+
+const groupBy = (rows: DataSetRowNode<number, Entry>[]) => {
+    type R = DataSetRowNode<number, Entry> & { _key: string };
+
+    const group = (nodes: R[]): DataSetNode<number, Entry>[] => Object
+        .entries(Object.groupBy(nodes, r => r._key.split('.').at(0)!) as Record<number, R[]>)
+        .map<any>(([key, nodes]) => nodes.at(0)?._key === key
+            ? nodes[0]
+            : ({ kind: 'group', key, groupedBy: 'key', nodes: group(nodes.map(n => ({ ...n, _key: n._key.slice(key.length + 1) }))) })
+        );
+
+    return group(rows.map<R>(r => ({ ...r, _key: r.value.key }))) as any;
 }
 
-const GridContext = createContext<GridContextType>();
+export function Grid(props: { class?: string, rows: Entry[], locales: string[], api?: (api: GridApi) => any }) {
+    const rows = createMemo(() => createDataSet<Entry>(props.rows, { group: { by: 'key', with: groupBy } }));
+    const locales = createMemo(() => props.locales);
+    const columns = createMemo<Column<Entry>[]>(() => [
+        {
+            id: 'key',
+            label: 'Key',
+            renderer: ({ value }) => value.split('.').at(-1),
+        },
+        ...locales().map<Column<Entry>>(lang => ({
+            id: lang,
+            label: lang,
+            renderer: ({ row, column, value, mutate }) => {
+                const entry = rows().value[row]!;
 
-const isLeaf = (entry: Entry | Leaf): entry is Leaf => Object.values(entry).some(v => typeof v === 'string');
-const useGrid = () => useContext(GridContext)!;
+                return <TextArea row={row} key={entry.key} lang={String(column)} value={value} oninput={e => mutate(e.data ?? '')} />;
+            },
+        }))
+    ]);
 
-export const Grid: Component<{ class?: string, columns: string[], rows: Rows, api?: (api: GridApi) => any }> = (props) => {
-    const [selection, setSelection] = createSignal<SelectionItem[]>([]);
-    const [state, setState] = createStore<{ rows: Record<string, Record<string, string>>, snapshot: Rows, numberOfRows: number }>({
-        rows: {},
-        snapshot: new Map,
-        numberOfRows: 0,
-    });
-
-    const mutations = createMemo(() => {
-        // enumerate all values to make sure the memo is recalculated on any change
-        Object.values(state.rows).map(entry => Object.values(entry));
-
-        return deepDiff(state.snapshot, state.rows).toArray();
-    });
-    const rows = createMemo(() => Object.fromEntries(Object.entries(state.rows).map(([key, row]) => [key, unwrap(row)] as const)));
+    const [api, setApi] = createSignal<GridCompApi<Entry>>();
 
     createEffect(() => {
-        setState('rows', Object.fromEntries(deepCopy(props.rows).entries()));
-        setState('snapshot', props.rows);
+        const r = rows();
+
+        props.api?.({
+            mutations: r.mutations,
+            selection: createMemo(() => api()?.selection() ?? []),
+            remove: r.remove,
+            addKey(key) {
+                r.insert({ key, ...Object.fromEntries(locales().map(l => [l, ''])) });
+            },
+            addLocale(locale) {
+                r.mutateEach(entry => ({ ...entry, [locale]: '' }));
+            },
+        });
     });
 
-    createEffect(() => {
-        setState('numberOfRows', Object.keys(state.rows).length);
-    });
-
-    const ctx: GridContextType = {
-        rows,
-        mutations,
-        selection,
-
-        mutate(prop: string, lang: string, value: string) {
-            setState('rows', prop, lang, value);
-        },
-
-        remove(props: string[]) {
-            setState('rows', produce(rows => {
-                for (const prop of props) {
-                    delete rows[prop];
-                }
-
-                return rows;
-            }));
-        },
-
-        insert(prop: string) {
-            setState('rows', produce(rows => {
-                rows[prop] = Object.fromEntries(props.columns.slice(1).map(lang => [lang, '']));
-
-                return rows
-            }))
-        },
-    };
-
-    return <GridContext.Provider value={ctx}>
-        <SelectionProvider selection={setSelection} multiSelect>
-            <Api api={props.api} />
-
-            <_Grid class={props.class} columns={props.columns} rows={rows()} />
-        </SelectionProvider>
-    </GridContext.Provider>;
+    return <GridComp rows={rows()} columns={columns()} api={setApi} />;
 };
 
-const _Grid: Component<{ class?: string, columns: string[], rows: Record<string, Record<string, string>> }> = (props) => {
-    const columnCount = createMemo(() => props.columns.length - 1);
-    const root = createMemo<Entry>(() => Object.entries(props.rows)
-        .reduce((aggregate, [key, value]) => {
-            let obj: any = aggregate;
-            const parts = key.split('.');
-
-            for (const [i, part] of parts.entries()) {
-                if (Object.hasOwn(obj, part) === false) {
-                    obj[part] = {};
-                }
-
-                if (i === (parts.length - 1)) {
-                    obj[part] = value;
-                }
-                else {
-                    obj = obj[part];
-                }
-            }
-
-            return aggregate;
-        }, {}));
-
-    return <section class={`${css.table} ${props.class}`} style={{ '--columns': columnCount() }}>
-        <Head headers={props.columns} />
-
-        <main class={css.main}>
-            <Row entry={root()} />
-        </main>
-    </section>
-};
-
-const Api: Component<{ api: undefined | ((api: GridApi) => any) }> = (props) => {
-    const gridContext = useGrid();
-    const selectionContext = useSelection<{ key: string, value: Accessor<Record<string, string>>, element: WeakRef<HTMLElement> }>();
-
-    const api: GridApi = {
-        selection: createMemo(() => {
-            const selection = selectionContext.selection();
-
-            return Object.fromEntries(selection.map(({ key, value }) => [key, value()] as const));
-        }),
-        rows: gridContext.rows,
-        mutations: gridContext.mutations,
-        selectAll() {
-            selectionContext.selectAll();
-        },
-        clear() {
-            selectionContext.clear();
-        },
-        remove(props: string[]) {
-            gridContext.remove(props);
-        },
-        insert(prop: string) {
-            gridContext.insert(prop);
-        },
-    };
-
-    createEffect(() => {
-        props.api?.(api);
-    });
-
-    return null;
-};
-
-const Head: Component<{ headers: string[] }> = (props) => {
-    const context = useSelection();
-
-    return <header class={css.header}>
-        <div class={css.cell}>
-            <input
-                type="checkbox"
-                checked={context.selection().length > 0 && context.selection().length === context.length()}
-                indeterminate={context.selection().length !== 0 && context.selection().length !== context.length()}
-                on:input={(e: InputEvent) => e.target.checked ? context.selectAll() : context.clear()}
-            />
-        </div>
-
-        <For each={props.headers}>{
-            header => <span class={css.cell}>{header}</span>
-        }</For>
-    </header>;
-};
-
-const Row: Component<{ entry: Entry, path?: string[] }> = (props) => {
-    const grid = useGrid();
-
-    return <For each={Object.entries(props.entry)}>{
-        ([key, value]) => {
-            const values = Object.entries(value);
-            const path = [...(props.path ?? []), key];
-            const k = path.join('.');
-            const context = useSelection();
-
-            const isSelected = context.isSelected(k);
-
-            return <Show when={isLeaf(value)} fallback={<Group key={key} entry={value as Entry} path={path} />}>
-                <div class={css.row} use:selectable={{ value, key: k }}>
-                    <div class={css.cell}>
-                        <input type="checkbox" checked={isSelected()} on:input={() => context.select([k])} on:pointerdown={e => e.stopPropagation()} />
-                    </div>
-
-                    <div class={css.cell}>
-                        <span style={{ '--depth': path.length - 1 }}>{key}</span>
-                    </div>
-
-                    <For each={values}>{
-                        ([lang, value]) => <div class={css.cell}>
-                            <TextArea key={k} value={value} lang={lang} oninput={(e) => grid.mutate(k, lang, e.data ?? '')} />
-                        </div>
-                    }</For>
-                </div>
-            </Show>;
-        }
-    }</For>
-};
-
-const Group: Component<{ key: string, entry: Entry, path: string[] }> = (props) => {
-    return <details open>
-        <summary style={{ '--depth': props.path.length - 1 }}>{props.key}</summary>
-
-        <Row entry={props.entry} path={props.path} />
-    </details>;
-};
-
-const TextArea: Component<{ key: string, value: string, lang: string, oninput?: (event: InputEvent) => any }> = (props) => {
+const TextArea: Component<{ row: number, key: string, lang: string, value: string, oninput?: (event: InputEvent) => any }> = (props) => {
     const [element, setElement] = createSignal<HTMLTextAreaElement>();
 
     const resize = () => {
@@ -250,10 +95,11 @@ const TextArea: Component<{ key: string, value: string, lang: string, oninput?: 
 
     return <textarea
         ref={setElement}
+        class={css.textarea}
         value={props.value}
         lang={props.lang}
         placeholder={`${props.key} in ${props.lang}`}
-        name={`${props.key}:${props.lang}`}
+        name={`${props.row}[${props.lang}]`}
         spellcheck={true}
         wrap="soft"
         onkeyup={onKeyUp}

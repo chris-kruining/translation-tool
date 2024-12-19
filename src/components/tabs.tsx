@@ -95,19 +95,12 @@ export const Tab: ParentComponent<{ id: string, label: string, closable?: boolea
     const context = useTabs();
     const resolved = children(() => props.children);
     const isActive = context.isActive(props.id);
-    const [ref, setRef] = createSignal();
-
-    // const isActive = context.register(props.id, props.label, {
-    //     closable: props.closable ?? false,
-    //     ref: ref,
-    // });
 
     return <div
-        ref={setRef()}
         id={props.id}
+        class={css.tab}
         data-tab-label={props.label}
         data-tab-closable={props.closable}
-        style="display: contents;"
     >
         <Show when={isActive()}>
             <Command.Context for={context.onClose() ?? noop} with={[props.id]}>{resolved()}</Command.Context>

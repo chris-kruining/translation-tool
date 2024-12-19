@@ -1,5 +1,5 @@
 import { Link, Meta, Title } from "@solidjs/meta";
-import { Component, createMemo, createSignal, createUniqueId, ErrorBoundary, ParentProps, Show } from "solid-js";
+import { Component, createMemo, createSignal, ParentProps, Show } from "solid-js";
 import { FilesProvider } from "~/features/file";
 import { CommandPalette, CommandPaletteApi, Menu, MenuProvider } from "~/features/menu";
 import { A, RouteDefinition, useBeforeLeave } from "@solidjs/router";
@@ -89,11 +89,15 @@ export default function Editor(props: ParentProps) {
             </nav>
 
             <section>
-                <ErrorBoundary fallback={err => <ErrorComp error={err} />}>
+                <FilesProvider>
+                    {props.children}
+                </FilesProvider>
+
+                {/* <ErrorBoundary fallback={err => <ErrorComp error={err} />}>
                     <FilesProvider>
                         {props.children}
                     </FilesProvider>
-                </ErrorBoundary>
+                </ErrorBoundary> */}
             </section>
         </main>
 
@@ -109,6 +113,11 @@ const ErrorComp: Component<{ error: Error }> = (props) => {
             cause => <>{cause().description}</>
         }</Show>
 
+        {props.error.stack}
+
         <a href="/">Return to start</a>
     </div>;
 };
+
+let keyCounter = 0;
+const createUniqueId = () => `key-${keyCounter++}`;

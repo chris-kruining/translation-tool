@@ -1,4 +1,4 @@
-import { createEffect, createSignal, createUniqueId, JSX, onMount, ParentComponent, Show } from "solid-js";
+import { createEffect, createSignal, JSX, ParentComponent, Show } from "solid-js";
 import css from './prompt.module.css';
 
 export interface PromptApi {
@@ -73,3 +73,6 @@ export const Prompt: ParentComponent<{ api: (api: PromptApi) => any, title?: str
         </form>
     </dialog>;
 };
+
+let idCounter = 0;
+const createUniqueId = () => `prompt-${idCounter++}`;

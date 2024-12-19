@@ -3,3 +3,8 @@
         background-color: color(from var(--info) xyz x y z / .2);
     }
 }
+
+.root {
+    display: contents !important;
+    all: inherit;
+}

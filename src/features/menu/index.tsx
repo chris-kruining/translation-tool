@@ -1,4 +1,4 @@
-import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, createUniqueId, mergeProps, onCleanup, onMount, useContext } from "solid-js";
+import { Accessor, Component, For, JSX, Match, ParentComponent, Setter, Show, Switch, children, createContext, createEffect, createMemo, createSignal, mergeProps, useContext } from "solid-js";
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { CommandType, Command, useCommands } from "../command";
@@ -75,9 +75,9 @@ const useMenu = () => {
     return context;
 }
 
-type ItemProps = { label: string, children: JSX.Element } | { command: CommandType };
+type ItemProps<T extends (...args: any[]) => any> = { label: string, children: JSX.Element } | { command: CommandType<T> };
 
-const Item: Component<ItemProps> = (props) => {
+function Item<T extends (...args: any[]) => any>(props: ItemProps<T>) {
     const id = createUniqueId();
 
     if (props.command) {
@@ -182,7 +182,7 @@ const Root: ParentComponent<{}> = (props) => {
 const Mount: Component = (props) => {
     const menu = useMenu();
 
-    return <div class={css.root} ref={menu.setRef} />;
+    return <menu class={css.root} ref={menu.setRef} />;
 };
 
 export const Menu = { Mount, Root, Item, Separator } as const;
@@ -233,7 +233,7 @@ export const CommandPalette: Component<{ api?: (api: CommandPaletteApi) => any, 
     };
 
     return <dialog ref={setRoot} class={css.commandPalette} onClose={() => setOpen(false)}>
-        <SearchableList<CommandType> items={context.commands()} keySelector={item => item.label} context={setSearch} onSubmit={onSubmit}>{
+        <SearchableList title="command palette" items={context.commands()} keySelector={item => item.label} context={setSearch} onSubmit={onSubmit}>{
             (item, ctx) => <For each={item.label.split(ctx.filter())}>{
                 (part, index) => <>
                     <Show when={index() !== 0}><b>{ctx.filter()}</b></Show>
@@ -258,6 +258,7 @@ interface SearchContext<T> {
 
 interface SearchableListProps<T> {
     items: T[];
+    title?: string;
     keySelector(item: T): string;
     filter?: (item: T, search: string) => boolean;
     children(item: T, context: SearchContext<T>): JSX.Element;
@@ -303,7 +304,7 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
     createEffect(() => {
         const length = results().length - 1;
 
-        setSelected(current => current !== undefined ? Math.min(current, length) : undefined);
+        setSelected(current => Math.min(current, length));
     });
 
     const onKeyDown = (e: KeyboardEvent) => {
@@ -333,16 +334,21 @@ function SearchableList<T>(props: SearchableListProps<T>): JSX.Element {
         props.onSubmit?.(v);
     };
 
-    return <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
-        <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" />
+    return <search title={props.title}>
+        <form method="dialog" class={css.search} onkeydown={onKeyDown} onsubmit={onSubmit}>
+            <input id={`search-${id}`} ref={setInput} value={term()} oninput={(e) => setTerm(e.target.value)} placeholder="start typing for command" autofocus autocomplete="off" enterkeyhint="go" />
 
-        <output for={`search-${id}`}>
-            <For each={results()}>{
-                (result, index) => <div classList={{ [css.selected]: index() === selected() }}>{props.children(result, ctx)}</div>
-            }</For>
-        </output>
-    </form>;
+            <output for={`search-${id}`}>
+                <For each={results()}>{
+                    (result, index) => <div classList={{ [css.selected]: index() === selected() }}>{props.children(result, ctx)}</div>
+                }</For>
+            </output>
+        </form>
+    </search>;
 };
+
+let keyCounter = 0;
+const createUniqueId = () => `key-${keyCounter++}`;
 
 declare module "solid-js" {
     namespace JSX {

@@ -54,10 +54,10 @@ export enum MutarionKind {
     Update = 'updated',
     Delete = 'deleted',
 }
-type Created = { kind: MutarionKind.Create, value: any };
-type Updated = { kind: MutarionKind.Update, value: any, original: any };
-type Deleted = { kind: MutarionKind.Delete };
-export type Mutation = { key: string } & (Created | Updated | Deleted);
+export type Created = { kind: MutarionKind.Create, key: string, value: any };
+export type Updated = { kind: MutarionKind.Update, key: string, value: any, original: any };
+export type Deleted = { kind: MutarionKind.Delete, key: string, original: any };
+export type Mutation = Created | Updated | Deleted;
 
 export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, path: string[] = []): Generator<Mutation, void, unknown> {
     if (!isIterable(a) || !isIterable(b)) {
@@ -74,7 +74,7 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
         }
 
         if (keyA && keyB === undefined) {
-            yield { key: path.concat(keyA.toString()).join('.'), kind: MutarionKind.Delete };
+            yield { key: path.concat(keyA.toString()).join('.'), kind: MutarionKind.Delete, original: valueA };
 
             continue;
         }
@@ -93,7 +93,7 @@ export function* deepDiff<T1 extends object, T2 extends object>(a: T1, b: T2, pa
 
         yield ((): Mutation => {
             if (valueA === null || valueA === undefined) return { key, kind: MutarionKind.Create, value: valueB };
-            if (valueB === null || valueB === undefined) return { key, kind: MutarionKind.Delete };
+            if (valueB === null || valueB === undefined) return { key, kind: MutarionKind.Delete, original: valueA };
 
             return { key, kind: MutarionKind.Update, value: valueB, original: valueA };
         })();
@@ -181,7 +181,7 @@ const bufferredIterator = <T extends readonly [string | number, any]>(subject: I
         done = res.done ?? false;
 
         if (!done) {
-            buffer.push(res.value)
+            buffer.push(res.value);
         }
     };
 
